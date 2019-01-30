@@ -1,5 +1,5 @@
 {smcl}
-{* 29jan2019}{...}
+{* 30jan2019}{...}
 {cmd:help colrspace}
 {hline}
 
@@ -2557,7 +2557,7 @@
 
 {pmore}
     Jann, B. (2019). ColrSpace: Mata class for color management. Available from
-    {browse "http://ideas.repec.org/c/boc/bocode/s??????.html"}.
+    {browse "http://ideas.repec.org/c/boc/bocode/s458594.html"}.
 
 
 {marker alsosee}{...}
