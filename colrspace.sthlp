@@ -2556,8 +2556,8 @@
     Thanks for citing this software as
 
 {pmore}
-    Jann, B. (2019). ColrSpace: Mata class for color management. Available from
-    {browse "http://ideas.repec.org/c/boc/bocode/s458594.html"}.
+    Jann, B. (2019). colrspace: Stata module providing a class-based color management system in Mata. Available from
+    {browse "http://ideas.repec.org/c/boc/bocode/s458597.html"}.
 
 
 {marker alsosee}{...}
