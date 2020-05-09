@@ -23,6 +23,10 @@ Installation from GitHub:
 
 Main changes:
 
+    09may2020
+    - webcolors added as palette
+    - some fixed to help file
+    
     17apr2020
     - installation files added to GitHub distribution
     

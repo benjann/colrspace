@@ -1,4 +1,4 @@
-*! version 1.0.0  29jan2019  Ben Jann
+*! version 1.0.1  09may2020  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -353,6 +353,9 @@ class `MAIN' {
         `SC'    P_()
         `SC'    P_s1(), P_s1r(), P_s2(), P_economist(), P_mono(), P_cblind(),
                 P_plottig(), P_538(), P_tfl(), P_mrc(), P_burd(), P_lean(),
+                P_webc(), P_webc_pi(), P_webc_pu(), P_webc_rd(), P_webc_ye(),
+                P_webc_gn(), P_webc_cy(), P_webc_bl(), P_webc_br(),
+                P_webc_wh(), P_webc_gray(), P_webc_grey(),
                 P_d3_10(), P_d3_20(), P_d3_20b(), P_d3_20c(), P_Accent(),
                 P_Dark2(), P_Paired(), P_Pastel1(), P_Pastel2(), P_Set1(),
                 P_Set2(), P_Set3(), P_Blues(), P_BuGn(), P_BuPu(), P_GnBu(),
@@ -4183,6 +4186,18 @@ void `MAIN'::palette(| `SS' pal0, `RS' n0, `RS' noipolate)
     else if (smatch(p ,"mrc"))               cdef = P_(1, P_mrc())
     else if (smatch(p ,"burd"))              cdef = P_(1, P_burd())
     else if (smatch(p ,"lean"))              cdef = P_(1, P_lean())
+    else if (smatch(p ,"webcolors"))           cdef = P_(1, P_webc())
+    else if (smatch(p ,"webcolors pink"))      cdef = P_(1, P_webc_pi())
+    else if (smatch(p ,"webcolors purple"))    cdef = P_(1, P_webc_pu())
+    else if (smatch(p ,"webcolors redorange")) cdef = P_(1, P_webc_rd())
+    else if (smatch(p ,"webcolors yellow"))    cdef = P_(1, P_webc_ye())
+    else if (smatch(p ,"webcolors green"))     cdef = P_(1, P_webc_gn())
+    else if (smatch(p ,"webcolors cyan"))      cdef = P_(1, P_webc_cy())
+    else if (smatch(p ,"webcolors blue"))      cdef = P_(1, P_webc_bl())
+    else if (smatch(p ,"webcolors brown"))     cdef = P_(1, P_webc_br())
+    else if (smatch(p ,"webcolors white"))     cdef = P_(1, P_webc_wh())
+    else if (smatch(p ,"webcolors gray"))      cdef = P_(1, P_webc_gray())
+    else if (smatch(p ,"webcolors grey"))      cdef = P_(1, P_webc_grey())
     else if (smatch(p ,"d3 10"))             cdef = P_(1, P_d3_10())
     else if (smatch(p ,"d3 20"))             cdef = P_(1, P_d3_20())
     else if (smatch(p ,"d3 20b"))            cdef = P_(1, P_d3_20b())
@@ -4306,6 +4321,22 @@ void `MAIN'::palette(| `SS' pal0, `RS' n0, `RS' noipolate)
 `PAL'::P_burd()      return("33 102 172,178 24 43,27 120 55,230 97 1,1 102 94,197 27 125,118 42 131,140 81 10,77 77 77,103 169 207,209 229 240,239 138 98,253 219 199"
                           \ "Bu from RdBu-7,Rd from RdBu-7,Gn from PRGn-7,Or from PuOr-7,BG from BrBG-7,Pi from PiYG-7,Pu from PuOr-7,Br from BrBG-7,Gy from RdGy-7,(ci_arealine),(ci_area),(ci2_arealine),(ci2_area)")
 `PAL'::P_lean()      return("gs14,gs10,gs12,gs8,gs16,gs13,gs10,gs7,gs4,gs0,gs14,gs10,gs12,gs0,gs16")
+`PAL'::P_webc()
+{
+    if (webcolors.N()==0) webcolors()
+    return(invtokens(sort(webcolors.keys(),1)',","))
+}
+`PAL'::P_webc_pi()   return("Pink,LightPink,HotPink,DeepPink,PaleVioletRed,MediumVioletRed")
+`PAL'::P_webc_pu()   return("Lavender,Thistle,Plum,Orchid,Violet,Fuchsia,Magenta,MediumOrchid,DarkOrchid,DarkViolet,BlueViolet,DarkMagenta,Purple,MediumPurple,MediumSlateBlue,SlateBlue,DarkSlateBlue,RebeccaPurple,Indigo")
+`PAL'::P_webc_rd()   return("LightSalmon,Salmon,DarkSalmon,LightCoral,IndianRed,Crimson,Red,FireBrick,DarkRed,Orange,DarkOrange,Coral,Tomato,OrangeRed")
+`PAL'::P_webc_ye()   return("Gold,Yellow,LightYellow,LemonChiffon,LightGoldenRodYellow,PapayaWhip,Moccasin,PeachPuff,PaleGoldenRod,Khaki,DarkKhaki")
+`PAL'::P_webc_gn()   return("GreenYellow,Chartreuse,LawnGreen,Lime,LimeGreen,PaleGreen,LightGreen,MediumSpringGreen,SpringGreen,MediumSeaGreen,SeaGreen,ForestGreen,Green,DarkGreen,YellowGreen,OliveDrab,DarkOliveGreen,MediumAquaMarine,DarkSeaGreen,LightSeaGreen,DarkCyan,Teal")
+`PAL'::P_webc_cy()   return("Aqua,Cyan,LightCyan,PaleTurquoise,Aquamarine,Turquoise,MediumTurquoise,DarkTurquoise")
+`PAL'::P_webc_bl()   return("CadetBlue,SteelBlue,LightSteelBlue,LightBlue,PowderBlue,LightSkyBlue,SkyBlue,CornflowerBlue,DeepSkyBlue,DodgerBlue,RoyalBlue,Blue,MediumBlue,DarkBlue,Navy,MidnightBlue")
+`PAL'::P_webc_br()   return("Cornsilk,BlanchedAlmond,Bisque,NavajoWhite,Wheat,BurlyWood,Tan,RosyBrown,SandyBrown,GoldenRod,DarkGoldenRod,Peru,Chocolate,Olive,SaddleBrown,Sienna,Brown,Maroon")
+`PAL'::P_webc_wh()   return("White,Snow,HoneyDew,MintCream,Azure,AliceBlue,GhostWhite,WhiteSmoke,SeaShell,Beige,OldLace,FloralWhite,Ivory,AntiqueWhite,Linen,LavenderBlush,MistyRose")
+`PAL'::P_webc_gray() return("Gainsboro,LightGray,Silver,DarkGray,DimGray,Gray,LightSlateGray,SlateGray,DarkSlateGray,Black")
+`PAL'::P_webc_grey() return("Gainsboro,LightGrey,Silver,DarkGrey,DimGrey,Grey,LightSlateGrey,SlateGrey,DarkSlateGrey,Black")
 `PAL'::P_d3_10()     return("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf")
 `PAL'::P_d3_20()     return("#1f77b4,#aec7e8,#ff7f0e,#ffbb78,#2ca02c,#98df8a,#d62728,#ff9896,#9467bd,#c5b0d5,#8c564b,#c49c94,#e377c2,#f7b6d2,#7f7f7f,#c7c7c7,#bcbd22,#dbdb8d,#17becf,#9edae5")
 `PAL'::P_d3_20b()    return("#393b79,#5254a3,#6b6ecf,#9c9ede,#637939,#8ca252,#b5cf6b,#cedb9c,#8c6d31,#bd9e39,#e7ba52,#e7cb94,#843c39,#ad494a,#d6616b,#e7969c,#7b4173,#a55194,#ce6dbd,#de9ed6")

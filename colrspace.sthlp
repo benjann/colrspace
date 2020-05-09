@@ -1,5 +1,5 @@
 {smcl}
-{* 30jan2019}{...}
+{* 09may2020}{...}
 {cmd:help colrspace}
 {hline}
 
@@ -1793,6 +1793,18 @@
 {p2col:{cmd:mrc}}8 qualitative colors as in {cmd:tfl} by {browse "http://ideas.repec.org/c/boc/bocode/s458103.html":Morris (2015)}{p_end}
 {p2col:{cmd:burd}}13 qualitative colors as in {cmd:burd} by {browse "http://ideas.repec.org/c/boc/bocode/s457623.html":Briatte (2013)}{p_end}
 {p2col:{cmd:lean}}15 gray scales (qualitative) as in {cmd:lean} by {browse "http://www.stata-journal.com/article.html?article=gr0002":Juul (2003)}{p_end}
+{p2col:{cmd:webcolors}}all 148 {help colrspace##webcolors:web colors}, alphabetically sorted{p_end}
+{p2col:{cmd:webcolors pink}}6 pink {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors purple}}19 purple {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors redorange}}14 red and orange {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors yellow}}11 yellow {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors green}}22 green {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors cyan}}8 cyan {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors blue}}16 blue {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors brown}}18 brown {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors white}}17 white {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors gray}}10 gray {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors grey}}10 grey {help colrspace##webcolors:web colors} (same color codes as {cmd:gray}){p_end}
 {p2col:{cmd:d3 10}}10 qualitative colors from {browse "http://d3js.org/":D3.js}{p_end}
 {p2col:{cmd:d3 20}}20 qualitative colors in pairs from {browse "http://d3js.org/":D3.js}{p_end}
 {p2col:{cmd:d3 20b}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
