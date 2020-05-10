@@ -23,9 +23,14 @@ Installation from GitHub:
 
 Main changes:
 
+    10may2020
+    - changed info for some palettes so that it contains valid names that can be
+      used by colorpalette when creating globals
+    - some fixes to help file
+    
     09may2020
     - webcolors added as palette
-    - some fixed to help file
+    - some fixes to help file
     
     17apr2020
     - installation files added to GitHub distribution
