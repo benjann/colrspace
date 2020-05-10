@@ -1,5 +1,5 @@
 {smcl}
-{* 09may2020}{...}
+{* 10may2020}{...}
 {cmd:help colrspace}
 {hline}
 
@@ -890,7 +890,7 @@
 {pstd}
     where string scalar {it:delimiter} sets the character(s) delimiting the descriptions;
     the default is to assume a space-separated list, i.e. {it:delimiter} = {cmd:" "}. To
-    avoid breaking a description that contains the a delimiting character, enclose
+    avoid breaking a description that contains a delimiting character, enclose
     the description in double quotes. {it:S}{cmd:.info()} affects all colors
     defined in {it:S}; use {it:S}{cmd:.colors_added()} to affect only the
     colors that have been added last.
@@ -2285,12 +2285,20 @@
         . {stata `"mata: S.colors("navy maroon")"'}
         . {stata `"mata: S.add_intensify(.6)"'}
         . {stata `"mata: S.contrast((1,3) \ (2,4))"'} {it:(not enough contrast)}
-        . {stata "colorpalette mata(S)"}
+        . {stata `"mata: C = S.Colors()"'}
+        . {stata `"mata: t = `" 2 "Text", c(%s) box m(medium) bc(%s)"'"'}
+        . {stata `"mata: st_local("t1", sprintf("1"+t, C[1], C[3]))"'}
+        . {stata `"mata: st_local("t2", sprintf("2"+t, C[2], C[4]))"'}
+        . {stata `"colorpalette mata(S), gropts(text(`t1') text(`t2'))"'}
 
         . {stata `"mata: S.select((1,2))"'}
         . {stata `"mata: S.add_intensify((.4,.3))"'}
         . {stata `"mata: S.contrast((1,3) \ (2,4))"'} {it:(contrast now ok)}
-        . {stata "colorpalette mata(S)"}
+        . {stata `"mata: C = S.Colors()"'}
+        . {stata `"mata: t = `" 2 "Text", c(%s) box m(medium) bc(%s)"'"'}
+        . {stata `"mata: st_local("t1", sprintf("1"+t, C[1], C[3]))"'}
+        . {stata `"mata: st_local("t2", sprintf("2"+t, C[2], C[4]))"'}
+        . {stata `"colorpalette mata(S), gropts(text(`t1') text(`t2'))"'}
 
 
 {marker util}{...}

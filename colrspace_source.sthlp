@@ -1,4 +1,4 @@
-*! version 1.0.1  09may2020  Ben Jann
+*! version 1.0.2  10may2020  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -4309,17 +4309,17 @@ void `MAIN'::palette(| `SS' pal0, `RS' n0, `RS' noipolate)
 `PAL'::P_economist() return("edkblue,emidblue,eltblue,emerald,erose,ebblue,eltgreen,stone,navy,maroon,brown,lavender,teal,cranberry,khaki")
 `PAL'::P_mono()      return("gs6,gs10,gs8,gs4,black,gs12,gs2,gs7,gs9,gs11,gs13,gs5,gs3,gs14,gs15")
 `PAL'::P_cblind()    return("#000000,#999999,#E69F00,#56B4E9,#009E73,#F0E442,#0072B2,#D55E00,#CC79A7"
-                          \ "black,grey,orange,sky blue,bluish green,yellow,blue,vermillion,reddish purple")
+                          \ "black,grey,orange,skyblue,bluishgreen,yellow,blue,vermillion,reddishpurple")
 `PAL'::P_plottig()   return("black,97 156 255,0 192 175,201 152 0,185 56 255,248 118 109,0 176 246,0 186 56,163 165 0,231 107 243,255 103 164,0 188 216,107 177 0,229 135 0,253 97 209"
-                         \  ",plb1 - blue,plg1 - light greenish,ply1 - yellow/brownish,pll1 - purple,plr1 - red,plb2 - bluish,plg2 - greenish ,ply2 - yellow/brownish,pll2 - purple,plr2 - red,plb3 - blue,plg3 - green,ply3 - orange,pll3 - purple")
+                         \  ",plb1_blue,plg1_lightgreenish,ply1_yellowbrownish,pll1_purple,plr1_red,plb2_bluish,plg2_greenish,ply2_yellowbrownish,pll2_purple,plr2_red,plb3_blue,plg3_green,ply3_orange,pll3_purple")
 `PAL'::P_538()       return("3 144 214,254 48 11,120 172 68,247 187 5,229 138 233,254 133 3,242 242 242,205 205 206,155 155 155,162 204 246,254 181 167,42 161 237,255 244 241"
-                          \ "538b,538r,538g,538y,538m,538o,538background,538axis,538label,538bs6 (ci),538rs6 (ci2),538bs1 (contour_begin),538rs11 (contour_end)")
+                          \ "c538b,c538r,c538g,c538y,c538m,c538o,c538bg,c538axis,c538label,c538bs6_ci,c538rs6_ci2,c538bs1_contr_begin,c538rs11_contr_end")
 `PAL'::P_tfl()       return("220 36 31, 0 25 168, 0 114 41, 232 106 16, 137 78 36, 117 16 86, 255 206 0, 65 75 86"
                           \ "tflred,tflblue,tflgreen,tflorange,tflbrown,tflpurple,tflyellow,tflgrey")
 `PAL'::P_mrc()       return("33 103 126,106 59 119,130 47 90,208 114 50,255 219 0,181 211 52,138 121 103"
                           \ "mrcblue,mrcpurple,mrcred,mrcorange,mrcyellow,mrcgreen,mrcgrey")
 `PAL'::P_burd()      return("33 102 172,178 24 43,27 120 55,230 97 1,1 102 94,197 27 125,118 42 131,140 81 10,77 77 77,103 169 207,209 229 240,239 138 98,253 219 199"
-                          \ "Bu from RdBu-7,Rd from RdBu-7,Gn from PRGn-7,Or from PuOr-7,BG from BrBG-7,Pi from PiYG-7,Pu from PuOr-7,Br from BrBG-7,Gy from RdGy-7,(ci_arealine),(ci_area),(ci2_arealine),(ci2_area)")
+                          \ "Bu_from_RdBu7,Rd_from_RdBu7,Gn_from_PRGn7,Or_from_PuOr7,BG_from_BrBG7,Pi_from_PiYG7,Pu_from_PuOr7,Br_from_BrBG7,Gy_from_RdGy7,burd_ci_arealine,burd_ci_area,burd_ci2_arealine,burd_ci2_area")
 `PAL'::P_lean()      return("gs14,gs10,gs12,gs8,gs16,gs13,gs10,gs7,gs4,gs0,gs14,gs10,gs12,gs0,gs16")
 `PAL'::P_webc()
 {
@@ -4682,9 +4682,9 @@ void `MAIN'::palette(| `SS' pal0, `RS' n0, `RS' noipolate)
 `PAL'::P_lin_carcolor_a()   return("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180"
                                  \ "Red,Silver,Black,Green,Brown,Blue")
 `PAL'::P_lin_food()         return("199 199 199,31 119 180,140 86 75,152 223 138,219 219 141,196 156 148,214 39 40"
-                                 \ "Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
+                                 \ "Sour_cream,Blue_cheese_dressing,Porterhouse_steak,Iceberg_lettuce,Onions_raw,Potato_baked,Tomato")
 `PAL'::P_lin_food_a()       return("31 119 180,255 127 14,140 86 75,44 160 44,255 187 120,219 219 141,214 39 40"
-                                 \ "Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
+                                 \ "Sour_cream,Blue_cheese_dressing,Porterhouse_steak,Iceberg_lettuce,Onions_raw,Potato_baked,Tomato")
 `PAL'::P_lin_features()     return("214 39 40,31 119 180,174 119 232,44 160 44,152 223 138"
                                  \ "Speed,Reliability,Comfort,Safety,Efficiency")
 `PAL'::P_lin_features_a()   return("214 39 40,31 119 180,140 86 75,255 127 14,44 160 44"
@@ -4702,13 +4702,13 @@ void `MAIN'::palette(| `SS' pal0, `RS' n0, `RS' noipolate)
 `PAL'::P_lin_vegetables_a() return("255 127 14,44 160 44,188 189 34,148 103 189,140 86 75,152 223 138,214 39 40"
                                  \ "Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
 `PAL'::P_lin_drinks()       return("119 67 6,254 0 0,151 37 63,1 106 171,1 159 76,254 115 20,104 105 169"
-                                 \ "A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
+                                 \ "RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
 `PAL'::P_lin_drinks_a()     return("140 86 75,214 39 40,227 119 194,31 119 180,44 160 44,255 127 14,148 103 189"
-                                 \ "A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
+                                 \ "RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
 `PAL'::P_lin_brands()       return("161 165 169,44 163 218,242 99 33,255 183 0,0 112 66,204 0 0,123 0 153"
-                                 \ "Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
+                                 \ "Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
 `PAL'::P_lin_brands_a()     return("152 223 138,31 119 180,255 127 14,140 86 75,44 160 44,214 39 40,148 103 189"
-                                 \ "Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
+                                 \ "Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
 `PAL'::P_spmap_blues(`RS' n0)
 {
     `Int' n, i
@@ -4850,7 +4850,7 @@ void `MAIN'::palette(| `SS' pal0, `RS' n0, `RS' noipolate)
 `PAL'::P_sfso_parties()     return("#6268AF,#f39f5e,#ea546f,#547d34,#cbd401,#ffff00,#26b300,#792a8f,#9fabd9,#f0da9d,#bebebe"
                                  \ `"FDP,CVP,SP,SVP,GLP,BDP,Grüne,"small leftwing parties (PdA, Sol.)","small middle parties (EVP, CSP)","small rightwing parties (EDu, Lega)",other parties"')
 `PAL'::P_sfso_languages()   return("#c73e31,#4570ba,#4ca767,#ecce42,#7f5fa9"
-                                 \ "German,French,Italian,Rhaeto-Romanic,English")
+                                 \ "German,French,Italian,RhaetoRomanic,English")
 `PAL'::P_sfso_votes()       return("#6d2a83,#6d2a83*.8,#6d2a83*.6,#6d2a83*.4,#6d2a83*.2,#45974d*.2,#45974d*.4,#45974d*.6,#45974d*.8,#45974d"
                                  \ "No,,,,,,,,,Yes")
 
