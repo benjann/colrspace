@@ -23,6 +23,26 @@ Installation from GitHub:
 
 Main changes:
 
+    14may2020
+    - S.names() and S.Names() added (color names)
+    - S.cvalid() added (check whether a color specification is valid)
+    - S.info() and S.Info() no longer have an rgbforce argument
+    - CMYK colors are now always exported as RGB by S.colors()
+    - system for handling palettes revised and partially rewritten
+      o S.pexists() added (check whether a palette exists)
+      o S.pinfo() added (palette description)
+      o S.psource() added (palette source)
+      o S.palette() and S.matplotlib() now assign a palette description and a
+        source
+      o some palettes now assign color names
+      o matplotlib colormaps are now supported by S.palettes() (using a
+        redirection to S.matplotlib())
+    
+    10may2020
+    - changed info for some palettes so that it contains valid names that can be
+      used by colorpalette when creating globals
+    - some fixes to help file
+    
     10may2020
     - changed info for some palettes so that it contains valid names that can be
       used by colorpalette when creating globals

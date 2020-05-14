@@ -1,4 +1,4 @@
-*! version 1.0.2  10may2020  Ben Jann
+*! version 1.0.3  14may2020  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -73,7 +73,7 @@ local FALSE  0
 local PAL    `SC' `MAIN'
 // locals for add/added wrappers
 local add       set generate palette matplotlib
-local added     info Info contrast delta get reset
+local added     names Names info Info contrast delta get reset
 local add_added colors Colors opacity alpha intensity intensify saturate ///
                 luminate gray cvd ipolate recycle select order reverse
 local ADD `T'
@@ -138,19 +138,25 @@ class `MAIN' {
         `RS'    N()           // number of colors
         `T'     pclass()      // set or return type of palette
         `T'     pname()       // set or return name of palette
+        `T'     pinfo()       // set or return palette info
+        `T'     psource()     // set or return palette source
         `Bool'  isipolate()   // 1 if interpolated; 0 else
         `RM'    RGB()         // get copy of RGB; undocumented
-        `SM'    INFO()        // retrieve copy of info; undocumented
+        `SC'    NAMES()       // retrieve copy of names; undocumented
+        `SC'    INFO()        // retrieve copy of info; undocumented
         `BoolC' STOK()        // retrieve copy of stok; undocumented
         `RM'    clip()        // clip values
     private:
         `RM'    RGB           // N x 3 matrix of RGB 0-1 codes
         `RC'    alpha         // N x 1 vectors of opacity values in [0,1]
         `RC'    intensity     // N x 1 vectors of intensity values in [0,1]
-        `SM'    info          // N x 2 string vector of color information
+        `SC'    names         // N x 1 string vector of color names
+        `SC'    info          // N x 1 string vector of color information
         `BoolC' stok          // N x 1 vector: Stata compatible "name"
         `SS'    pclass        // class of palette: qualitative, sequential, diverging
         `SS'    pname         // palette name
+        `SS'    pinfo         // palette info
+        `SS'    psource       // palette source
         `Bool'  isip          // 1 if interpolated; 0 else
         `SC'    SPACES        // main list of supported color metrics
         `SC'    SPACES2       // additional color metrics
@@ -213,17 +219,19 @@ class `MAIN' {
     public:
         `T'     colors()      // parse or return string colors (scalar)
         `T'     Colors()      // parse or return string colors (vector)
+        `T'     names()       // parse or return color names (scalar)
+        `T'     Names()       // parse or return color names (vector)
         `T'     info()        // parse or return color info (scalar)
         `T'     Info()        // parse or return color info (vector)
+        `Bool'  cvalid()      // check whether color specification is valid
     private:
-        `SS'    colors_get(), info_get()
-        `SC'    Colors_get(), Info_get()
-        void    colors_set(), info_set()
-        void    Colors_set(), Info_set()
-        void    parse_split(), parse_convert()
-        `RR'    parse_named()
+        `SS'    colors_get(), names_get(), info_get()
+        `SC'    Colors_get()
+        void    colors_set(), names_set(), info_set()
+        void    Colors_set(), Names_set(), Info_set()
+        `SR'    parse_split(), parse_convert()
+        `Bool'  parse_named()
         `SS'    parse_stcolorstyle(), _parse_stcolorstyle(), parse_webcolor()
-        void    ERROR_color_invalid(), ERROR_color_not_found()
         `SR'    _tokens()     // modified version of tokens
 
     // Set or retrieve colors
@@ -248,7 +256,7 @@ class `MAIN' {
         `RM'    ipolate_get(), mix_get(), _ipolate(), _ipolate_pos()
         `RC'    _ipolate_halign()
         `RV'    _ipolate_setrange()
-        void    ipolate_set(), _ipolate_fromto(), _ipolate_collapse()
+        void    _ipolate_fromto(), _ipolate_collapse()
 
     // Recycle, select, and order
     public:
@@ -349,35 +357,23 @@ class `MAIN' {
     // Palettes
     public:
         void    palette()
+        `Bool'  pexists()
     private:
-        `SC'    P_()
-        `SC'    P_s1(), P_s1r(), P_s2(), P_economist(), P_mono(), P_cblind(),
-                P_plottig(), P_538(), P_tfl(), P_mrc(), P_burd(), P_lean(),
-                P_webc(), P_webc_pi(), P_webc_pu(), P_webc_rd(), P_webc_ye(),
-                P_webc_gn(), P_webc_cy(), P_webc_bl(), P_webc_br(),
-                P_webc_wh(), P_webc_gray(), P_webc_grey(),
-                P_d3_10(), P_d3_20(), P_d3_20b(), P_d3_20c(), P_Accent(),
-                P_Dark2(), P_Paired(), P_Pastel1(), P_Pastel2(), P_Set1(),
-                P_Set2(), P_Set3(), P_Blues(), P_BuGn(), P_BuPu(), P_GnBu(),
-                P_Greens(), P_Greys(), P_OrRd(), P_Oranges(), P_PuBu(),
-                P_PuBuGn(), P_PuRd(), P_Purples(), P_RdPu(), P_Reds(),
-                P_YlGn(), P_YlGnBu(), P_YlOrBr(), P_YlOrRd(), P_BrBG(),
-                P_PRGn(), P_PiYG(), P_PuOr(), P_RdBu(), P_RdGy(), P_RdYlBu(),
-                P_RdYlGn(), P_Spectral(), P_ptol_qualitative(),
-                P_ptol_diverging(), P_ptol_rainbow(), P_tableau(),
-                P_lin_carcolor(), P_lin_carcolor_a(), P_lin_food(),
-                P_lin_food_a(), P_lin_features(), P_lin_features_a(),
-                P_lin_activities(), P_lin_activities_a(), P_lin_fruits(),
-                P_lin_fruits_a(), P_lin_vegetables(), P_lin_vegetables_a(),
-                P_lin_drinks(), P_lin_drinks_a(), P_lin_brands(),
-                P_lin_brands_a(), P_spmap_blues(), P_spmap_greens(),
-                P_spmap_greys(), P_spmap_reds(), P_spmap_rainbow(),
-                P_spmap_heat(), P_spmap_terrain(), P_spmap_topological(),
-                P_sfso_brown(), P_sfso_orange(), P_sfso_red(), P_sfso_pink(),
-                P_sfso_purple(), P_sfso_violet(), P_sfso_blue(),
-                P_sfso_ltblue(), P_sfso_turquoise(), P_sfso_green(),
-                P_sfso_olive(), P_sfso_black(), P_sfso_parties(),
-                P_sfso_languages(), P_sfso_votes()
+        `Bool'  Palette()
+        void    P_pclass(), P_colors(), P_names(), P_info()
+        `Bool'  P_s1(), P_s1r(), P_s2(), P_economist(), P_mono(), P_cblind(),
+                P_plottig(), P_538(), P_mrc(), P_tfl(), P_burd(), P_lean(),
+                P_tableau(),
+                P_Accent(), P_Dark2(), P_Paired(), P_Pastel1(),
+                P_Pastel2(), P_Set1(), P_Set2(), P_Set3(), P_Blues(), P_BuGn(),
+                P_BuPu(), P_GnBu(), P_Greens(), P_Greys(), P_OrRd(),
+                P_Oranges(), P_PuBu(), P_PuBuGn(), P_PuRd(), P_Purples(),
+                P_RdPu(), P_Reds(), P_YlGn(), P_YlGnBu(), P_YlOrBr(),
+                P_YlOrRd(), P_BrBG(), P_PRGn(), P_PiYG(), P_PuOr(), P_RdBu(),
+                P_RdGy(), P_RdYlBu(), P_RdYlGn(), P_Spectral(),
+                P_viridis(), P_plasma(), P_inferno(), P_magma(), P_cividis(),
+                P_twilight(), P_matplotlib(),
+                P_ptol(), P_d3(), P_lin(), P_spmap(), P_sfso(), P_webcolors()
     
     // matplotlib colormaps
     public:
@@ -429,59 +425,56 @@ end
 foreach f in `add' `add_added' {
     if "`f'"=="set" local ff add
     else            local ff add_`f'
-    mata: ///
-    `T' `MAIN'::`ff'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6) ///
-    {; ///
-        `Main' S; ///
-        `T'    T; ///
-        S = this; ///
-        if      (args()==0) T = S.`f'(); ///
-        else if (args()==1) T = S.`f'(o1); ///
-        else if (args()==2) T = S.`f'(o1, o2); ///
-        else if (args()==3) T = S.`f'(o1, o2, o3); ///
-        else if (args()==4) T = S.`f'(o1, o2, o3, o4); ///
-        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5); ///
-        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6); ///
-        append(S); ///
-        return(T); ///
+    mata `T' `MAIN'::`ff'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    {
+        `Main' S
+        `T'    T
+        S = this
+        if      (args()==0) T = S.`f'()
+        else if (args()==1) T = S.`f'(o1)
+        else if (args()==2) T = S.`f'(o1, o2)
+        else if (args()==3) T = S.`f'(o1, o2, o3)
+        else if (args()==4) T = S.`f'(o1, o2, o3, o4)
+        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5)
+        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6)
+        append(S)
+        return(T)
     }
 }
 foreach f in `added' `add_added' {
-    mata: ///
-    `T' `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6) ///
-    {; ///
-        `Main' S; ///
-        `T'    T; ///
-        S = this; ///
-        S.select((N0+1)::max((N(), N0+1))); ///
-        if      (args()==0) T = S.`f'(); ///
-        else if (args()==1) T = S.`f'(o1); ///
-        else if (args()==2) T = S.`f'(o1, o2); ///
-        else if (args()==3) T = S.`f'(o1, o2, o3); ///
-        else if (args()==4) T = S.`f'(o1, o2, o3, o4); ///
-        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5); ///
-        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6); ///
-        update(S); ///
-        return(T); ///
+    mata `T' `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    {
+        `Main' S
+        `T'    T
+        S = this
+        S.select((N0+1)::max((N(), N0+1)))
+        if      (args()==0) T = S.`f'()
+        else if (args()==1) T = S.`f'(o1)
+        else if (args()==2) T = S.`f'(o1, o2)
+        else if (args()==3) T = S.`f'(o1, o2, o3)
+        else if (args()==4) T = S.`f'(o1, o2, o3, o4)
+        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5)
+        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6)
+        update(S)
+        return(T)
     }
 }
 foreach f in `add_added' {
-    mata: ///
-    `T' `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6) ///
-    {; ///
-        `Main' S; ///
-        `T'    T; ///
-        S = this; ///
-        S.select((N0+1)::max((N(), N0+1))); ///
-        if      (args()==0) T = S.`f'(); ///
-        else if (args()==1) T = S.`f'(o1); ///
-        else if (args()==2) T = S.`f'(o1, o2); ///
-        else if (args()==3) T = S.`f'(o1, o2, o3); ///
-        else if (args()==4) T = S.`f'(o1, o2, o3, o4); ///
-        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5); ///
-        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6); ///
-        append(S); ///
-        return(T); ///
+    mata `T' `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    {
+        `Main' S
+        `T'    T
+        S = this
+        S.select((N0+1)::max((N(), N0+1)))
+        if      (args()==0) T = S.`f'()
+        else if (args()==1) T = S.`f'(o1)
+        else if (args()==2) T = S.`f'(o1, o2)
+        else if (args()==3) T = S.`f'(o1, o2, o3)
+        else if (args()==4) T = S.`f'(o1, o2, o3, o4)
+        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5)
+        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6)
+        append(S)
+        return(T)
     }
 }
 
@@ -493,11 +486,14 @@ void `MAIN'::append(`Main' S)
     RGB       = RGB       \ S.RGB()
     alpha     = alpha     \ S.alpha()
     intensity = intensity \ S.intensity()
+    names     = names     \ S.NAMES()
     info      = info      \ S.INFO()
     stok      = stok      \ S.STOK()
-    if (S.pclass()!="")        pclass = S.pclass()
-    if (S.pname()!="")         pname  = S.pname()
-    if (S.isipolate()==`TRUE') isip   = `TRUE'
+    if (S.pclass()!="")        pclass  = S.pclass()
+    if (S.pname()!="")         pname   = S.pname()
+    if (S.pinfo()!="")         pinfo   = S.pinfo()
+    if (S.psource()!="")       psource = S.psource()
+    if (S.isipolate()==`TRUE') isip    = `TRUE'
 }
 
 void `MAIN'::update(`Main' S)
@@ -506,12 +502,15 @@ void `MAIN'::update(`Main' S)
         RGB       = RGB[|1,1 \ N0,.|]   \ S.RGB()
         alpha     = alpha[|1 \ N0|]     \ S.alpha()
         intensity = intensity[|1 \ N0|] \ S.intensity()
-        info      = info[|1,1 \ N0,.|]  \ S.INFO()
+        names     = names[|1 \ N0|]     \ S.NAMES()
+        info      = info[|1 \ N0|]      \ S.INFO()
         stok      = stok[|1 \ N0|]      \ S.STOK()
     }
-    if (S.pclass()!="")        pclass = S.pclass()
-    if (S.pname()!="")         pname  = S.pname()
-    if (S.isipolate()==`TRUE') isip   = `TRUE'
+    if (S.pclass()!="")        pclass   = S.pclass()
+    if (S.pname()!="")         pname    = S.pname()
+    if (S.pinfo()!="")         pinfo    = S.pinfo()
+    if (S.psource()!="")       psource  = S.psource()
+    if (S.isipolate()==`TRUE') isip     = `TRUE'
 }
 
 end
@@ -538,11 +537,25 @@ mata:
     pname = s
 }
 
+`T' `MAIN'::pinfo(| `SS' s)
+{
+    if (args()==0) return(pinfo)
+    pinfo = s
+}
+
+`T' `MAIN'::psource(| `SS' s)
+{
+    if (args()==0) return(psource)
+    psource = s
+}
+
 `Bool' `MAIN'::isipolate() return(isip)
 
 `RM' `MAIN'::RGB() return(RGB)
 
-`SM' `MAIN'::INFO() return(info)
+`SC' `MAIN'::NAMES() return(names)
+
+`SC' `MAIN'::INFO() return(info)
 
 `BoolC' `MAIN'::STOK() return(stok)
 
@@ -575,7 +588,8 @@ void `MAIN'::rgb_set(`RM' rgb)
     RGB   = rgb
     alpha = intensity = J(N(), 1, .)
     stok  = J(N(), 1, `FALSE')
-    info  = J(N(), 2, "")
+    names = J(N(), 1, "")
+    info  = J(N(), 1, "")
     isip  = `FALSE'
 }
 
@@ -583,25 +597,23 @@ void `MAIN'::rgb_reset(`RM' rgb, | `IntV' p)
 {
     if (length(p)==0) {
         assert_size(rgb, N(), 3)
-        RGB  = rgb
-        stok = J(N(), 1, `FALSE')
+        RGB   = rgb
+        names = J(N(), 1, "")
+        info  = J(N(), 1, "")
+        stok  = J(N(), 1, `FALSE')
         return
     }
     assert_size(rgb, length(p), 3)
     RGB[p,] = rgb
-    stok[p] = J(length(p), 1, `FALSE')
+    names[p] = J(length(p), 1, "")
+    info[p]  = J(length(p), 1, "")
+    stok[p]  = J(length(p), 1, `FALSE')
 }
 
 void `MAIN'::info_reset(`SS' c, `T' C, | `SS' fmt, `IntV' p)
 {
-    `SC' INFO
-    
-    INFO = _info_reset(c, C, fmt)
-    if (length(p)==0) {
-        info = J(length(INFO), 1, ""), INFO
-        return
-    }
-    info[p,] = (J(length(p), 1, ""), INFO)
+    if (length(p)==0) info     = _info_reset(c, C, fmt)
+    else              info[p] = _info_reset(c, C, fmt)
 }
 
 `SC' `MAIN'::_info_reset(`SS' c, `T' C, `SS' fmt)
@@ -1261,6 +1273,7 @@ end
 
 mata:
 
+
 `T' `MAIN'::colors(| `TS' opt1, `SS' opt2)
 {
     if (args()==0)                     return(colors_get(`FALSE'))
@@ -1298,7 +1311,7 @@ mata:
      C = J(i, 1, "")
      for (; i; i--) {
          if (rgbforce)             C[i] = invtokens(strofreal(RGB[i,]))
-         else if (stok[i]==`TRUE') C[i] = info[i,2]
+         else if (stok[i]==`TRUE') C[i] = names[i]
          else                      C[i] = invtokens(strofreal(RGB[i,]))
          if (alpha[i]<.)           C[i] = C[i] + "%" + strofreal(alpha[i]*100)
          if (intensity[i]<.)       C[i] = C[i] + "*" + strofreal(intensity[i])
@@ -1310,11 +1323,34 @@ void `MAIN'::colors_set(`SS' c, `SS' wchar) Colors_set(_tokens(c, wchar))
 
 void `MAIN'::Colors_set(`SV' C)
 {
-    parse_split(C)
-    parse_convert()
+    `SR' s
+    
+    s = parse_split(C)
+    if (length(s)) {
+        display("{err}color specification '" + s + "' is invalid")
+        exit(3498)
+    }
+    s = parse_convert()
+    if (length(s)) {
+        display("{err}color '" + s + "' invalid/not found")
+        exit(3498)
+    }
 }
 
-void `MAIN'::parse_split(`SV' C)
+`Bool' `MAIN'::cvalid(| `SS' c)
+{
+    if (length(parse_split(c)))  {
+        set(J(0,3,.))
+        return(0)
+    }
+    if (length(parse_convert())) {
+        set(J(0,3,.))
+        return(0)
+    }
+    return(1)
+}
+
+`SR' `MAIN'::parse_split(`SV' C)
 {
     `Int' n, i
     `SS'  tok
@@ -1323,35 +1359,37 @@ void `MAIN'::parse_split(`SV' C)
     n = length(C)
     rgb_set(J(n, 3, .))
     t = tokeninit("", ("%","*"), "")
-    for (i=n; i; i--) {
+    for (i=1; i<=n; i++) {
         tokenset(t, C[i])
-        info[i,2] = strtrim(tokenget(t))
+        info[i] = strtrim(tokenget(t))
         if ((tok = tokenget(t))=="") continue
         if (tok=="%") {
             alpha[i] = strtoreal(tokenget(t))/100
-            if (alpha[i]<0 | alpha[i]>1) ERROR_color_invalid(C[i])
+            if (alpha[i]<0 | alpha[i]>1) return(C[i])
             if ((tok = tokenget(t))=="") continue
             if (tok=="*") {
                 intensity[i] = strtoreal(tokenget(t))
-                if (intensity[i]<0 | intensity[i]>255) ERROR_color_invalid(C[i])
+                if (intensity[i]<0 | intensity[i]>255) return(C[i])
             }
         }
         else if (tok=="*") {
             intensity[i] = strtoreal(tokenget(t))
-            if (intensity[i]<0 | intensity[i]>255) ERROR_color_invalid(C[i])
+            if (intensity[i]<0 | intensity[i]>255) return(C[i])
             if ((tok = tokenget(t))=="") continue
             if (tok=="%") {
                 alpha[i] = strtoreal(tokenget(t))/100
-                if (alpha[i]<0 | alpha[i]>1) ERROR_color_invalid(C[i])
+                if (alpha[i]<0 | alpha[i]>1) return(C[i])
             }
         }
-        else ERROR_color_invalid(C[i])
+        else return(C[i])
         if (tokenrest(t)=="") continue
-        ERROR_color_invalid(C[i])
+        return(C[i])
     }
+    // done
+    return(J(1,0,""))
 }
 
-void `MAIN'::parse_convert()
+`SR' `MAIN'::parse_convert()
 {
     `Int'  r, i, l
     `RR'   TMP
@@ -1362,60 +1400,58 @@ void `MAIN'::parse_convert()
 
     r = N()
     type = J(r, 1, "")
-    for (i=r; i; i--) {
-        tok = strtrim(info[i,2])
+    for (i=1; i<=r; i++) {
+        tok = strtrim(info[i])
         if (substr(tok,1,1)=="#") { // HEX color
             RGB[i,] = _HEX_to_RGB(tok)/255
-            if (missing(RGB[i,])) ERROR_color_invalid(info[i,2])
+            if (missing(RGB[i,])) return(info[i])
             continue
         }
         tok = tokens(tok)
         l = length(tok)
-        if (l==0) ERROR_color_invalid(info[i,2])
-        if (l==2) ERROR_color_invalid(info[i,2])
+        if (l==0) return(info[i])
+        if (l==2) return(info[i])
         if (l==1) { // named color
-            RGB[i,] = parse_named(tok, i)
-            info[i,2] = tok
+            if (parse_named(tok, i)) return(tok)
+            names[i] = tok
             continue
         }
         if (l==3) { // RGB [0-255]
             TMP = strtoreal(tok)
-            if (_clip(round(TMP),0,255)!=TMP) ERROR_color_invalid(info[i,2])
+            if (_clip(round(TMP),0,255)!=TMP) return(info[i])
             RGB[i,] = TMP/255
-            if (missing(RGB[i,])) ERROR_color_invalid(info[i,2])
-            info[i,2] = ""
+            if (missing(RGB[i,])) return(info[i])
+            info[i] = ""
             continue
         }
         if (l==4) { // check whether CMYK
             if (strtoreal(tok[1])<.) { 
                 TMP = strtoreal(tok)
                 if (all(TMP:<=1)) { // CMYK [0-1]
-                    if (any(TMP:<0)) ERROR_color_invalid(info[i,2])
+                    if (any(TMP:<0)) return(info[i])
                     RGB[i,] = _CMYK1_to_RGB1(TMP)
                 }
                 else {              // CMYK [0-255]
-                    if (_clip(round(TMP),0,255)!=TMP) ERROR_color_invalid(info[i,2])
+                    if (_clip(round(TMP),0,255)!=TMP) return(info[i])
                     RGB[i,] = _CMYK1_to_RGB1(TMP/255) 
                 }
-                if (missing(RGB[i,])) ERROR_color_invalid(info[i,2])
-                stok[i] = `TRUE'
+                if (missing(RGB[i,])) return(info[i])
                 continue
             }
         }
         t = strlower(tok[1]) // check whether CMYK
         if (t==substr("cmyk1", 1, max((2, strlen(t))))) {
-            if (l!=5) ERROR_color_invalid(info[i,2])
+            if (l!=5) return(info[i])
             TMP = strtoreal(tok[|2 \ .|])
             if (t=="cmyk1") RGB[i,] = _CMYK1_to_RGB1(TMP)     // CMYK [0-1]
             else            RGB[i,] = _CMYK1_to_RGB1(TMP/255) // CMYK [0-255]
-            if (missing(RGB[i,])) ERROR_color_invalid(info[i,2])
-            stok[i] = `TRUE'
+            if (missing(RGB[i,])) return(info[i])
             continue
         }
         if (l==5) { // check whether RGBA/RGBA1
             if (t=="rgba" | t=="rgba1") {
                 TMP = strtoreal(tok[5])
-                if (TMP<0 | TMP>1) ERROR_color_invalid(info[i,2])
+                if (TMP<0 | TMP>1) return(info[i])
                 if (alpha[i]<.) {
                     display("{err}opacity not allowed with RGBA")
                     exit(3498)
@@ -1427,22 +1463,24 @@ void `MAIN'::parse_convert()
             }
         }
         type[i] = invtokens(tok[|1 \ l-3|])   // get color space info
-        if (type[i]=="") ERROR_color_invalid(info[i,2])
+        if (type[i]=="") return(info[i])
         RGB[i,] = strtoreal(tok[|l-3+1 \ .|]) // get value (last 3 elements)
-        if (missing(RGB[i,])) ERROR_color_invalid(info[i,2])
+        if (missing(RGB[i,])) return(info[i])
     }
     // convert remaining colors
     for (i=r; i; i--) {
         t = type[i]
         if (t=="") continue
-        if (convert_parse(tok, t, 0)) ERROR_color_invalid(info[i,2])
+        if (convert_parse(tok, t, 0)) return(info[i])
         p = ::select(1::r, type:==t)
         RGB[p,] = convert(RGB[p,], t, "RGB1")
         type[p] = J(length(p), 1, "")
     }
+    // done
+    return(J(1,0,""))
 }
 
-`RR' `MAIN'::parse_named(`SS' s, `Int' i)
+`Bool' `MAIN'::parse_named(`SS' s, `Int' i)
 {
     `SS' c
     `RR' RGB1
@@ -1462,27 +1500,33 @@ void `MAIN'::parse_convert()
     }
     if (c!="") {
         RGB1 = strtoreal(tokens(c))/255
-        if (length(RGB1)!=3) ERROR_color_invalid(s)
+        if (length(RGB1)!=3) return(1)
+        info[i] = ""
         stok[i] = `TRUE'
-        return(RGB1)
+        RGB[i,] = RGB1
+        return(0)
     }
     // web color
     c = parse_webcolor(s)
     if (c!="") {
         RGB1 = _HEX_to_RGB(c)/255
-        if (missing(RGB1)) ERROR_color_invalid(s)
-        return(RGB1)
+        if (missing(RGB1)) return(1)
+        info[i] = c
+        RGB[i,] = RGB1
+        return(0)
     }
     // user color provided as color-<name>.style
     c = parse_stcolorstyle(s)
     if (c!="") {
         RGB1 = strtoreal(tokens(c))/255
-        if (length(RGB1)!=3) ERROR_color_invalid(s)
+        if (length(RGB1)!=3) return(1)
+        info[i] = ""
         stok[i] = `TRUE'
-        return(RGB1)
+        RGB[i,] = RGB1
+        return(0)
     }
     // color not found
-    ERROR_color_not_found(s)
+    return(1)
 }
 
 `SS' `MAIN'::parse_stcolorstyle(`SS' s) // read RGB from color-<name>.style
@@ -1538,38 +1582,24 @@ void `MAIN'::parse_convert()
     return(c)
 }
 
-void `MAIN'::ERROR_color_not_found(`SS' s)
+`T' `MAIN'::names(| `SS' c, `SS' wchar)
 {
-    display("{err}color '" + s + "' not found")
-    exit(3499)
+    if (args()==0) return(names_get())
+    names_set(c, wchar)
 }
 
-void `MAIN'::ERROR_color_invalid(`SS' s)
+`T' `MAIN'::Names(| `SV' C)
 {
-    display("{err}color '" + s + "' is invalid")
-    exit(3498)
+    if (args()==0) return(names)
+    Names_set(C)
 }
 
-`T' `MAIN'::info(| `TS' opt1, `SS' opt2)
-{
-    if (args()==0)                     return(info_get(`FALSE'))
-    if (args()==1 & isstring(opt1)==0) return(info_get(opt1))
-    info_set(opt1, opt2)
-}
-
-`T' `MAIN'::Info(| `TV' opt)
-{
-    if (args()==0)        return(Info_get(`FALSE'))
-    if (isstring(opt)==0) return(Info_get(opt))
-    Info_set(opt)
-}
-
-`SS' `MAIN'::info_get(`Bool' rgbforce)
+`SS' `MAIN'::names_get()
 {
     `Int' i
     `SC'  C
      
-     C = Info(rgbforce)
+     C = names
      if (allof(C, "")) return("")
      for (i = N(); i; i--) {
          if      (C[i]=="")          C[i] = `""""'
@@ -1578,21 +1608,42 @@ void `MAIN'::ERROR_color_invalid(`SS' s)
      return(invtokens(C'))
 }
 
-`SC' `MAIN'::Info_get(`Bool' rgbforce)
+void `MAIN'::names_set(`SS' c, `SS' wchar)
+{
+    Names_set(_tokens(c, wchar))
+}
+
+void `MAIN'::Names_set(`SV' C)
+{
+    `Int' i
+    
+    for (i = min((length(C), N())); i; i--) names[i] = C[i]
+}
+
+`T' `MAIN'::info(| `SS' c, `SS' wchar)
+{
+    if (args()==0) return(info_get())
+    info_set(c, wchar)
+}
+
+`T' `MAIN'::Info(| `SV' C)
+{
+    if (args()==0) return(info)
+    Info_set(C)
+}
+
+`SS' `MAIN'::info_get()
 {
     `Int' i
     `SC'  C
      
-     i = N()
-     C = J(i, 1, "")
-     for (; i; i--) {
-         if (info[i,1]!="")       C[i] = info[i,1]
-         else {
-             if (stok[i]!=`TRUE') C[i] = info[i,2]
-             else if (rgbforce)   C[i] = info[i,2]
-         }
+     C = info
+     if (allof(C, "")) return("")
+     for (i = N(); i; i--) {
+         if      (C[i]=="")          C[i] = `""""'
+         else if (strpos(C[i], " ")) C[i] = `"""' + C[i] + `"""'
      }
-     return(C)
+     return(invtokens(C'))
 }
 
 void `MAIN'::info_set(`SS' c, `SS' wchar)
@@ -1604,7 +1655,7 @@ void `MAIN'::Info_set(`SV' C)
 {
     `Int' i
     
-    for (i = min((length(C), N())); i; i--) info[i,1] = C[i]
+    for (i = min((length(C), N())); i; i--) info[i] = C[i]
 }
 
 // modified version of tokens; omits delimiters and inserts empty elements 
@@ -1684,16 +1735,15 @@ void `MAIN'::_set(`T' C, `SS' space, `Bool' reset, | `IntV' p0)
             else           alpha = C[,4]
         }
         else alpha = C[,4]
-        info_reset("", J(rows(C),1,.), "", p)
         return
     }
     if (reset) rgb_reset(convert(C, space, "RGB1"), p)
     else       rgb_set(convert(C, space, "RGB1"))
     // generate info
     (void) convert_parse(S, space, 0)
-    if      (S[1]=="RGB")   info_reset("", J(rows(C),1,.), "", p)
-    else if (S[1]=="RGB1")  info_reset("", J(rows(C),1,.), "", p)
-    else if (S[1]=="HEX")   info_reset("", C, "", p)
+    if      (S[1]=="RGB")   return
+    if      (S[1]=="RGB1")  return
+    if      (S[1]=="HEX")   info_reset("", C, "", p)
     else if (S[1]=="CMYK")  info_reset("", C, "%9.0f", p)
     else if (S[1]=="CMYK1") info_reset("", C, "%9.3g", p)
     else if (anyof(("lRGB", "XYZ1", "xyY", "xyY1", "HSV", "HSL"), S[1]))
@@ -2092,6 +2142,7 @@ void `MAIN'::recycle(`Int' n0)
     RGB       = colrecycle(RGB, n)
     alpha     = colrecycle(alpha, n)
     intensity = colrecycle(intensity, n)
+    names     = colrecycle(names, n)
     info      = colrecycle(info, n)
     stok      = colrecycle(stok, n)
 }
@@ -2152,6 +2203,7 @@ void `MAIN'::_select(`IntM' p)
     RGB       = RGB[p,]
     alpha     = alpha[p]
     intensity = intensity[p]
+    names     = names[p]
     info      = info[p,]
     stok      = stok[p]
 }
@@ -2301,14 +2353,8 @@ mata:
 
 void `MAIN'::gray(| `RS' p, `SS' method)
 {
-    `Int' i
-    
     RGB = GRAY(RGB, "RGB1", p, method)
     stok = J(N(), 1, `FALSE')
-    for (i=N(); i; i--) {
-        if (info[i,1]!="") info[i,1] = info[i,1] + " (gs)"
-        if (info[i,2]!="") info[i,2] = info[i,2] + " (gs)"
-    }
 }
 
 `RM' `MAIN'::GRAY(`RM' C, `SS' space, `RS' p0, `SS' method0)
@@ -2353,14 +2399,8 @@ mata:
 
 void `MAIN'::cvd(| `RS' p, `SS' method)
 {
-    `Int' i
-
     RGB = CVD(RGB, "RGB1", p, method)
     stok = J(N(), 1, `FALSE')
-    for (i=N(); i; i--) {
-        if (info[i,1]!="") info[i,1] = info[i,1] + " (cvd)"
-        if (info[i,2]!="") info[i,2] = info[i,2] + " (cvd)"
-    }
 }
 
 `RM' `MAIN'::CVD(`RM' C, `SS' space, | `RS' p, `SS' method)
@@ -4165,694 +4205,1274 @@ end
 
 mata:
 
-void `MAIN'::palette(| `SS' pal0, `RS' n0, `RS' noipolate)
+`Bool' `MAIN'::pexists(| `SS' pal)
 {
-    `SS'  p
-    `SV'  cdef
-    `Int' n
+    `SS' PAL
+    pragma unset PAL
     
-    if (args()<3) noipolate = `FALSE'
-    n = (n0<. ? n0 : 15)
-    p = strlower(pal0)
-    if      (smatch(p ,"s2"))                cdef = P_(1, P_s2())
-    else if (smatch(p, "s1"))                cdef = P_(1, P_s1())
-    else if (smatch(p, "s1r"))               cdef = P_(1, P_s1r())
-    else if (smatch(p ,"economist"))         cdef = P_(1, P_economist())
-    else if (smatch(p ,"mono"))              cdef = P_(1, P_mono())
-    else if (smatch(p ,"cblind"))            cdef = P_(1, P_cblind())
-    else if (smatch(p ,"plottig"))           cdef = P_(1, P_plottig())
-    else if (smatch(p ,"538"))               cdef = P_(1, P_538())
-    else if (smatch(p ,"tfl"))               cdef = P_(1, P_tfl())
-    else if (smatch(p ,"mrc"))               cdef = P_(1, P_mrc())
-    else if (smatch(p ,"burd"))              cdef = P_(1, P_burd())
-    else if (smatch(p ,"lean"))              cdef = P_(1, P_lean())
-    else if (smatch(p ,"webcolors"))           cdef = P_(1, P_webc())
-    else if (smatch(p ,"webcolors pink"))      cdef = P_(1, P_webc_pi())
-    else if (smatch(p ,"webcolors purple"))    cdef = P_(1, P_webc_pu())
-    else if (smatch(p ,"webcolors redorange")) cdef = P_(1, P_webc_rd())
-    else if (smatch(p ,"webcolors yellow"))    cdef = P_(1, P_webc_ye())
-    else if (smatch(p ,"webcolors green"))     cdef = P_(1, P_webc_gn())
-    else if (smatch(p ,"webcolors cyan"))      cdef = P_(1, P_webc_cy())
-    else if (smatch(p ,"webcolors blue"))      cdef = P_(1, P_webc_bl())
-    else if (smatch(p ,"webcolors brown"))     cdef = P_(1, P_webc_br())
-    else if (smatch(p ,"webcolors white"))     cdef = P_(1, P_webc_wh())
-    else if (smatch(p ,"webcolors gray"))      cdef = P_(1, P_webc_gray())
-    else if (smatch(p ,"webcolors grey"))      cdef = P_(1, P_webc_grey())
-    else if (smatch(p ,"d3 10"))             cdef = P_(1, P_d3_10())
-    else if (smatch(p ,"d3 20"))             cdef = P_(1, P_d3_20())
-    else if (smatch(p ,"d3 20b"))            cdef = P_(1, P_d3_20b())
-    else if (smatch(p ,"d3 20c"))            cdef = P_(1, P_d3_20c())
-    else if (smatch(p ,"Accent"))            cdef = P_(1, P_Accent())
-    else if (smatch(p ,"Dark2"))             cdef = P_(1, P_Dark2())
-    else if (smatch(p ,"Paired"))            cdef = P_(1, P_Paired())
-    else if (smatch(p ,"Pastel1"))           cdef = P_(1, P_Pastel1())
-    else if (smatch(p ,"Pastel2"))           cdef = P_(1, P_Pastel2())
-    else if (smatch(p ,"Set1"))              cdef = P_(1, P_Set1())
-    else if (smatch(p ,"Set2"))              cdef = P_(1, P_Set2())
-    else if (smatch(p ,"Set3"))              cdef = P_(1, P_Set3())
-    else if (smatch(p ,"Blues"))             cdef = P_(2, P_Blues(n))
-    else if (smatch(p ,"BuGn"))              cdef = P_(2, P_BuGn(n))
-    else if (smatch(p ,"BuPu"))              cdef = P_(2, P_BuPu(n))
-    else if (smatch(p ,"GnBu"))              cdef = P_(2, P_GnBu(n))
-    else if (smatch(p ,"Greens"))            cdef = P_(2, P_Greens(n))
-    else if (smatch(p ,"Greys"))             cdef = P_(2, P_Greys(n))
-    else if (smatch(p ,"OrRd"))              cdef = P_(2, P_OrRd(n))
-    else if (smatch(p ,"Oranges"))           cdef = P_(2, P_Oranges(n))
-    else if (smatch(p ,"PuBu"))              cdef = P_(2, P_PuBu(n))
-    else if (smatch(p ,"PuBuGn"))            cdef = P_(2, P_PuBuGn(n))
-    else if (smatch(p ,"PuRd"))              cdef = P_(2, P_PuRd(n))
-    else if (smatch(p ,"Purples"))           cdef = P_(2, P_Purples(n))
-    else if (smatch(p ,"RdPu"))              cdef = P_(2, P_RdPu(n))
-    else if (smatch(p ,"Reds"))              cdef = P_(2, P_Reds(n))
-    else if (smatch(p ,"YlGn"))              cdef = P_(2, P_YlGn(n))
-    else if (smatch(p ,"YlGnBu"))            cdef = P_(2, P_YlGnBu(n))
-    else if (smatch(p ,"YlOrBr"))            cdef = P_(2, P_YlOrBr(n))
-    else if (smatch(p ,"YlOrRd"))            cdef = P_(2, P_YlOrRd(n))
-    else if (smatch(p ,"BrBG"))              cdef = P_(3, P_BrBG(n))
-    else if (smatch(p ,"PRGn"))              cdef = P_(3, P_PRGn(n))
-    else if (smatch(p ,"PiYG"))              cdef = P_(3, P_PiYG(n))
-    else if (smatch(p ,"PuOr"))              cdef = P_(3, P_PuOr(n))
-    else if (smatch(p ,"RdBu"))              cdef = P_(3, P_RdBu(n))
-    else if (smatch(p ,"RdGy"))              cdef = P_(3, P_RdGy(n))
-    else if (smatch(p ,"RdYlBu"))            cdef = P_(3, P_RdYlBu(n))
-    else if (smatch(p ,"RdYlGn"))            cdef = P_(3, P_RdYlGn(n))
-    else if (smatch(p ,"Spectral"))          cdef = P_(3, P_Spectral(n))
-    else if (smatch(p ,"ptol qualitative"))  cdef = P_(1, P_ptol_qualitative(n))
-    else if (smatch(p ,"ptol diverging"))    cdef = P_(3, P_ptol_diverging(n))
-    else if (smatch(p ,"ptol rainbow"))      cdef = P_(2, P_ptol_rainbow(n))
-    else if (smatch(p ,"tableau"))           cdef = P_(1, P_tableau())
-    else if (smatch(p ,"lin carcolor"))             cdef = P_(1, P_lin_carcolor())
-    else if (smatch(p ,"lin carcolor algorithm"))   cdef = P_(1, P_lin_carcolor_a())
-    else if (smatch(p ,"lin food"))                 cdef = P_(1, P_lin_food())
-    else if (smatch(p ,"lin food algorithm"))       cdef = P_(1, P_lin_food_a())
-    else if (smatch(p ,"lin features"))             cdef = P_(1, P_lin_features())
-    else if (smatch(p ,"lin features algorithm"))   cdef = P_(1, P_lin_features_a())
-    else if (smatch(p ,"lin activities"))           cdef = P_(1, P_lin_activities())
-    else if (smatch(p ,"lin activities algorithm")) cdef = P_(1, P_lin_activities_a())
-    else if (smatch(p ,"lin fruits"))               cdef = P_(1, P_lin_fruits())
-    else if (smatch(p ,"lin fruits algorithm"))     cdef = P_(1, P_lin_fruits_a())
-    else if (smatch(p ,"lin vegetables"))           cdef = P_(1, P_lin_vegetables())
-    else if (smatch(p ,"lin vegetables algorithm")) cdef = P_(1, P_lin_vegetables_a())
-    else if (smatch(p ,"lin drinks"))               cdef = P_(1, P_lin_drinks())
-    else if (smatch(p ,"lin drinks algorithm"))     cdef = P_(1, P_lin_drinks_a())
-    else if (smatch(p ,"lin brands"))               cdef = P_(1, P_lin_brands())
-    else if (smatch(p ,"lin brands algorithm"))     cdef = P_(1, P_lin_brands_a())
-    else if (smatch(p ,"spmap blues"))       cdef = P_(2, P_spmap_blues(n))
-    else if (smatch(p ,"spmap greens"))      cdef = P_(2, P_spmap_greens(n))
-    else if (smatch(p ,"spmap greys"))       cdef = P_(2, P_spmap_greys(n))
-    else if (smatch(p ,"spmap reds"))        cdef = P_(2, P_spmap_reds(n))
-    else if (smatch(p ,"spmap rainbow"))     cdef = P_(2, P_spmap_rainbow(n))
-    else if (smatch(p ,"spmap heat"))        cdef = P_(2, P_spmap_heat(n))
-    else if (smatch(p ,"spmap terrain"))     cdef = P_(2, P_spmap_terrain(n))
-    else if (smatch(p ,"spmap topological")) cdef = P_(2, P_spmap_topological(n))
-    else if (smatch(p ,"sfso blue"))         cdef = P_(2, P_sfso_blue())
-    else if (smatch(p ,"sfso brown"))        cdef = P_(2, P_sfso_brown())
-    else if (smatch(p ,"sfso orange"))       cdef = P_(2, P_sfso_orange())
-    else if (smatch(p ,"sfso red"))          cdef = P_(2, P_sfso_red())
-    else if (smatch(p ,"sfso pink"))         cdef = P_(2, P_sfso_pink())
-    else if (smatch(p ,"sfso purple"))       cdef = P_(2, P_sfso_purple())
-    else if (smatch(p ,"sfso violet"))       cdef = P_(2, P_sfso_violet())
-    else if (smatch(p ,"sfso ltblue"))       cdef = P_(2, P_sfso_ltblue())
-    else if (smatch(p ,"sfso turquoise"))    cdef = P_(2, P_sfso_turquoise())
-    else if (smatch(p ,"sfso green"))        cdef = P_(2, P_sfso_green())
-    else if (smatch(p ,"sfso olive"))        cdef = P_(2, P_sfso_olive())
-    else if (smatch(p ,"sfso black"))        cdef = P_(2, P_sfso_black())
-    else if (smatch(p ,"sfso parties"))      cdef = P_(1, P_sfso_parties())
-    else if (smatch(p ,"sfso languages"))    cdef = P_(1, P_sfso_languages())
-    else if (smatch(p ,"sfso votes"))        cdef = P_(3, P_sfso_votes())
-    else {
-        display("{err}palette '" + pal0 + "' not found")
+    if (Palette(0, PAL, pal)) {
+        pname = PAL
+        return(1)
+    }
+    return(0)
+}
+
+void `MAIN'::palette(| `SS' pal, `RS' n, `RV' opt)
+{
+    `SS' PAL
+    pragma unset PAL
+
+    if (Palette(1, PAL, pal, n, opt)==0) {
+        display("{err}palette '" + pal + "' not found")
         exit(3499)
     }
-    pname = p
-    colors(cdef[1], ",")
-    if (length(cdef)>1) info(cdef[2], ",")
+    pname = PAL
+}
+
+`Bool' `MAIN'::Palette(`Bool' r, `SS' p, `SS' pal, | `RS' n0, `RV' opt)
+{
+    `Int'  n
+    
+    // prepare
+    n = (n0<. ? n0 : 15)
+    p = strtrim(strlower(pal))
+    
+    // read palette if r; else only check existence and exit
+    if      (P_s2(r, p))                  {; if (!r) return(1); }
+    else if (P_s1(r, p))                  {; if (!r) return(1); }
+    else if (P_s1r(r, p))                 {; if (!r) return(1); }
+    else if (P_economist(r, p))           {; if (!r) return(1); }
+    else if (P_mono(r, p))                {; if (!r) return(1); }
+    else if (P_cblind(r, p))              {; if (!r) return(1); }
+    else if (P_plottig(r, p))             {; if (!r) return(1); }
+    else if (P_538(r, p))                 {; if (!r) return(1); }
+    else if (P_mrc(r, p))                 {; if (!r) return(1); }
+    else if (P_tfl(r, p))                 {; if (!r) return(1); }
+    else if (P_burd(r, p))                {; if (!r) return(1); }
+    else if (P_lean(r, p))                {; if (!r) return(1); }
+    else if (P_tableau(r, p))             {; if (!r) return(1); }
+    else if (P_webcolors(r, p))           {; if (!r) return(1); }
+    else if (P_d3(r, p))                  {; if (!r) return(1); }
+    else if (P_Accent(r, p))              {; if (!r) return(1); }
+    else if (P_Dark2(r, p))               {; if (!r) return(1); }
+    else if (P_Paired(r, p))              {; if (!r) return(1); }
+    else if (P_Pastel1(r, p))             {; if (!r) return(1); }
+    else if (P_Pastel2(r, p))             {; if (!r) return(1); }
+    else if (P_Set1(r, p))                {; if (!r) return(1); }
+    else if (P_Set2(r, p))                {; if (!r) return(1); }
+    else if (P_Set3(r, p))                {; if (!r) return(1); }
+    else if (P_Blues(r, p, n))            {; if (!r) return(1); }
+    else if (P_BuGn(r, p, n))             {; if (!r) return(1); }
+    else if (P_BuPu(r, p, n))             {; if (!r) return(1); }
+    else if (P_GnBu(r, p, n))             {; if (!r) return(1); }
+    else if (P_Greens(r, p, n))           {; if (!r) return(1); }
+    else if (P_Greys(r, p, n))            {; if (!r) return(1); }
+    else if (P_OrRd(r, p, n))             {; if (!r) return(1); }
+    else if (P_Oranges(r, p, n))          {; if (!r) return(1); }
+    else if (P_PuBu(r, p, n))             {; if (!r) return(1); }
+    else if (P_PuBuGn(r, p, n))           {; if (!r) return(1); }
+    else if (P_PuRd(r, p, n))             {; if (!r) return(1); }
+    else if (P_Purples(r, p, n))          {; if (!r) return(1); }
+    else if (P_RdPu(r, p, n))             {; if (!r) return(1); }
+    else if (P_Reds(r, p, n))             {; if (!r) return(1); }
+    else if (P_YlGn(r, p, n))             {; if (!r) return(1); }
+    else if (P_YlGnBu(r, p, n))           {; if (!r) return(1); }
+    else if (P_YlOrBr(r, p, n))           {; if (!r) return(1); }
+    else if (P_YlOrRd(r, p, n))           {; if (!r) return(1); }
+    else if (P_BrBG(r, p, n))             {; if (!r) return(1); }
+    else if (P_PRGn(r, p, n))             {; if (!r) return(1); }
+    else if (P_PiYG(r, p, n))             {; if (!r) return(1); }
+    else if (P_PuOr(r, p, n))             {; if (!r) return(1); }
+    else if (P_RdBu(r, p, n))             {; if (!r) return(1); }
+    else if (P_RdGy(r, p, n))             {; if (!r) return(1); }
+    else if (P_RdYlBu(r, p, n))           {; if (!r) return(1); }
+    else if (P_RdYlGn(r, p, n))           {; if (!r) return(1); }
+    else if (P_Spectral(r, p, n))         {; if (!r) return(1); }
+    else if (P_ptol(r, p, n))             {; if (!r) return(1); }
+    else if (P_lin(r, p))                 {; if (!r) return(1); }
+    else if (P_spmap(r, p, n))            {; if (!r) return(1); }
+    else if (P_sfso(r, p))                {; if (!r) return(1); }
+    else if (P_viridis(r, p, n, opt))     return(1)
+    else if (P_magma(r, p, n, opt))       return(1)
+    else if (P_inferno(r, p, n, opt))     return(1)
+    else if (P_plasma(r, p, n, opt))      return(1)
+    else if (P_cividis(r, p, n, opt))     return(1)
+    else if (P_twilight(r, p, n, opt))    return(1)
+    else if (P_matplotlib(r, p, n, opt))  return(1)
+    else return(0)
+    
+    // interpolation/recycling
     if (n0<. & n0!=N()) {
         if (n<N() & pclass=="qualitative") recycle(n0) // select first n colors
-        else if (noipolate==0) { // ok to recycle or interpolate
+        else if (!length(opt) | opt==0) { // ok to recycle or interpolate
             if (pclass=="qualitative") recycle(n0)
             else                       ipolate(n0)
         }
     }
+    return(1)
+}
+void `MAIN'::P_pclass(`RC' i)
+{
+    pclass = ("qualitative","sequential","diverging")[i]
+}
+void `MAIN'::P_colors(`SS' s) colors(s, ",")
+void `MAIN'::P_names(`SS' s)  names(s, ",")
+void `MAIN'::P_info(`SS' s)   info(s, ",")
+`Bool' `MAIN'::P_s2(`Bool' r, `SS' p)
+{
+    if (!smatch(p, "s2")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("navy,maroon,forest_green,dkorange,teal,cranberry,lavender,khaki,sienna,emidblue,emerald,brown,erose,gold,bluishgray")
+    pinfo("colors used for p1 to p15 in Stata's s2color scheme")
+    return(1)
+}
+`Bool' `MAIN'::P_s1(`Bool' r, `SS' p)
+{
+    if (!smatch(p, "s1")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("dkgreen,orange_red,navy,maroon,teal,sienna,orange,magenta,cyan,red,lime,brown,purple,olive_teal,ltblue")
+    pinfo("colors used for p1 to p15 in Stata's s1color scheme")
+    return(1)
+}
+`Bool' `MAIN'::P_s1r(`Bool' r, `SS' p)
+{
+    if (!smatch(p, "s1r")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("yellow,lime,midblue,magenta,orange,red,ltblue,sandb,mint,olive_teal,orange_red,blue,pink,teal,sienna")
+    pinfo("colors used for p1 to p15 in Stata's s1rcolor scheme")
+    return(1)
+}
+`Bool' `MAIN'::P_economist(`Bool' r, `SS' p)
+{
+    if (!smatch(p, "economist")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("edkblue,emidblue,eltblue,emerald,erose,ebblue,eltgreen,stone,navy,maroon,brown,lavender,teal,cranberry,khaki")
+    pinfo("colors used for p1 to p15 in Stata's economist scheme")
+    return(1)
 }
 
-`PAL'::P_(`RC' i, `SC' cdef)
+`Bool' `MAIN'::P_mono(`Bool' r, `SS' p)
 {
-    if      (i==1) pclass = "qualitative"
-    else if (i==2) pclass = "sequential"
-    else if (i==3) pclass = "diverging"
-    return(cdef)
+    if (!smatch(p, "mono")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("gs6,gs10,gs8,gs4,black,gs12,gs2,gs7,gs9,gs11,gs13,gs5,gs3,gs14,gs15")
+    pinfo("gray scales used for p1 to p15 in Stata's monochrome schemes")
+    return(1)
 }
-`PAL'::P_s1()        return("dkgreen,orange_red,navy,maroon,teal,sienna,orange,magenta,cyan,red,lime,brown,purple,olive_teal,ltblue")
-`PAL'::P_s1r()       return("yellow,lime,midblue,magenta,orange,red,ltblue,sandb,mint,olive_teal,orange_red,blue,pink,teal,sienna")
-`PAL'::P_s2()        return("navy,maroon,forest_green,dkorange,teal,cranberry,lavender,khaki,sienna,emidblue,emerald,brown,erose,gold,bluishgray")
-`PAL'::P_economist() return("edkblue,emidblue,eltblue,emerald,erose,ebblue,eltgreen,stone,navy,maroon,brown,lavender,teal,cranberry,khaki")
-`PAL'::P_mono()      return("gs6,gs10,gs8,gs4,black,gs12,gs2,gs7,gs9,gs11,gs13,gs5,gs3,gs14,gs15")
-`PAL'::P_cblind()    return("#000000,#999999,#E69F00,#56B4E9,#009E73,#F0E442,#0072B2,#D55E00,#CC79A7"
-                          \ "black,grey,orange,skyblue,bluishgreen,yellow,blue,vermillion,reddishpurple")
-`PAL'::P_plottig()   return("black,97 156 255,0 192 175,201 152 0,185 56 255,248 118 109,0 176 246,0 186 56,163 165 0,231 107 243,255 103 164,0 188 216,107 177 0,229 135 0,253 97 209"
-                         \  ",plb1_blue,plg1_lightgreenish,ply1_yellowbrownish,pll1_purple,plr1_red,plb2_bluish,plg2_greenish,ply2_yellowbrownish,pll2_purple,plr2_red,plb3_blue,plg3_green,ply3_orange,pll3_purple")
-`PAL'::P_538()       return("3 144 214,254 48 11,120 172 68,247 187 5,229 138 233,254 133 3,242 242 242,205 205 206,155 155 155,162 204 246,254 181 167,42 161 237,255 244 241"
-                          \ "c538b,c538r,c538g,c538y,c538m,c538o,c538bg,c538axis,c538label,c538bs6_ci,c538rs6_ci2,c538bs1_contr_begin,c538rs11_contr_end")
-`PAL'::P_tfl()       return("220 36 31, 0 25 168, 0 114 41, 232 106 16, 137 78 36, 117 16 86, 255 206 0, 65 75 86"
-                          \ "tflred,tflblue,tflgreen,tflorange,tflbrown,tflpurple,tflyellow,tflgrey")
-`PAL'::P_mrc()       return("33 103 126,106 59 119,130 47 90,208 114 50,255 219 0,181 211 52,138 121 103"
-                          \ "mrcblue,mrcpurple,mrcred,mrcorange,mrcyellow,mrcgreen,mrcgrey")
-`PAL'::P_burd()      return("33 102 172,178 24 43,27 120 55,230 97 1,1 102 94,197 27 125,118 42 131,140 81 10,77 77 77,103 169 207,209 229 240,239 138 98,253 219 199"
-                          \ "Bu_from_RdBu7,Rd_from_RdBu7,Gn_from_PRGn7,Or_from_PuOr7,BG_from_BrBG7,Pi_from_PiYG7,Pu_from_PuOr7,Br_from_BrBG7,Gy_from_RdGy7,burd_ci_arealine,burd_ci_area,burd_ci2_arealine,burd_ci2_area")
-`PAL'::P_lean()      return("gs14,gs10,gs12,gs8,gs16,gs13,gs10,gs7,gs4,gs0,gs14,gs10,gs12,gs0,gs16")
-`PAL'::P_webc()
+`Bool' `MAIN'::P_cblind(`Bool' r, `SS' p)
 {
-    if (webcolors.N()==0) webcolors()
-    return(invtokens(sort(webcolors.keys(),1)',","))
+    if (!smatch(p, "cblind")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("#000000,#999999,#E69F00,#56B4E9,#009E73,#F0E442,#0072B2,#D55E00,#CC79A7")
+    P_names("Black,Gray,Orange,Sky Blue,bluish Green,Yellow,Blue,Vermillion,reddish Purple")
+    pinfo("colorblind-friendly colors suggested by Okabe and Ito (2002), including gray as suggested at www.cookbook-r.com")
+    psource("Okabe and Ito (2002)")
+    return(1)
 }
-`PAL'::P_webc_pi()   return("Pink,LightPink,HotPink,DeepPink,PaleVioletRed,MediumVioletRed")
-`PAL'::P_webc_pu()   return("Lavender,Thistle,Plum,Orchid,Violet,Fuchsia,Magenta,MediumOrchid,DarkOrchid,DarkViolet,BlueViolet,DarkMagenta,Purple,MediumPurple,MediumSlateBlue,SlateBlue,DarkSlateBlue,RebeccaPurple,Indigo")
-`PAL'::P_webc_rd()   return("LightSalmon,Salmon,DarkSalmon,LightCoral,IndianRed,Crimson,Red,FireBrick,DarkRed,Orange,DarkOrange,Coral,Tomato,OrangeRed")
-`PAL'::P_webc_ye()   return("Gold,Yellow,LightYellow,LemonChiffon,LightGoldenRodYellow,PapayaWhip,Moccasin,PeachPuff,PaleGoldenRod,Khaki,DarkKhaki")
-`PAL'::P_webc_gn()   return("GreenYellow,Chartreuse,LawnGreen,Lime,LimeGreen,PaleGreen,LightGreen,MediumSpringGreen,SpringGreen,MediumSeaGreen,SeaGreen,ForestGreen,Green,DarkGreen,YellowGreen,OliveDrab,DarkOliveGreen,MediumAquaMarine,DarkSeaGreen,LightSeaGreen,DarkCyan,Teal")
-`PAL'::P_webc_cy()   return("Aqua,Cyan,LightCyan,PaleTurquoise,Aquamarine,Turquoise,MediumTurquoise,DarkTurquoise")
-`PAL'::P_webc_bl()   return("CadetBlue,SteelBlue,LightSteelBlue,LightBlue,PowderBlue,LightSkyBlue,SkyBlue,CornflowerBlue,DeepSkyBlue,DodgerBlue,RoyalBlue,Blue,MediumBlue,DarkBlue,Navy,MidnightBlue")
-`PAL'::P_webc_br()   return("Cornsilk,BlanchedAlmond,Bisque,NavajoWhite,Wheat,BurlyWood,Tan,RosyBrown,SandyBrown,GoldenRod,DarkGoldenRod,Peru,Chocolate,Olive,SaddleBrown,Sienna,Brown,Maroon")
-`PAL'::P_webc_wh()   return("White,Snow,HoneyDew,MintCream,Azure,AliceBlue,GhostWhite,WhiteSmoke,SeaShell,Beige,OldLace,FloralWhite,Ivory,AntiqueWhite,Linen,LavenderBlush,MistyRose")
-`PAL'::P_webc_gray() return("Gainsboro,LightGray,Silver,DarkGray,DimGray,Gray,LightSlateGray,SlateGray,DarkSlateGray,Black")
-`PAL'::P_webc_grey() return("Gainsboro,LightGrey,Silver,DarkGrey,DimGrey,Grey,LightSlateGrey,SlateGrey,DarkSlateGrey,Black")
-`PAL'::P_d3_10()     return("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf")
-`PAL'::P_d3_20()     return("#1f77b4,#aec7e8,#ff7f0e,#ffbb78,#2ca02c,#98df8a,#d62728,#ff9896,#9467bd,#c5b0d5,#8c564b,#c49c94,#e377c2,#f7b6d2,#7f7f7f,#c7c7c7,#bcbd22,#dbdb8d,#17becf,#9edae5")
-`PAL'::P_d3_20b()    return("#393b79,#5254a3,#6b6ecf,#9c9ede,#637939,#8ca252,#b5cf6b,#cedb9c,#8c6d31,#bd9e39,#e7ba52,#e7cb94,#843c39,#ad494a,#d6616b,#e7969c,#7b4173,#a55194,#ce6dbd,#de9ed6")
-`PAL'::P_d3_20c()    return("#3182bd,#6baed6,#9ecae1,#c6dbef,#e6550d,#fd8d3c,#fdae6b,#fdd0a2,#31a354,#74c476,#a1d99b,#c7e9c0,#756bb1,#9e9ac8,#bcbddc,#dadaeb,#636363,#969696,#bdbdbd,#d9d9d9")
-`PAL'::P_Accent()    return("127 201 127,190 174 212,253 192 134,255 255 153,56 108 176,240 2 127,191 91 23,102 102 102")
-`PAL'::P_Dark2()     return("27 158 119,217 95 2,117 112 179,231 41 138,102 166 30,230 171 2,166 118 29,102 102 102")
-`PAL'::P_Paired()    return("166 206 227,31 120 180,178 223 138,51 160 44,251 154 153,227 26 28,253 191 111,255 127 0,202 178 214,106 61 154,255 255 153,177 89 40")
-`PAL'::P_Pastel1()   return("251 180 174,179 205 227,204 235 197,222 203 228,254 217 166,255 255 204,229 216 189,253 218 236,242 242 242")
-`PAL'::P_Pastel2()   return("179 226 205,253 205 172,203 213 232,244 202 228,230 245 201,255 242 174,241 226 204,204 204 204")
-`PAL'::P_Set1()      return("228 26 28,55 126 184,77 175 74,152 78 163,255 127 0,255 255 51,166 86 40,247 129 191,153 153 153")
-`PAL'::P_Set2()      return("102 194 165,252 141 98,141 160 203,231 138 195,166 216 84,255 217 47,229 196 148,179 179 179")
-`PAL'::P_Set3()      return("141 211 199,255 255 179,190 186 218,251 128 114,128 177 211,253 180 98,179 222 105,252 205 229,217 217 217,188 128 189,204 235 197,255 237 111")
-`PAL'::P_Blues(`RS' n)
+`Bool' `MAIN'::P_plottig(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("222 235 247,158 202 225,49 130 189")
-    if (n==4)  return("239 243 255,189 215 231,107 174 214,33 113 181")
-    if (n==5)  return("239 243 255,189 215 231,107 174 214,49 130 189,8 81 156")
-    if (n==6)  return("239 243 255,198 219 239,158 202 225,107 174 214,49 130 189,8 81 156")
-    if (n==7)  return("239 243 255,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
-    if (n==8)  return("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
-    if (n>=9)  return("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 81 156,8 48 107")
+    if (!smatch(p, "plottig")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("black,97 156 255,0 192 175,201 152 0,185 56 255,248 118 109,0 176 246,0 186 56,163 165 0,231 107 243,255 103 164,0 188 216,107 177 0,229 135 0,253 97 209")
+    P_names("black,plb1,plg1,ply1,pll1,plr1,plb2,plg2,ply2,pll2,plr2,plb3,plg3,ply3,pll3")
+    P_info(",blue,lght greenish,yellow/brownish,purple,red,bluish,greenish,yellow/brownish,purple,red,blue,green,orange,purple")
+    pinfo("colors used for p1 to p15 in the plottig scheme by Bischof (2017)")
+    psource("Bischof (2017)")
+    return(1)
 }
-`PAL'::P_BuGn(`RS' n)
+`Bool' `MAIN'::P_538(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("229 245 249,153 216 201,44 162 95")
-    if (n==4)  return("237 248 251,178 226 226,102 194 164,35 139 69")
-    if (n==5)  return("237 248 251,178 226 226,102 194 164,44 162 95,0 109 44")
-    if (n==6)  return("237 248 251,204 236 230,153 216 201,102 194 164,44 162 95,0 109 44")
-    if (n==7)  return("237 248 251,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
-    if (n==8)  return("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
-    if (n>=9)  return("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 109 44,0 68 27")
+    if (!smatch(p, "538")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("3 144 214,254 48 11,120 172 68,247 187 5,229 138 233,254 133 3,242 242 242,205 205 206,155 155 155,162 204 246,254 181 167,42 161 237,255 244 241")
+    P_names("538b,538r,538g,538y,538m,538o,538background,538axis,538label,538bs6,538rs6,538bs1,538rs11")
+    P_info(",,,,,,,,,used for ci,used for ci2,used for contour_begin,used for contour_end")
+    pinfo("colors used for p1 to p6, background, labels, axes etc. in the 538 scheme by Bischof (2017)")
+    psource("Bischof (2017)")
+    return(1)
 }
-`PAL'::P_BuPu(`RS' n)
+`Bool' `MAIN'::P_mrc(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("224 236 244,158 188 218,136 86 167")
-    if (n==4)  return("237 248 251,179 205 227,140 150 198,136 65 157")
-    if (n==5)  return("237 248 251,179 205 227,140 150 198,136 86 167,129 15 124")
-    if (n==6)  return("237 248 251,191 211 230,158 188 218,140 150 198,136 86 167,129 15 124")
-    if (n==7)  return("237 248 251,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
-    if (n==8)  return("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
-    if (n>=9)  return("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,129 15 124,77 0 75")
+    if (!smatch(p, "mrc")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("33 103 126,106 59 119,130 47 90,208 114 50,255 219 0,181 211 52,138 121 103")
+    P_names("mrcblue,mrcpurple,mrcred,mrcorange,mrcyellow,mrcgreen,mrcgrey")
+    pinfo("colors used for p1 to p7 in the mrc scheme by Morris (2013)")
+    psource("Morris (2013)")
+    return(1)
 }
-`PAL'::P_GnBu(`RS' n)
+`Bool' `MAIN'::P_tfl(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("224 243 219,168 221 181,67 162 202")
-    if (n==4)  return("240 249 232,186 228 188,123 204 196,43 140 190")
-    if (n==5)  return("240 249 232,186 228 188,123 204 196,67 162 202,8 104 172")
-    if (n==6)  return("240 249 232,204 235 197,168 221 181,123 204 196,67 162 202,8 104 172")
-    if (n==7)  return("240 249 232,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
-    if (n==8)  return("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
-    if (n>=9)  return("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 104 172,8 64 129")
+    if (!smatch(p, "tfl")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("220 36 31, 0 25 168, 0 114 41, 232 106 16, 137 78 36, 117 16 86, 255 206 0, 65 75 86")
+    P_names("tflred,tflblue,tflgreen,tflorange,tflbrown,tflpurple,tflyellow,tflgrey")
+    pinfo("colors used for p1 to p8 in the tfl scheme by Morris (2015)")
+    psource("Morris (2015)")
+    return(1)
 }
-`PAL'::P_Greens(`RS' n)
+`Bool' `MAIN'::P_burd(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("229 245 224,161 217 155,49 163 84")
-    if (n==4)  return("237 248 233,186 228 179,116 196 118,35 139 69")
-    if (n==5)  return("237 248 233,186 228 179,116 196 118,49 163 84,0 109 44")
-    if (n==6)  return("237 248 233,199 233 192,161 217 155,116 196 118,49 163 84,0 109 44")
-    if (n==7)  return("237 248 233,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
-    if (n==8)  return("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
-    if (n>=9)  return("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 109 44,0 68 27")
+    if (!smatch(p, "burd")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("33 102 172,178 24 43,27 120 55,230 97 1,1 102 94,197 27 125,118 42 131,140 81 10,77 77 77,103 169 207,209 229 240,239 138 98,253 219 199")
+    P_names("Bu,Rd,Gn,Or,BG,Pi,Pu,Br,Gy")
+    P_info("Bu from RdBu-7,Rd from RdBu-7,Gn from PRGn-7,Or from PuOr-7,BG from BrBG-7,Pi from PiYG-7,Pu from PuOr-7,Br from BrBG-7,Gy from RdGy-7,used for ci_arealine,used for ci_area,used for ci2_arealine,used for ci2_area")
+    pinfo("colors used for p1 to p9 and for CIs in the burd scheme by Briatte (2013)")
+    psource("Briatte (2013)")
+    return(1)
 }
-`PAL'::P_Greys(`RS' n)
+`Bool' `MAIN'::P_lean(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("240 240 240,189 189 189,99 99 99")
-    if (n==4)  return("247 247 247,204 204 204,150 150 150,82 82 82")
-    if (n==5)  return("247 247 247,204 204 204,150 150 150,99 99 99,37 37 37")
-    if (n==6)  return("247 247 247,217 217 217,189 189 189,150 150 150,99 99 99,37 37 37")
-    if (n==7)  return("247 247 247,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
-    if (n==8)  return("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
-    if (n>=9)  return("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37,0 0 0")
+    if (!smatch(p, "lean")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("gs14,gs10,gs12,gs8,gs16,gs13,gs10,gs7,gs4,gs0,gs14,gs10,gs12,gs0,gs16")
+    pinfo("gray scales used for p1area to p15area in schemes lean1 and lean2 by Juul (2003)")
+    psource("Juul (2003)")
+    return(1)
 }
-`PAL'::P_OrRd(`RS' n)
+`Bool' `MAIN'::P_tableau(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("254 232 200,253 187 132,227 74 51")
-    if (n==4)  return("254 240 217,253 204 138,252 141 89,215 48 31")
-    if (n==5)  return("254 240 217,253 204 138,252 141 89,227 74 51,179 0 0")
-    if (n==6)  return("254 240 217,253 212 158,253 187 132,252 141 89,227 74 51,179 0 0")
-    if (n==7)  return("254 240 217,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
-    if (n==8)  return("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
-    if (n>=9)  return("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,179 0 0,127 0 0")
+    if (!smatch(p, "tableau")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf,#aec7e8,#ffbb78,#98df8a,#ff9896,#c5b0d5,#c49c94,#f7b6d2,#c7c7c7,#dbdb8d,#9edae5")
+    pinfo("categorical colors provided by Lin et al. (2013)")
+    psource("Lin et al. (2013)")
+    return(1)
 }
-`PAL'::P_Oranges(`RS' n)
+`Bool' `MAIN'::P_Accent(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("254 230 206,253 174 107,230 85 13")
-    if (n==4)  return("254 237 222,253 190 133,253 141 60,217 71 1")
-    if (n==5)  return("254 237 222,253 190 133,253 141 60,230 85 13,166 54 3")
-    if (n==6)  return("254 237 222,253 208 162,253 174 107,253 141 60,230 85 13,166 54 3")
-    if (n==7)  return("254 237 222,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
-    if (n==8)  return("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
-    if (n>=9)  return("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,166 54 3,127 39 4")
+    if (!smatch(p, "Accent")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("127 201 127,190 174 212,253 192 134,255 255 153,56 108 176,240 2 127,191 91 23,102 102 102")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_PuBu(`RS' n)
+`Bool' `MAIN'::P_Dark2(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("236 231 242,166 189 219,43 140 190")
-    if (n==4)  return("241 238 246,189 201 225,116 169 207,5 112 176")
-    if (n==5)  return("241 238 246,189 201 225,116 169 207,43 140 190,4 90 141")
-    if (n==6)  return("241 238 246,208 209 230,166 189 219,116 169 207,43 140 190,4 90 141")
-    if (n==7)  return("241 238 246,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
-    if (n==8)  return("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
-    if (n>=9)  return("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,4 90 141,2 56 88")
+    if (!smatch(p, "Dark2")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("27 158 119,217 95 2,117 112 179,231 41 138,102 166 30,230 171 2,166 118 29,102 102 102")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_PuBuGn(`RS' n)
+`Bool' `MAIN'::P_Paired(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("236 226 240,166 189 219,28 144 153")
-    if (n==4)  return("246 239 247,189 201 225,103 169 207,2 129 138")
-    if (n==5)  return("246 239 247,189 201 225,103 169 207,28 144 153,1 108 89")
-    if (n==6)  return("246 239 247,208 209 230,166 189 219,103 169 207,28 144 153,1 108 89")
-    if (n==7)  return("246 239 247,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
-    if (n==8)  return("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
-    if (n>=9)  return("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 108 89,1 70 54")
+    if (!smatch(p, "Paired")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("166 206 227,31 120 180,178 223 138,51 160 44,251 154 153,227 26 28,253 191 111,255 127 0,202 178 214,106 61 154,255 255 153,177 89 40")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_PuRd(`RS' n)
+`Bool' `MAIN'::P_Pastel1(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("231 225 239,201 148 199,221 28 119")
-    if (n==4)  return("241 238 246,215 181 216,223 101 176,206 18 86")
-    if (n==5)  return("241 238 246,215 181 216,223 101 176,221 28 119,152 0 67")
-    if (n==6)  return("241 238 246,212 185 218,201 148 199,223 101 176,221 28 119,152 0 67")
-    if (n==7)  return("241 238 246,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
-    if (n==8)  return("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
-    if (n>=9)  return("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,152 0 67,103 0 31")
+    if (!smatch(p, "Pastel1")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("251 180 174,179 205 227,204 235 197,222 203 228,254 217 166,255 255 204,229 216 189,253 218 236,242 242 242")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_Purples(`RS' n)
+`Bool' `MAIN'::P_Pastel2(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("239 237 245,188 189 220,117 107 177")
-    if (n==4)  return("242 240 247,203 201 226,158 154 200,106 81 163")
-    if (n==5)  return("242 240 247,203 201 226,158 154 200,117 107 177,84 39 143")
-    if (n==6)  return("242 240 247,218 218 235,188 189 220,158 154 200,117 107 177,84 39 143")
-    if (n==7)  return("242 240 247,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
-    if (n==8)  return("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
-    if (n>=9)  return("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,84 39 143,63 0 125")
+    if (!smatch(p, "Pastel2")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("179 226 205,253 205 172,203 213 232,244 202 228,230 245 201,255 242 174,241 226 204,204 204 204")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_RdPu(`RS' n)
+`Bool' `MAIN'::P_Set1(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("253 224 221,250 159 181,197 27 138")
-    if (n==4)  return("254 235 226,251 180 185,247 104 161,174 1 126")
-    if (n==5)  return("254 235 226,251 180 185,247 104 161,197 27 138,122 1 119")
-    if (n==6)  return("254 235 226,252 197 192,250 159 181,247 104 161,197 27 138,122 1 119")
-    if (n==7)  return("254 235 226,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
-    if (n==8)  return("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
-    if (n>=9)  return("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119,73 0 106")
+    if (!smatch(p, "Set1")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("228 26 28,55 126 184,77 175 74,152 78 163,255 127 0,255 255 51,166 86 40,247 129 191,153 153 153")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_Reds(`RS' n)
+`Bool' `MAIN'::P_Set2(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("254 224 210,252 146 114,222 45 38")
-    if (n==4)  return("254 229 217,252 174 145,251 106 74,203 24 29")
-    if (n==5)  return("254 229 217,252 174 145,251 106 74,222 45 38,165 15 21")
-    if (n==6)  return("254 229 217,252 187 161,252 146 114,251 106 74,222 45 38,165 15 21")
-    if (n==7)  return("254 229 217,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
-    if (n==8)  return("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
-    if (n>=9)  return("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,165 15 21,103 0 13")
+    if (!smatch(p, "Set2")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("102 194 165,252 141 98,141 160 203,231 138 195,166 216 84,255 217 47,229 196 148,179 179 179")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_YlGn(`RS' n)
+`Bool' `MAIN'::P_Set3(`Bool' r, `SS' p)
 {
-    if (n<=3)  return("247 252 185,173 221 142,49 163 84")
-    if (n==4)  return("255 255 204,194 230 153,120 198 121,35 132 67")
-    if (n==5)  return("255 255 204,194 230 153,120 198 121,49 163 84,0 104 55")
-    if (n==6)  return("255 255 204,217 240 163,173 221 142,120 198 121,49 163 84,0 104 55")
-    if (n==7)  return("255 255 204,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
-    if (n==8)  return("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
-    if (n>=9)  return("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 104 55,0 69 41")
+    if (!smatch(p, "Set3")) return(0)
+    if (!r) return(1)
+    P_pclass(1)
+    P_colors("141 211 199,255 255 179,190 186 218,251 128 114,128 177 211,253 180 98,179 222 105,252 205 229,217 217 217,188 128 189,204 235 197,255 237 111")
+    pinfo("categorical colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_YlGnBu(`RS' n)
+`Bool' `MAIN'::P_Blues(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("237 248 177,127 205 187,44 127 184")
-    if (n==4)  return("255 255 204,161 218 180,65 182 196,34 94 168")
-    if (n==5)  return("255 255 204,161 218 180,65 182 196,44 127 184,37 52 148")
-    if (n==6)  return("255 255 204,199 233 180,127 205 187,65 182 196,44 127 184,37 52 148")
-    if (n==7)  return("255 255 204,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
-    if (n==8)  return("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
-    if (n>=9)  return("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,37 52 148,8 29 88")
+    if (!smatch(p, "Blues")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("222 235 247,158 202 225,49 130 189")
+    else if (n==4)  P_colors("239 243 255,189 215 231,107 174 214,33 113 181")
+    else if (n==5)  P_colors("239 243 255,189 215 231,107 174 214,49 130 189,8 81 156")
+    else if (n==6)  P_colors("239 243 255,198 219 239,158 202 225,107 174 214,49 130 189,8 81 156")
+    else if (n==7)  P_colors("239 243 255,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
+    else if (n==8)  P_colors("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
+    else if (n>=9)  P_colors("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 81 156,8 48 107")
+    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_YlOrBr(`RS' n)
+`Bool' `MAIN'::P_BuGn(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("255 247 188,254 196 79,217 95 14")
-    if (n==4)  return("255 255 212,254 217 142,254 153 41,204 76 2")
-    if (n==5)  return("255 255 212,254 217 142,254 153 41,217 95 14,153 52 4")
-    if (n==6)  return("255 255 212,254 227 145,254 196 79,254 153 41,217 95 14,153 52 4")
-    if (n==7)  return("255 255 212,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
-    if (n==8)  return("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
-    if (n>=9)  return("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,153 52 4,102 37 6")
+    if (!smatch(p, "BuGn")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("229 245 249,153 216 201,44 162 95")
+    else if (n==4)  P_colors("237 248 251,178 226 226,102 194 164,35 139 69")
+    else if (n==5)  P_colors("237 248 251,178 226 226,102 194 164,44 162 95,0 109 44")
+    else if (n==6)  P_colors("237 248 251,204 236 230,153 216 201,102 194 164,44 162 95,0 109 44")
+    else if (n==7)  P_colors("237 248 251,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
+    else if (n==8)  P_colors("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
+    else if (n>=9)  P_colors("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 109 44,0 68 27")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_YlOrRd(`RS' n)
+`Bool' `MAIN'::P_BuPu(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("255 237 160,254 178 76,240 59 32")
-    if (n==4)  return("255 255 178,254 204 92,253 141 60,227 26 28")
-    if (n==5)  return("255 255 178,254 204 92,253 141 60,240 59 32,189 0 38")
-    if (n==6)  return("255 255 178,254 217 118,254 178 76,253 141 60,240 59 32,189 0 38")
-    if (n==7)  return("255 255 178,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
-    if (n==8)  return("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
-    if (n>=9)  return("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,189 0 38,128 0 38")
+    if (!smatch(p, "BuPu")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("224 236 244,158 188 218,136 86 167")
+    else if (n==4)  P_colors("237 248 251,179 205 227,140 150 198,136 65 157")
+    else if (n==5)  P_colors("237 248 251,179 205 227,140 150 198,136 86 167,129 15 124")
+    else if (n==6)  P_colors("237 248 251,191 211 230,158 188 218,140 150 198,136 86 167,129 15 124")
+    else if (n==7)  P_colors("237 248 251,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
+    else if (n==8)  P_colors("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
+    else if (n>=9)  P_colors("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,129 15 124,77 0 75")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_BrBG(`RS' n)
+`Bool' `MAIN'::P_GnBu(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("216 179 101,245 245 245,90 180 172")
-    if (n==4)  return("166 97 26,223 194 125,128 205 193,1 133 113")
-    if (n==5)  return("166 97 26,223 194 125,245 245 245,128 205 193,1 133 113")
-    if (n==6)  return("140 81 10,216 179 101,246 232 195,199 234 229,90 180 172,1 102 94")
-    if (n==7)  return("140 81 10,216 179 101,246 232 195,245 245 245,199 234 229,90 180 172,1 102 94")
-    if (n==8)  return("140 81 10,191 129 45,223 194 125,246 232 195,199 234 229,128 205 193,53 151 143,1 102 94")
-    if (n==9)  return("140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94")
-    if (n==10) return("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
-    if (n>=11) return("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
+    if (!smatch(p, "GnBu")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("224 243 219,168 221 181,67 162 202")
+    else if (n==4)  P_colors("240 249 232,186 228 188,123 204 196,43 140 190")
+    else if (n==5)  P_colors("240 249 232,186 228 188,123 204 196,67 162 202,8 104 172")
+    else if (n==6)  P_colors("240 249 232,204 235 197,168 221 181,123 204 196,67 162 202,8 104 172")
+    else if (n==7)  P_colors("240 249 232,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
+    else if (n==8)  P_colors("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
+    else if (n>=9)  P_colors("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 104 172,8 64 129")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_PRGn(`RS' n)
+`Bool' `MAIN'::P_Greens(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("175 141 195,247 247 247,127 191 123")
-    if (n==4)  return("123 50 148,194 165 207,166 219 160,0 136 55")
-    if (n==5)  return("123 50 148,194 165 207,247 247 247,166 219 160,0 136 55")
-    if (n==6)  return("118 42 131,175 141 195,231 212 232,217 240 211,127 191 123,27 120 55")
-    if (n==7)  return("118 42 131,175 141 195,231 212 232,247 247 247,217 240 211,127 191 123,27 120 55")
-    if (n==8)  return("118 42 131,153 112 171,194 165 207,231 212 232,217 240 211,166 219 160,90 174 97,27 120 55")
-    if (n==9)  return("118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55")
-    if (n==10) return("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
-    if (n>=11) return("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
+    if (!smatch(p, "Greens")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("229 245 224,161 217 155,49 163 84")
+    else if (n==4)  P_colors("237 248 233,186 228 179,116 196 118,35 139 69")
+    else if (n==5)  P_colors("237 248 233,186 228 179,116 196 118,49 163 84,0 109 44")
+    else if (n==6)  P_colors("237 248 233,199 233 192,161 217 155,116 196 118,49 163 84,0 109 44")
+    else if (n==7)  P_colors("237 248 233,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
+    else if (n==8)  P_colors("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
+    else if (n>=9)  P_colors("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 109 44,0 68 27")
+    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_PiYG(`RS' n)
+`Bool' `MAIN'::P_Greys(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("233 163 201,247 247 247,161 215 106")
-    if (n==4)  return("208 28 139,241 182 218,184 225 134,77 172 38")
-    if (n==5)  return("208 28 139,241 182 218,247 247 247,184 225 134,77 172 38")
-    if (n==6)  return("197 27 125,233 163 201,253 224 239,230 245 208,161 215 106,77 146 33")
-    if (n==7)  return("197 27 125,233 163 201,253 224 239,247 247 247,230 245 208,161 215 106,77 146 33")
-    if (n==8)  return("197 27 125,222 119 174,241 182 218,253 224 239,230 245 208,184 225 134,127 188 65,77 146 33")
-    if (n==9)  return("197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33")
-    if (n==10) return("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
-    if (n>=11) return("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
+    if (!smatch(p, "Greys")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("240 240 240,189 189 189,99 99 99")
+    else if (n==4)  P_colors("247 247 247,204 204 204,150 150 150,82 82 82")
+    else if (n==5)  P_colors("247 247 247,204 204 204,150 150 150,99 99 99,37 37 37")
+    else if (n==6)  P_colors("247 247 247,217 217 217,189 189 189,150 150 150,99 99 99,37 37 37")
+    else if (n==7)  P_colors("247 247 247,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
+    else if (n==8)  P_colors("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
+    else if (n>=9)  P_colors("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37,0 0 0")
+    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_PuOr(`RS' n)
+`Bool' `MAIN'::P_OrRd(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("241 163 64,247 247 247,153 142 195")
-    if (n==4)  return("230 97 1,253 184 99,178 171 210,94 60 153")
-    if (n==5)  return("230 97 1,253 184 99,247 247 247,178 171 210,94 60 153")
-    if (n==6)  return("179 88 6,241 163 64,254 224 182,216 218 235,153 142 195,84 39 136")
-    if (n==7)  return("179 88 6,241 163 64,254 224 182,247 247 247,216 218 235,153 142 195,84 39 136")
-    if (n==8)  return("179 88 6,224 130 20,253 184 99,254 224 182,216 218 235,178 171 210,128 115 172,84 39 136")
-    if (n==9)  return("179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136")
-    if (n==10) return("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
-    if (n>=11) return("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
+    if (!smatch(p, "OrRd")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("254 232 200,253 187 132,227 74 51")
+    else if (n==4)  P_colors("254 240 217,253 204 138,252 141 89,215 48 31")
+    else if (n==5)  P_colors("254 240 217,253 204 138,252 141 89,227 74 51,179 0 0")
+    else if (n==6)  P_colors("254 240 217,253 212 158,253 187 132,252 141 89,227 74 51,179 0 0")
+    else if (n==7)  P_colors("254 240 217,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
+    else if (n==8)  P_colors("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
+    else if (n>=9)  P_colors("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,179 0 0,127 0 0")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_RdBu(`RS' n)
+`Bool' `MAIN'::P_Oranges(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("239 138 98,247 247 247,103 169 207")
-    if (n==4)  return("202 0 32,244 165 130,146 197 222,5 113 176")
-    if (n==5)  return("202 0 32,244 165 130,247 247 247,146 197 222,5 113 176")
-    if (n==6)  return("178 24 43,239 138 98,253 219 199,209 229 240,103 169 207,33 102 172")
-    if (n==7)  return("178 24 43,239 138 98,253 219 199,247 247 247,209 229 240,103 169 207,33 102 172")
-    if (n==8)  return("178 24 43,214 96 77,244 165 130,253 219 199,209 229 240,146 197 222,67 147 195,33 102 172")
-    if (n==9)  return("178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172")
-    if (n==10) return("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
-    if (n>=11) return("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
+    if (!smatch(p, "Oranges")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("254 230 206,253 174 107,230 85 13")
+    else if (n==4)  P_colors("254 237 222,253 190 133,253 141 60,217 71 1")
+    else if (n==5)  P_colors("254 237 222,253 190 133,253 141 60,230 85 13,166 54 3")
+    else if (n==6)  P_colors("254 237 222,253 208 162,253 174 107,253 141 60,230 85 13,166 54 3")
+    else if (n==7)  P_colors("254 237 222,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
+    else if (n==8)  P_colors("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
+    else if (n>=9)  P_colors("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,166 54 3,127 39 4")
+    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_RdGy(`RS' n)
+`Bool' `MAIN'::P_PuBu(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("239 138 98,255 255 255,153 153 153")
-    if (n==4)  return("202 0 32,244 165 130,186 186 186,64 64 64")
-    if (n==5)  return("202 0 32,244 165 130,255 255 255,186 186 186,64 64 64")
-    if (n==6)  return("178 24 43,239 138 98,253 219 199,224 224 224,153 153 153,77 77 77")
-    if (n==7)  return("178 24 43,239 138 98,253 219 199,255 255 255,224 224 224,153 153 153,77 77 77")
-    if (n==8)  return("178 24 43,214 96 77,244 165 130,253 219 199,224 224 224,186 186 186,135 135 135,77 77 77")
-    if (n==9)  return("178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77")
-    if (n==10) return("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
-    if (n>=11) return("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
+    if (!smatch(p, "PuBu")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("236 231 242,166 189 219,43 140 190")
+    else if (n==4)  P_colors("241 238 246,189 201 225,116 169 207,5 112 176")
+    else if (n==5)  P_colors("241 238 246,189 201 225,116 169 207,43 140 190,4 90 141")
+    else if (n==6)  P_colors("241 238 246,208 209 230,166 189 219,116 169 207,43 140 190,4 90 141")
+    else if (n==7)  P_colors("241 238 246,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
+    else if (n==8)  P_colors("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
+    else if (n>=9)  P_colors("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,4 90 141,2 56 88")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_RdYlBu(`RS' n)
+`Bool' `MAIN'::P_PuBuGn(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("252 141 89,255 255 191,145 191 219")
-    if (n==4)  return("215 25 28,253 174 97,171 217 233,44 123 182")
-    if (n==5)  return("215 25 28,253 174 97,255 255 191,171 217 233,44 123 182")
-    if (n==6)  return("215 48 39,252 141 89,254 224 144,224 243 248,145 191 219,69 117 180")
-    if (n==7)  return("215 48 39,252 141 89,254 224 144,255 255 191,224 243 248,145 191 219,69 117 180")
-    if (n==8)  return("215 48 39,244 109 67,253 174 97,254 224 144,224 243 248,171 217 233,116 173 209,69 117 180")
-    if (n==9)  return("215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180")
-    if (n==10) return("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
-    if (n>=11) return("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
+    if (!smatch(p, "PuBuGn")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("236 226 240,166 189 219,28 144 153")
+    else if (n==4)  P_colors("246 239 247,189 201 225,103 169 207,2 129 138")
+    else if (n==5)  P_colors("246 239 247,189 201 225,103 169 207,28 144 153,1 108 89")
+    else if (n==6)  P_colors("246 239 247,208 209 230,166 189 219,103 169 207,28 144 153,1 108 89")
+    else if (n==7)  P_colors("246 239 247,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
+    else if (n==8)  P_colors("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
+    else if (n>=9)  P_colors("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 108 89,1 70 54")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_RdYlGn(`RS' n)
+`Bool' `MAIN'::P_PuRd(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("252 141 89,255 255 191,145 207 96")
-    if (n==4)  return("215 25 28,253 174 97,166 217 106,26 150 65")
-    if (n==5)  return("215 25 28,253 174 97,255 255 191,166 217 106,26 150 65")
-    if (n==6)  return("215 48 39,252 141 89,254 224 139,217 239 139,145 207 96,26 152 80")
-    if (n==7)  return("215 48 39,252 141 89,254 224 139,255 255 191,217 239 139,145 207 96,26 152 80")
-    if (n==8)  return("215 48 39,244 109 67,253 174 97,254 224 139,217 239 139,166 217 106,102 189 99,26 152 80")
-    if (n==9)  return("215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80")
-    if (n==10) return("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
-    if (n>=11) return("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
+    if (!smatch(p, "PuRd")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("231 225 239,201 148 199,221 28 119")
+    else if (n==4)  P_colors("241 238 246,215 181 216,223 101 176,206 18 86")
+    else if (n==5)  P_colors("241 238 246,215 181 216,223 101 176,221 28 119,152 0 67")
+    else if (n==6)  P_colors("241 238 246,212 185 218,201 148 199,223 101 176,221 28 119,152 0 67")
+    else if (n==7)  P_colors("241 238 246,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
+    else if (n==8)  P_colors("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
+    else if (n>=9)  P_colors("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,152 0 67,103 0 31")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_Spectral(`RS' n)
+`Bool' `MAIN'::P_Purples(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("252 141 89,255 255 191,153 213 148")
-    if (n==4)  return("215 25 28,253 174 97,171 221 164,43 131 186")
-    if (n==5)  return("215 25 28,253 174 97,255 255 191,171 221 164,43 131 186")
-    if (n==6)  return("213 62 79,252 141 89,254 224 139,230 245 152,153 213 148,50 136 189")
-    if (n==7)  return("213 62 79,252 141 89,254 224 139,255 255 191,230 245 152,153 213 148,50 136 189")
-    if (n==8)  return("213 62 79,244 109 67,253 174 97,254 224 139,230 245 152,171 221 164,102 194 165,50 136 189")
-    if (n==9)  return("213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189")
-    if (n==10) return("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
-    if (n>=11) return("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
+    if (!smatch(p, "Purples")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("239 237 245,188 189 220,117 107 177")
+    else if (n==4)  P_colors("242 240 247,203 201 226,158 154 200,106 81 163")
+    else if (n==5)  P_colors("242 240 247,203 201 226,158 154 200,117 107 177,84 39 143")
+    else if (n==6)  P_colors("242 240 247,218 218 235,188 189 220,158 154 200,117 107 177,84 39 143")
+    else if (n==7)  P_colors("242 240 247,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
+    else if (n==8)  P_colors("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
+    else if (n>=9)  P_colors("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,84 39 143,63 0 125")
+    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_ptol_qualitative(`RS' n)
+`Bool' `MAIN'::P_RdPu(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=1)  return("68 119 170")
-    if (n==2)  return("68 119 170,204 102 119")
-    if (n==3)  return("68 119 170,221 204 119,204 102 119")
-    if (n==4)  return("68 119 170,17 119 51,221 204 119,204 102 119")
-    if (n==5)  return("51 34 136,136 204 238,17 119 51,221 204 119,204 102 119")
-    if (n==6)  return("51 34 136,136 204 238,17 119 51,221 204 119,204 102 119,170 68 153")
-    if (n==7)  return("51 34 136,136 204 238,68 170 153,17 119 51,221 204 119,204 102 119,170 68 153")
-    if (n==8)  return("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,204 102 119,170 68 153")
-    if (n==9)  return("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,204 102 119,136 34 85,170 68 153")
-    if (n==10) return("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
-    if (n==11) return("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
-    if (n>=12) return("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,170 68 102,136 34 85,170 68 153")
+    if (!smatch(p, "RdPu")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("253 224 221,250 159 181,197 27 138")
+    else if (n==4)  P_colors("254 235 226,251 180 185,247 104 161,174 1 126")
+    else if (n==5)  P_colors("254 235 226,251 180 185,247 104 161,197 27 138,122 1 119")
+    else if (n==6)  P_colors("254 235 226,252 197 192,250 159 181,247 104 161,197 27 138,122 1 119")
+    else if (n==7)  P_colors("254 235 226,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
+    else if (n==8)  P_colors("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
+    else if (n>=9)  P_colors("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119,73 0 106")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_ptol_diverging(`RS' n)
+`Bool' `MAIN'::P_Reds(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=3)  return("153 199 236,255 250 210,245 162 117")
-    if (n==4)  return("0 139 206,180 221 247,249 189 126,208 50 50")
-    if (n==5)  return("0 139 206,180 221 247,255 250 210,249 189 126,208 50 50")
-    if (n==6)  return("58 137 201,153 199 236,230 245 254,255 227 170,245 162 117,210 77 62")
-    if (n==7)  return("58 137 201,153 199 236,230 245 254,255 250 210,255 227 170,245 162 117,210 77 62")
-    if (n==8)  return("58 137 201,119 183 229,180 221 247,230 245 254,255 227 170,249 189 126,237 135 94,210 77 62")
-    if (n==9)  return("58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62")
-    if (n==10) return("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
-    if (n>=11) return("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
+    if (!smatch(p, "Reds")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("254 224 210,252 146 114,222 45 38")
+    else if (n==4)  P_colors("254 229 217,252 174 145,251 106 74,203 24 29")
+    else if (n==5)  P_colors("254 229 217,252 174 145,251 106 74,222 45 38,165 15 21")
+    else if (n==6)  P_colors("254 229 217,252 187 161,252 146 114,251 106 74,222 45 38,165 15 21")
+    else if (n==7)  P_colors("254 229 217,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
+    else if (n==8)  P_colors("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
+    else if (n>=9)  P_colors("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,165 15 21,103 0 13")
+    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_ptol_rainbow(`RS' n)
+`Bool' `MAIN'::P_YlGn(`Bool' r, `SS' p, `RS' n)
 {
-    if (n<=4)  return("64 64 150,87 163 173,222 167 58,217 33 32")
-    if (n==5)  return("64 64 150,82 157 183,125 184 116,227 156 55,217 33 32")
-    if (n==6)  return("64 64 150,73 140 194,99 173 153,190 188 72,230 139 51,217 33 32")
-    if (n==7)  return("120 28 129,63 96 174,83 158 182,109 179 136,202 184 67,231 133 50,217 33 32")
-    if (n==8)  return("120 28 129,63 86 167,75 145 192,95 170 159,145 189 97,216 175 61,231 124 48,217 33 32")
-    if (n==9)  return("120 28 129,63 78 161,70 131 193,87 163 173,109 179 136,177 190 78,223 165 58,231 116 47,217 33 32")
-    if (n==10) return("120 28 129,63 71 155,66 119 189,82 157 183,98 172 155,134 187 106,199 185 68,227 156 55,231 109 46,217 33 32")
-    if (n==11) return("120 28 129,64 64 150,65 108 183,77 149 190,91 167 167,110 179 135,161 190 86,211 179 63,229 148 53,230 104 45,217 33 32")
-    if (n>=12) return("120 28 129,65 59 147,64 101 177,72 139 194,85 161 177,99 173 153,127 185 114,181 189 76,217 173 60,230 142 52,230 100 44,217 33 32")
+    if (!smatch(p, "YlGn")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("247 252 185,173 221 142,49 163 84")
+    else if (n==4)  P_colors("255 255 204,194 230 153,120 198 121,35 132 67")
+    else if (n==5)  P_colors("255 255 204,194 230 153,120 198 121,49 163 84,0 104 55")
+    else if (n==6)  P_colors("255 255 204,217 240 163,173 221 142,120 198 121,49 163 84,0 104 55")
+    else if (n==7)  P_colors("255 255 204,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
+    else if (n==8)  P_colors("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
+    else if (n>=9)  P_colors("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 104 55,0 69 41")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
 }
-`PAL'::P_tableau()          return("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf,#aec7e8,#ffbb78,#98df8a,#ff9896,#c5b0d5,#c49c94,#f7b6d2,#c7c7c7,#dbdb8d,#9edae5")
-`PAL'::P_lin_carcolor()     return("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180"
-                                 \ "Red,Silver,Black,Green,Brown,Blue")
-`PAL'::P_lin_carcolor_a()   return("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180"
-                                 \ "Red,Silver,Black,Green,Brown,Blue")
-`PAL'::P_lin_food()         return("199 199 199,31 119 180,140 86 75,152 223 138,219 219 141,196 156 148,214 39 40"
-                                 \ "Sour_cream,Blue_cheese_dressing,Porterhouse_steak,Iceberg_lettuce,Onions_raw,Potato_baked,Tomato")
-`PAL'::P_lin_food_a()       return("31 119 180,255 127 14,140 86 75,44 160 44,255 187 120,219 219 141,214 39 40"
-                                 \ "Sour_cream,Blue_cheese_dressing,Porterhouse_steak,Iceberg_lettuce,Onions_raw,Potato_baked,Tomato")
-`PAL'::P_lin_features()     return("214 39 40,31 119 180,174 119 232,44 160 44,152 223 138"
-                                 \ "Speed,Reliability,Comfort,Safety,Efficiency")
-`PAL'::P_lin_features_a()   return("214 39 40,31 119 180,140 86 75,255 127 14,44 160 44"
-                                 \ "Speed,Reliability,Comfort,Safety,Efficiency")
-`PAL'::P_lin_activities()   return("31 119 180,214 39 40,152 223 138,44 160 44,127 127 127"
-                                 \ "Sleeping,Working,Leisure,Eating,Driving")
-`PAL'::P_lin_activities_a() return("140 86 75,255 127 14,31 119 180,227 119 194,214 39 40"
-                                 \ "Sleeping,Working,Leisure,Eating,Driving")
-`PAL'::P_lin_fruits()       return("146 195 51,251 222 6,64 105 166,200 0 0,127 34 147,251 162 127,255 86 29"
-                                 \ "Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-`PAL'::P_lin_fruits_a()     return("44 160 44,188 189 34,31 119 180,214 39 40,148 103 189,255 187 120,255 127 14"
-                                 \ "Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-`PAL'::P_lin_vegetables()   return("255 141 61,157 212 105,245 208 64,104 59 101,239 197 143,139 129 57,255 26 34"
-                                 \ "Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-`PAL'::P_lin_vegetables_a() return("255 127 14,44 160 44,188 189 34,148 103 189,140 86 75,152 223 138,214 39 40"
-                                 \ "Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-`PAL'::P_lin_drinks()       return("119 67 6,254 0 0,151 37 63,1 106 171,1 159 76,254 115 20,104 105 169"
-                                 \ "RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
-`PAL'::P_lin_drinks_a()     return("140 86 75,214 39 40,227 119 194,31 119 180,44 160 44,255 127 14,148 103 189"
-                                 \ "RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
-`PAL'::P_lin_brands()       return("161 165 169,44 163 218,242 99 33,255 183 0,0 112 66,204 0 0,123 0 153"
-                                 \ "Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
-`PAL'::P_lin_brands_a()     return("152 223 138,31 119 180,255 127 14,140 86 75,44 160 44,214 39 40,148 103 189"
-                                 \ "Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
-`PAL'::P_spmap_blues(`RS' n0)
+`Bool' `MAIN'::P_YlGnBu(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "YlGnBu")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("237 248 177,127 205 187,44 127 184")
+    else if (n==4)  P_colors("255 255 204,161 218 180,65 182 196,34 94 168")
+    else if (n==5)  P_colors("255 255 204,161 218 180,65 182 196,44 127 184,37 52 148")
+    else if (n==6)  P_colors("255 255 204,199 233 180,127 205 187,65 182 196,44 127 184,37 52 148")
+    else if (n==7)  P_colors("255 255 204,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
+    else if (n==8)  P_colors("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
+    else if (n>=9)  P_colors("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,37 52 148,8 29 88")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_YlOrBr(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "YlOrBr")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("255 247 188,254 196 79,217 95 14")
+    else if (n==4)  P_colors("255 255 212,254 217 142,254 153 41,204 76 2")
+    else if (n==5)  P_colors("255 255 212,254 217 142,254 153 41,217 95 14,153 52 4")
+    else if (n==6)  P_colors("255 255 212,254 227 145,254 196 79,254 153 41,217 95 14,153 52 4")
+    else if (n==7)  P_colors("255 255 212,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
+    else if (n==8)  P_colors("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
+    else if (n>=9)  P_colors("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,153 52 4,102 37 6")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_YlOrRd(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "YlOrRd")) return(0)
+    if (!r) return(1)
+    P_pclass(2)
+    if      (n<=3)  P_colors("255 237 160,254 178 76,240 59 32")
+    else if (n==4)  P_colors("255 255 178,254 204 92,253 141 60,227 26 28")
+    else if (n==5)  P_colors("255 255 178,254 204 92,253 141 60,240 59 32,189 0 38")
+    else if (n==6)  P_colors("255 255 178,254 217 118,254 178 76,253 141 60,240 59 32,189 0 38")
+    else if (n==7)  P_colors("255 255 178,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
+    else if (n==8)  P_colors("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
+    else if (n>=9)  P_colors("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,189 0 38,128 0 38")
+    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_BrBG(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "BrBG")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("216 179 101,245 245 245,90 180 172")
+    else if (n==4)  P_colors("166 97 26,223 194 125,128 205 193,1 133 113")
+    else if (n==5)  P_colors("166 97 26,223 194 125,245 245 245,128 205 193,1 133 113")
+    else if (n==6)  P_colors("140 81 10,216 179 101,246 232 195,199 234 229,90 180 172,1 102 94")
+    else if (n==7)  P_colors("140 81 10,216 179 101,246 232 195,245 245 245,199 234 229,90 180 172,1 102 94")
+    else if (n==8)  P_colors("140 81 10,191 129 45,223 194 125,246 232 195,199 234 229,128 205 193,53 151 143,1 102 94")
+    else if (n==9)  P_colors("140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94")
+    else if (n==10) P_colors("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
+    else if (n>=11) P_colors("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_PRGn(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "PRGn")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("175 141 195,247 247 247,127 191 123")
+    else if (n==4)  P_colors("123 50 148,194 165 207,166 219 160,0 136 55")
+    else if (n==5)  P_colors("123 50 148,194 165 207,247 247 247,166 219 160,0 136 55")
+    else if (n==6)  P_colors("118 42 131,175 141 195,231 212 232,217 240 211,127 191 123,27 120 55")
+    else if (n==7)  P_colors("118 42 131,175 141 195,231 212 232,247 247 247,217 240 211,127 191 123,27 120 55")
+    else if (n==8)  P_colors("118 42 131,153 112 171,194 165 207,231 212 232,217 240 211,166 219 160,90 174 97,27 120 55")
+    else if (n==9)  P_colors("118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55")
+    else if (n==10) P_colors("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
+    else if (n>=11) P_colors("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_PiYG(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "PiYG")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("233 163 201,247 247 247,161 215 106")
+    else if (n==4)  P_colors("208 28 139,241 182 218,184 225 134,77 172 38")
+    else if (n==5)  P_colors("208 28 139,241 182 218,247 247 247,184 225 134,77 172 38")
+    else if (n==6)  P_colors("197 27 125,233 163 201,253 224 239,230 245 208,161 215 106,77 146 33")
+    else if (n==7)  P_colors("197 27 125,233 163 201,253 224 239,247 247 247,230 245 208,161 215 106,77 146 33")
+    else if (n==8)  P_colors("197 27 125,222 119 174,241 182 218,253 224 239,230 245 208,184 225 134,127 188 65,77 146 33")
+    else if (n==9)  P_colors("197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33")
+    else if (n==10) P_colors("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
+    else if (n>=11) P_colors("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_PuOr(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "PuOr")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("241 163 64,247 247 247,153 142 195")
+    else if (n==4)  P_colors("230 97 1,253 184 99,178 171 210,94 60 153")
+    else if (n==5)  P_colors("230 97 1,253 184 99,247 247 247,178 171 210,94 60 153")
+    else if (n==6)  P_colors("179 88 6,241 163 64,254 224 182,216 218 235,153 142 195,84 39 136")
+    else if (n==7)  P_colors("179 88 6,241 163 64,254 224 182,247 247 247,216 218 235,153 142 195,84 39 136")
+    else if (n==8)  P_colors("179 88 6,224 130 20,253 184 99,254 224 182,216 218 235,178 171 210,128 115 172,84 39 136")
+    else if (n==9)  P_colors("179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136")
+    else if (n==10) P_colors("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
+    else if (n>=11) P_colors("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_RdBu(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "RdBu")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("239 138 98,247 247 247,103 169 207")
+    else if (n==4)  P_colors("202 0 32,244 165 130,146 197 222,5 113 176")
+    else if (n==5)  P_colors("202 0 32,244 165 130,247 247 247,146 197 222,5 113 176")
+    else if (n==6)  P_colors("178 24 43,239 138 98,253 219 199,209 229 240,103 169 207,33 102 172")
+    else if (n==7)  P_colors("178 24 43,239 138 98,253 219 199,247 247 247,209 229 240,103 169 207,33 102 172")
+    else if (n==8)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,209 229 240,146 197 222,67 147 195,33 102 172")
+    else if (n==9)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172")
+    else if (n==10) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
+    else if (n>=11) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_RdGy(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "RdGy")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("239 138 98,255 255 255,153 153 153")
+    else if (n==4)  P_colors("202 0 32,244 165 130,186 186 186,64 64 64")
+    else if (n==5)  P_colors("202 0 32,244 165 130,255 255 255,186 186 186,64 64 64")
+    else if (n==6)  P_colors("178 24 43,239 138 98,253 219 199,224 224 224,153 153 153,77 77 77")
+    else if (n==7)  P_colors("178 24 43,239 138 98,253 219 199,255 255 255,224 224 224,153 153 153,77 77 77")
+    else if (n==8)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,224 224 224,186 186 186,135 135 135,77 77 77")
+    else if (n==9)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77")
+    else if (n==10) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
+    else if (n>=11) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_RdYlBu(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "RdYlBu")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("252 141 89,255 255 191,145 191 219")
+    else if (n==4)  P_colors("215 25 28,253 174 97,171 217 233,44 123 182")
+    else if (n==5)  P_colors("215 25 28,253 174 97,255 255 191,171 217 233,44 123 182")
+    else if (n==6)  P_colors("215 48 39,252 141 89,254 224 144,224 243 248,145 191 219,69 117 180")
+    else if (n==7)  P_colors("215 48 39,252 141 89,254 224 144,255 255 191,224 243 248,145 191 219,69 117 180")
+    else if (n==8)  P_colors("215 48 39,244 109 67,253 174 97,254 224 144,224 243 248,171 217 233,116 173 209,69 117 180")
+    else if (n==9)  P_colors("215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180")
+    else if (n==10) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
+    else if (n>=11) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_RdYlGn(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "RdYlGn")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("252 141 89,255 255 191,145 207 96")
+    else if (n==4)  P_colors("215 25 28,253 174 97,166 217 106,26 150 65")
+    else if (n==5)  P_colors("215 25 28,253 174 97,255 255 191,166 217 106,26 150 65")
+    else if (n==6)  P_colors("215 48 39,252 141 89,254 224 139,217 239 139,145 207 96,26 152 80")
+    else if (n==7)  P_colors("215 48 39,252 141 89,254 224 139,255 255 191,217 239 139,145 207 96,26 152 80")
+    else if (n==8)  P_colors("215 48 39,244 109 67,253 174 97,254 224 139,217 239 139,166 217 106,102 189 99,26 152 80")
+    else if (n==9)  P_colors("215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80")
+    else if (n==10) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
+    else if (n>=11) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_Spectral(`Bool' r, `SS' p, `RS' n)
+{
+    if (!smatch(p, "Spectral")) return(0)
+    if (!r) return(1)
+    P_pclass(3)
+    if      (n<=3)  P_colors("252 141 89,255 255 191,153 213 148")
+    else if (n==4)  P_colors("215 25 28,253 174 97,171 221 164,43 131 186")
+    else if (n==5)  P_colors("215 25 28,253 174 97,255 255 191,171 221 164,43 131 186")
+    else if (n==6)  P_colors("213 62 79,252 141 89,254 224 139,230 245 152,153 213 148,50 136 189")
+    else if (n==7)  P_colors("213 62 79,252 141 89,254 224 139,255 255 191,230 245 152,153 213 148,50 136 189")
+    else if (n==8)  P_colors("213 62 79,244 109 67,253 174 97,254 224 139,230 245 152,171 221 164,102 194 165,50 136 189")
+    else if (n==9)  P_colors("213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189")
+    else if (n==10) P_colors("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
+    else if (n>=11) P_colors("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
+    pinfo("diverging colors by Brewer et al. (2003)")
+    psource("colorbrewer2.org")
+    return(1)
+}
+`Bool' `MAIN'::P_viridis(`Bool' r, `SS' p, `RS' n, `RV' range)
+{
+    if (!smatch(p, "viridis")) return(0)
+    if (!r) return(1)
+    matplotlib(p, n, range)
+    return(1)
+}
+`Bool' `MAIN'::P_magma(`Bool' r, `SS' p, `RS' n, `RV' range)
+{
+    if (!smatch(p, "magma")) return(0)
+    if (!r) return(1)
+    matplotlib(p, n, range)
+    return(1)
+}
+`Bool' `MAIN'::P_inferno(`Bool' r, `SS' p, `RS' n, `RV' range)
+{
+    if (!smatch(p, "inferno")) return(0)
+    if (!r) return(1)
+    matplotlib(p, n, range)
+    return(1)
+}
+`Bool' `MAIN'::P_plasma(`Bool' r, `SS' p, `RS' n, `RV' range)
+{
+    if (!smatch(p, "plasma")) return(0)
+    if (!r) return(1)
+    matplotlib(p, n, range)
+    return(1)
+}
+`Bool' `MAIN'::P_cividis(`Bool' r, `SS' p, `RS' n, `RV' range)
+{
+    if (!smatch(p, "cividis")) return(0)
+    if (!r) return(1)
+    matplotlib(p, n, range)
+    return(1)
+}
+`Bool' `MAIN'::P_twilight(`Bool' r, `SS' p, `RS' n, `RV' range)
+{
+    if      (!smatch(gettok(p), "twilight")) return(0)
+    if      (smatch(p, "twilight"))          {; if (!r) return(1); }
+    else if (smatch(p, "twilight shifted"))  {; if (!r) return(1); }
+    else return(0)
+    matplotlib(p, n, range)
+    return(1)
+}
+`Bool' `MAIN'::P_matplotlib(`Bool' r, `SS' p, `RS' n, `RV' range)
+{
+    `SS' rest
+    pragma unset rest
+    
+    if      (!smatch(gettok(p, rest), "matplotlib"))    return(0)
+    if      (smatch(p, "matplotlib viridis"))           {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib magma"))             {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib inferno"))           {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib plasma"))            {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib cividis"))           {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib twilight"))          {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib twilight shifted"))  {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib autumn"))            {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib spring"))            {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib summer"))            {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib winter"))            {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib bone"))              {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib cool"))              {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib copper"))            {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib coolwarm"))          {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib jet"))               {; if (!r) return(1); }
+    else if (smatch(p, "matplotlib hot"))               {; if (!r) return(1); }
+    else return(0)
+    matplotlib(rest, n, range)
+    return(1)
+}
+`Bool' `MAIN'::P_ptol(`Bool' r, `SS' p,`RS' n)
+{
+    `Int' i
+
+    if      (!smatch(gettok(p), "ptol"))     return(0)
+    if      (smatch(p, "ptol qualitative"))  {; if (!r) return(1); i=1; }
+    else if (smatch(p, "ptol rainbow"))      {; if (!r) return(1); i=2; }
+    else if (smatch(p, "ptol diverging"))    {; if (!r) return(1); i=3; }
+    else return(0)
+    P_pclass(i)
+    if (i==1) {
+        if      (n<=1)  P_colors("68 119 170")
+        else if (n==2)  P_colors("68 119 170,204 102 119")
+        else if (n==3)  P_colors("68 119 170,221 204 119,204 102 119")
+        else if (n==4)  P_colors("68 119 170,17 119 51,221 204 119,204 102 119")
+        else if (n==5)  P_colors("51 34 136,136 204 238,17 119 51,221 204 119,204 102 119")
+        else if (n==6)  P_colors("51 34 136,136 204 238,17 119 51,221 204 119,204 102 119,170 68 153")
+        else if (n==7)  P_colors("51 34 136,136 204 238,68 170 153,17 119 51,221 204 119,204 102 119,170 68 153")
+        else if (n==8)  P_colors("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,204 102 119,170 68 153")
+        else if (n==9)  P_colors("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,204 102 119,136 34 85,170 68 153")
+        else if (n==10) P_colors("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
+        else if (n==11) P_colors("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
+        else if (n>=12) P_colors("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,170 68 102,136 34 85,170 68 153")
+        pinfo("qualitative colors by Tol (2012)")
+    }
+    else if (i==2) {
+        if      (n<=4)  P_colors("64 64 150,87 163 173,222 167 58,217 33 32")
+        else if (n==5)  P_colors("64 64 150,82 157 183,125 184 116,227 156 55,217 33 32")
+        else if (n==6)  P_colors("64 64 150,73 140 194,99 173 153,190 188 72,230 139 51,217 33 32")
+        else if (n==7)  P_colors("120 28 129,63 96 174,83 158 182,109 179 136,202 184 67,231 133 50,217 33 32")
+        else if (n==8)  P_colors("120 28 129,63 86 167,75 145 192,95 170 159,145 189 97,216 175 61,231 124 48,217 33 32")
+        else if (n==9)  P_colors("120 28 129,63 78 161,70 131 193,87 163 173,109 179 136,177 190 78,223 165 58,231 116 47,217 33 32")
+        else if (n==10) P_colors("120 28 129,63 71 155,66 119 189,82 157 183,98 172 155,134 187 106,199 185 68,227 156 55,231 109 46,217 33 32")
+        else if (n==11) P_colors("120 28 129,64 64 150,65 108 183,77 149 190,91 167 167,110 179 135,161 190 86,211 179 63,229 148 53,230 104 45,217 33 32")
+        else if (n>=12) P_colors("120 28 129,65 59 147,64 101 177,72 139 194,85 161 177,99 173 153,127 185 114,181 189 76,217 173 60,230 142 52,230 100 44,217 33 32")
+        pinfo("rainbow colors by Tol (2012)")
+    }
+    else {
+        if      (n<=3)  P_colors("153 199 236,255 250 210,245 162 117")
+        else if (n==4)  P_colors("0 139 206,180 221 247,249 189 126,208 50 50")
+        else if (n==5)  P_colors("0 139 206,180 221 247,255 250 210,249 189 126,208 50 50")
+        else if (n==6)  P_colors("58 137 201,153 199 236,230 245 254,255 227 170,245 162 117,210 77 62")
+        else if (n==7)  P_colors("58 137 201,153 199 236,230 245 254,255 250 210,255 227 170,245 162 117,210 77 62")
+        else if (n==8)  P_colors("58 137 201,119 183 229,180 221 247,230 245 254,255 227 170,249 189 126,237 135 94,210 77 62")
+        else if (n==9)  P_colors("58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62")
+        else if (n==10) P_colors("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
+        else if (n>=11) P_colors("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
+        pinfo("diverging colors by Tol (2012)")
+    }
+    psource("Tol (2012)")
+    return(1)
+}
+`Bool' `MAIN'::P_d3(`Bool' r, `SS' p)
+{
+    `Int' i
+    
+    if      (smatch(p, "d3 10"))  {; if (!r) return(1); i=1; }
+    else if (smatch(p, "d3 20"))  {; if (!r) return(1); i=2; }
+    else if (smatch(p, "d3 20b")) {; if (!r) return(1); i=3; }
+    else if (smatch(p, "d3 20c")) {; if (!r) return(1); i=4; }
+    else return(0)
+    P_pclass(1)
+    if      (i==1)  P_colors("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf")
+    else if (i==2)  P_colors("#1f77b4,#aec7e8,#ff7f0e,#ffbb78,#2ca02c,#98df8a,#d62728,#ff9896,#9467bd,#c5b0d5,#8c564b,#c49c94,#e377c2,#f7b6d2,#7f7f7f,#c7c7c7,#bcbd22,#dbdb8d,#17becf,#9edae5")
+    else if (i==3)  P_colors("#393b79,#5254a3,#6b6ecf,#9c9ede,#637939,#8ca252,#b5cf6b,#cedb9c,#8c6d31,#bd9e39,#e7ba52,#e7cb94,#843c39,#ad494a,#d6616b,#e7969c,#7b4173,#a55194,#ce6dbd,#de9ed6")
+    else            P_colors("#3182bd,#6baed6,#9ecae1,#c6dbef,#e6550d,#fd8d3c,#fdae6b,#fdd0a2,#31a354,#74c476,#a1d99b,#c7e9c0,#756bb1,#9e9ac8,#bcbddc,#dadaeb,#636363,#969696,#bdbdbd,#d9d9d9")
+    pinfo("categorical colors from D3.js, using values found at github.com/d3")
+    psource("github.com/d3")
+    return(1)
+}
+`Bool' `MAIN'::P_lin(`Bool' r, `SS' p)
+{
+    `Int' i
+
+    if      (!smatch(gettok(p), "lin"))             return(0)
+    if      (smatch(p, "lin carcolor"))             {; if (!r) return(1); i=1;  }
+    else if (smatch(p, "lin carcolor algorithm"))   {; if (!r) return(1); i=2;  }
+    else if (smatch(p, "lin food"))                 {; if (!r) return(1); i=3;  }
+    else if (smatch(p, "lin food algorithm"))       {; if (!r) return(1); i=4;  }
+    else if (smatch(p, "lin features"))             {; if (!r) return(1); i=5;  }
+    else if (smatch(p, "lin features algorithm"))   {; if (!r) return(1); i=6;  }
+    else if (smatch(p, "lin activities"))           {; if (!r) return(1); i=7;  }
+    else if (smatch(p, "lin activities algorithm")) {; if (!r) return(1); i=8;  }
+    else if (smatch(p, "lin fruits"))               {; if (!r) return(1); i=9;  }
+    else if (smatch(p, "lin fruits algorithm"))     {; if (!r) return(1); i=10; }
+    else if (smatch(p, "lin vegetables"))           {; if (!r) return(1); i=11; }
+    else if (smatch(p, "lin vegetables algorithm")) {; if (!r) return(1); i=12; }
+    else if (smatch(p, "lin drinks"))               {; if (!r) return(1); i=13; }
+    else if (smatch(p, "lin drinks algorithm"))     {; if (!r) return(1); i=14; }
+    else if (smatch(p, "lin brands"))               {; if (!r) return(1); i=15; }
+    else if (smatch(p, "lin brands algorithm"))     {; if (!r) return(1); i=16; }
+    else return(0)
+    P_pclass(1)
+    if (i==1) {
+        P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
+        P_names("Red,Silver,Black,Green,Brown,Blue")
+        pinfo("car colors (Turkers) by Lin et al. (2013)")
+    }
+    else if (i==2) {
+        P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
+        P_names("Red,Silver,Black,Green,Brown,Blue")
+        pinfo("car colors (algorithm) by Lin et al. (2013)")
+    }
+    else if (i==3) {
+        P_colors("199 199 199,31 119 180,140 86 75,152 223 138,219 219 141,196 156 148,214 39 40")
+        P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
+        P_info("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
+        pinfo("food colors (Turkers) by Lin et al. (2013)")
+    }
+    else if (i==4) {
+        P_colors("31 119 180,255 127 14,140 86 75,44 160 44,255 187 120,219 219 141,214 39 40")
+        P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
+        P_info("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
+        pinfo("food colors (algorithm) by Lin et al. (2013)")
+    }
+    else if (i==5) {
+        P_colors("214 39 40,31 119 180,174 119 232,44 160 44,152 223 138")
+        P_names("Speed,Reliability,Comfort,Safety,Efficiency")
+        pinfo("feature colors (Turkers) by Lin et al. (2013)")
+    }
+    else if (i==6) {
+        P_colors("214 39 40,31 119 180,140 86 75,255 127 14,44 160 44")
+        P_names("Speed,Reliability,Comfort,Safety,Efficiency")
+        pinfo("feature colors (algorithm) by Lin et al. (2013)")
+    }
+    else if (i==7) {
+        P_colors("31 119 180,214 39 40,152 223 138,44 160 44,127 127 127")
+        P_names("Sleeping,Working,Leisure,Eating,Driving")
+        pinfo("activity colors (Turkers) by Lin et al. (2013)")
+    }
+    else if (i==8) {
+        P_colors("140 86 75,255 127 14,31 119 180,227 119 194,214 39 40")
+        P_names("Sleeping,Working,Leisure,Eating,Driving")
+        pinfo("activity colors (algorithm) by Lin et al. (2013)")
+    }
+    else if (i==9) {
+        P_colors("146 195 51,251 222 6,64 105 166,200 0 0,127 34 147,251 162 127,255 86 29")
+        P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
+        pinfo("fruit colors (Turkers) by Lin et al. (2013)")
+    }
+    else if (i==10) {
+        P_colors("44 160 44,188 189 34,31 119 180,214 39 40,148 103 189,255 187 120,255 127 14")
+        P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
+        pinfo("fruit colors (algorithm) by Lin et al. (2013)")
+    }
+    else if (i==11) {
+        P_colors("255 141 61,157 212 105,245 208 64,104 59 101,239 197 143,139 129 57,255 26 34")
+        P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
+        pinfo("vegetable colors (Turkers) by Lin et al. (2013)")
+    }
+    else if (i==12) {
+        P_colors("255 127 14,44 160 44,188 189 34,148 103 189,140 86 75,152 223 138,214 39 40")
+        P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
+        pinfo("vegetable colors (algorithm) by Lin et al. (2013)")
+    }
+    else if (i==13) {
+        P_colors("119 67 6,254 0 0,151 37 63,1 106 171,1 159 76,254 115 20,104 105 169")
+        P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
+        P_info("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
+        pinfo("drinks colors (Turkers) by Lin et al. (2013)")
+    }
+    else if (i==14) {
+        P_colors("140 86 75,214 39 40,227 119 194,31 119 180,44 160 44,255 127 14,148 103 189")
+        P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
+        P_info("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
+        pinfo("drinks colors (algorithm) by Lin et al. (2013)")
+    }
+    else if (i==15) {
+        P_colors("161 165 169,44 163 218,242 99 33,255 183 0,0 112 66,204 0 0,123 0 153")
+        P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
+        P_info("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
+        pinfo("brands colors (Turkers) by Lin et al. (2013)")
+    }
+    else {
+        P_colors("152 223 138,31 119 180,255 127 14,140 86 75,44 160 44,214 39 40,148 103 189")
+        P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
+        P_info("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
+        pinfo("brands colors (algorithm) by Lin et al. (2013)")
+    }
+    psource("Lin et al. (2013)")
+    return(1)
+}
+`Bool' `MAIN'::P_spmap(`Bool' r, `SS' pal,`RS' n0)
 {
     `Int' n, i
-    `SS'  c
     `RM'  C
     `RC'  p
     
-    n = __clip(n0, 2, 99)
-    p = ((1::n):-1) / (n-1)
-    C = J(n,1,208), (.2 :+ .8*p), (1 :- .6*p)
-    C = RGB1_to_RGB(HSV_to_RGB1(C))
-    c = ""
-    for (i=1; i<=n; i++) c = c + (i==1 ? "" : ",") + invtokens(strofreal(C[i,]))
-    return(c)
+    if      (!smatch(gettok(pal), "spmap"))    return(0)
+    if      (smatch(pal, "spmap blues"))       {; if (!r) return(1); i=1; }
+    else if (smatch(pal, "spmap greens"))      {; if (!r) return(1); i=2; }
+    else if (smatch(pal, "spmap greys"))       {; if (!r) return(1); i=3; }
+    else if (smatch(pal, "spmap reds"))        {; if (!r) return(1); i=4; }
+    else if (smatch(pal, "spmap rainbow"))     {; if (!r) return(1); i=5; }
+    else if (smatch(pal, "spmap heat"))        {; if (!r) return(1); i=6; }
+    else if (smatch(pal, "spmap terrain"))     {; if (!r) return(1); i=7; }
+    else if (smatch(pal, "spmap topological")) {; if (!r) return(1); i=8; }
+    else return(0)
+    P_pclass(2)
+    if (i==1) {
+        n = __clip(n0, 2, 99)
+        p = ((1::n):-1) / (n-1)
+        C = J(n,1,208), (.2 :+ .8*p), (1 :- .6*p)
+        set(C, "HSV")
+        pinfo("light blue to blue color scheme from the spmap package by Pisati (2007)")
+    }
+    else if (i==2) {
+        n = __clip(n0, 2, 99)
+        p = ((1::n):-1) / (n-1)
+        C = (122 :+ 20*p), (.2 :+ .8*p), (1 :- .7*p)
+        set(C, "HSV")
+        pinfo("light green to green color scheme from the spmap package by Pisati (2007)")
+    }
+    else if (i==3) {
+        n = __clip(n0, 2, 99)
+        C = J(n,2,0), (.88 :- .88*((1::n):-1)/(n-1))
+        set(C, "HSV")
+        pinfo("light gray to black color scheme from the spmap package by Pisati (2007)")
+    }
+    else if (i==4) {
+        n = __clip(n0, 2, 99)
+        p = ((1::n):-1) / (n-1)
+        C = (20 :- 20*p), (.2 :+ .8*p), (1 :- rowmax((J(n, 1, 0), 1.2*(p:-.5))))
+        set(C, "HSV")
+        pinfo("light red to red color scheme from the spmap package by Pisati (2007)")
+    }
+    else if (i==5) {
+        n = __clip(n0, 2, 99)
+        C = (240 :- 240*((1::n):-1)/(n-1)), J(n,2,1)
+        set(C, "HSV")
+        pinfo("rainbow color scheme from the spmap package by Pisati (2007)")
+    }
+    else if (i==6) {
+        if      (n0<=2)  P_colors("255 255 0,255 0 0")
+        else if (n0==3)  P_colors("255 255 0,255 128 0,255 0 0")
+        else if (n0==4)  P_colors("255 255 128,255 255 0,255 128 0,255 0 0")
+        else if (n0==5)  P_colors("255 255 128,255 255 0,255 170 0,255 85 0,255 0 0")
+        else if (n0==6)  P_colors("255 255 128,255 255 0,255 191 0,255 128 0,255 64 0,255 0 0")
+        else if (n0==7)  P_colors("255 255 128,255 255 0,255 204 0,255 153 0,255 102 0,255 51 0,255 0 0")
+        else if (n0==8)  P_colors("255 255 191,255 255 64,255 255 0,255 204 0,255 153 0,255 102 0,255 51 0,255 0 0")
+        else if (n0==9)  P_colors("255 255 191,255 255 64,255 255 0,255 213 0,255 170 0,255 128 0,255 85 0,255 42 0,255 0 0")
+        else if (n0==10) P_colors("255 255 191,255 255 64,255 255 0,255 219 0,255 182 0,255 146 0,255 109 0,255 73 0,255 36 0,255 0 0")
+        else if (n0==11) P_colors("255 255 191,255 255 64,255 255 0,255 223 0,255 191 0,255 159 0,255 128 0,255 96 0,255 64 0,255 32 0,255 0 0")
+        else if (n0==12) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 223 0,255 191 0,255 159 0,255 128 0,255 96 0,255 64 0,255 32 0,255 0 0")
+        else if (n0==13) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 227 0,255 198 0,255 170 0,255 142 0,255 113 0,255 85 0,255 57 0,255 28 0,255 0 0")
+        else if (n0==14) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 229 0,255 204 0,255 178 0,255 153 0,255 128 0,255 102 0,255 77 0,255 51 0,255 26 0,255 0 0")
+        else if (n0==15) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
+        else if (n0>=16) P_colors("255 255 223,255 255 159,255 255 96,255 255 32,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
+        pinfo("heat color scheme from the spmap package by Pisati (2007)")
+    }
+    else if (i==7) {
+        if      (n0<=2)  P_colors("0 166 0,242 242 242")
+        else if (n0==3)  P_colors("0 166 0,236 177 118,242 242 242")
+        else if (n0==4)  P_colors("0 166 0,230 230 0,236 177 118,242 242 242")
+        else if (n0==5)  P_colors("0 166 0,230 230 0,234 182 78,238 185 159,242 242 242")
+        else if (n0==6)  P_colors("0 166 0,99 198 0,230 230 0,234 182 78,238 185 159,242 242 242")
+        else if (n0==7)  P_colors("0 166 0,99 198 0,230 230 0,233 189 58,236 177 118,239 194 179,242 242 242")
+        else if (n0==8)  P_colors("0 166 0,62 187 0,139 208 0,230 230 0,233 189 58,236 177 118,239 194 179,242 242 242")
+        else if (n0==9)  P_colors("0 166 0,62 187 0,139 208 0,230 230 0,232 195 46,235 178 94,237 180 142,240 201 192,242 242 242")
+        else if (n0==10) P_colors("0 166 0,45 182 0,99 198 0,160 214 0,230 230 0,232 195 46,235 178 94,237 180 142,240 201 192,242 242 242")
+        else if (n0==11) P_colors("0 166 0,45 182 0,99 198 0,160 214 0,230 230 0,232 199 39,234 182 78,236 177 118,238 185 159,240 207 200,242 242 242")
+        else if (n0==12) P_colors("0 166 0,36 179 0,76 191 0,122 204 0,173 217 0,230 230 0,232 199 39,234 182 78,236 177 118,238 185 159,240 207 200,242 242 242")
+        else if (n0==13) P_colors("0 166 0,36 179 0,76 191 0,122 204 0,173 217 0,230 230 0,231 203 33,233 186 67,235 177 101,237 179 135,239 190 170,240 211 206,242 242 242")
+        else if (n0==14) P_colors("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 203 33,233 186 67,235 177 101,237 179 135,239 190 170,240 211 206,242 242 242")
+        else if (n0==15) P_colors("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
+        else if (n0>=16) P_colors("0 166 0,25 175 0,53 184 0,83 193 0,116 202 0,151 211 0,189 220 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
+        pinfo("terrain color scheme from the spmap package by Pisati (2007)")
+    }
+    else {
+        if      (n0<=2)  P_colors("76 0 255,0 229 255")
+        else if (n0==3)  P_colors("76 0 255,0 255 77,255 255 0")
+        else if (n0==4)  P_colors("76 0 255,0 229 255,0 255 77,255 255 0")
+        else if (n0==5)  P_colors("76 0 255,0 76 255,0 229 255,0 255 77,255 255 0")
+        else if (n0==6)  P_colors("76 0 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
+        else if (n0==7)  P_colors("76 0 255,0 76 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
+        else if (n0==8)  P_colors("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
+        else if (n0==9)  P_colors("76 0 255,0 76 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
+        else if (n0==10) P_colors("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
+        else if (n0==11) P_colors("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
+        else if (n0==12) P_colors("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
+        else if (n0==13) P_colors("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
+        else if (n0==14) P_colors("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
+        else if (n0==15) P_colors("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
+        else if (n0>=16) P_colors("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
+        pinfo("topological color scheme from the spmap package by Pisati (2007)")
+    }
+    psource("Pisati (2007)")
+    return(1)
 }
-`PAL'::P_spmap_greens(`RS' n0)
+`Bool' `MAIN'::P_sfso(`Bool' r, `SS' p)
 {
-    `Int' n, i
-    `SS'  c
-    `RM'  C
-    `RC'  p
+    `Int' i
     
-    n = __clip(n0, 2, 99)
-    p = ((1::n):-1) / (n-1)
-    C = (122 :+ 20*p), (.2 :+ .8*p), (1 :- .7*p)
-    C = RGB1_to_RGB(HSV_to_RGB1(C))
-    c = ""
-    for (i=1; i<=n; i++) c = c + (i==1 ? "" : ",") + invtokens(strofreal(C[i,]))
-    return(c)
+    if      (!smatch(gettok(p), "sfso"))  return(0)
+    if      (smatch(p, "sfso blue"))      {; if (!r) return(1); i=1;  }
+    else if (smatch(p, "sfso brown"))     {; if (!r) return(1); i=2;  }
+    else if (smatch(p, "sfso orange"))    {; if (!r) return(1); i=3;  }
+    else if (smatch(p, "sfso red"))       {; if (!r) return(1); i=4;  }
+    else if (smatch(p, "sfso pink"))      {; if (!r) return(1); i=5;  }
+    else if (smatch(p, "sfso purple"))    {; if (!r) return(1); i=6;  }
+    else if (smatch(p, "sfso violet"))    {; if (!r) return(1); i=7;  }
+    else if (smatch(p, "sfso ltblue"))    {; if (!r) return(1); i=8;  }
+    else if (smatch(p, "sfso turquoise")) {; if (!r) return(1); i=9;  }
+    else if (smatch(p, "sfso green"))     {; if (!r) return(1); i=10; }
+    else if (smatch(p, "sfso olive"))     {; if (!r) return(1); i=11; }
+    else if (smatch(p, "sfso black"))     {; if (!r) return(1); i=12; }
+    else if (smatch(p, "sfso parties"))   {; if (!r) return(1); i=13; }
+    else if (smatch(p, "sfso languages")) {; if (!r) return(1); i=14; }
+    else if (smatch(p, "sfso votes"))     {; if (!r) return(1); i=15; }
+    else return(0)
+    P_pclass(2)
+    if (i==1) {
+        P_colors("#1c3259,#374a83,#6473aa,#8497cf,#afbce2,#d8def2,#e8eaf7")
+        P_names(",,,BFS-Blau,,,BFS-Blau 20%")
+        pinfo("dark blue to light blue color scheme")
+    }
+    else if (i==2) {
+        P_colors("#6b0616,#a1534e,#b67d6c,#cca58f,#ddc3a8,#eee3cd")
+        pinfo("dark brown to light brown color scheme")
+    }
+    else if (i==3) {
+        P_colors("#92490d,#ce6725,#d68c25,#e2b224,#eccf76,#f6e7be")
+        pinfo("dark orange to light orange color scheme")
+    }
+    else if (i==4) {
+        P_colors("#6d0724,#a61346,#c62a4f,#d17477,#dea49f,#efd6d1")
+        pinfo("dark red to light red color scheme")
+    }
+    else if (i==5) {
+        P_colors("#7c0051,#a4006f,#c0007c,#cc669d,#da9dbf,#efd7e5")
+        pinfo("dark pink to light pink color scheme")
+    }
+    else if (i==6) {
+        P_colors("#5e0059,#890883,#a23392,#bf64a6,#d79dc5,#efd7e8")
+        pinfo("dark purple to light purple color scheme")
+    }
+    else if (i==7) {
+        P_colors("#3a0054,#682b86,#8c58a3,#a886bc,#c5b0d5,#e1d7eb")
+        pinfo("dark violet to light violet color scheme")
+    }
+    else if (i==8) {
+        P_colors("#076e8d,#1b9dc9,#76b8da,#abd0e7,#c8e0f2,#edf5fd")
+        pinfo("lighter version of blue color scheme")
+    }
+    else if (i==9) {
+        P_colors("#005046,#107a6d,#3aa59a,#95c6c3,#cbe1df,#e9f2f5")
+        pinfo("dark turquoise to light turquoise color scheme")
+    }
+    else if (i==10) {
+        P_colors("#3b6519,#68a239,#95c15b,#b3d17f,#d3e3af,#ecf2d1")
+        pinfo("dark green to light green color scheme")
+    }
+    else if (i==11) {
+        P_colors("#6f6f02,#a3a20a,#c5c00c,#e3df86,#eeecbc,#fefde6")
+        pinfo("dark olive to light olive color scheme")
+    }
+    else if (i==12) {
+        P_colors("#3f3f3e,#838382,#b2b3b3,#d4d5d5,#e6e6e7,#f7f7f7")
+        pinfo("dark gray to light gray color scheme")
+    }
+    else if (i==13) {
+        P_pclass(1)
+        P_colors("#6268AF,#f39f5e,#ea546f,#547d34,#cbd401,#ffff00,#26b300,#792a8f,#9fabd9,#f0da9d,#bebebe")
+        P_names("FDP,CVP,SP,SVP,GLP,BDP,Grüne,small leftwing parties,small middle parties,small rightwing parties,other parties")
+        pinfo("Swiss parties color scheme")
+    }
+    else if (i==14) {
+        P_pclass(1)
+        P_colors("#c73e31,#4570ba,#4ca767,#ecce42,#7f5fa9")
+        P_names("German,French,Italian,Rhaeto-Romanic,English")
+        pinfo("Swiss language region color scheme")
+    }
+    else {
+        P_pclass(3)
+        P_colors("#6d2a83,#8a559c,#a77fb5,#c5aacd,#e2d4e6,#daeadb,#b5d5b8,#8fc194,#6aac71,#45974d")
+        P_names("No,,,,,,,,,Yes")
+        pinfo("vote share color scheme")
+    }
+    psource("Swiss Federal Statistical Office")
+    return(1)
 }
-`PAL'::P_spmap_greys(`RS' n0)
+`Bool' `MAIN'::P_webcolors(`Bool' r, `SS' p)
 {
-    `Int' n, i
-    `SS'  c
-    `RM'  C
+    `Int' i
     
-    n = __clip(n0, 2, 99)
-    C = J(n,2,0), (.88 :- .88*((1::n):-1)/(n-1))
-    C = RGB1_to_RGB(HSV_to_RGB1(C))
-    c = ""
-    for (i=1; i<=n; i++) c = c + (i==1 ? "" : ",") + invtokens(strofreal(C[i,]))
-    return(c)
+    if      (!smatch(gettok(p), "webcolors"))  return(0)
+    if      (smatch(p, "webcolors"))           {; if (!r) return(1); i=0;  }
+    else if (smatch(p, "webcolors pink"))      {; if (!r) return(1); i=1;  }
+    else if (smatch(p, "webcolors purple"))    {; if (!r) return(1); i=2;  }
+    else if (smatch(p, "webcolors redorange")) {; if (!r) return(1); i=3;  }
+    else if (smatch(p, "webcolors yellow"))    {; if (!r) return(1); i=4;  }
+    else if (smatch(p, "webcolors green"))     {; if (!r) return(1); i=5;  }
+    else if (smatch(p, "webcolors cyan"))      {; if (!r) return(1); i=6;  }
+    else if (smatch(p, "webcolors blue"))      {; if (!r) return(1); i=7;  }
+    else if (smatch(p, "webcolors brown"))     {; if (!r) return(1); i=8;  }
+    else if (smatch(p, "webcolors white"))     {; if (!r) return(1); i=9;  }
+    else if (smatch(p, "webcolors gray"))      {; if (!r) return(1); i=10; }
+    else if (smatch(p, "webcolors grey"))      {; if (!r) return(1); i=11; }
+    else return(0)
+    P_pclass(1)
+    if      (i==1)  P_colors("Pink,LightPink,HotPink,DeepPink,PaleVioletRed,MediumVioletRed")
+    else if (i==2)  P_colors("Lavender,Thistle,Plum,Orchid,Violet,Fuchsia,Magenta,MediumOrchid,DarkOrchid,DarkViolet,BlueViolet,DarkMagenta,Purple,MediumPurple,MediumSlateBlue,SlateBlue,DarkSlateBlue,RebeccaPurple,Indigo")
+    else if (i==3)  P_colors("LightSalmon,Salmon,DarkSalmon,LightCoral,IndianRed,Crimson,Red,FireBrick,DarkRed,Orange,DarkOrange,Coral,Tomato,OrangeRed")
+    else if (i==4)  P_colors("Gold,Yellow,LightYellow,LemonChiffon,LightGoldenRodYellow,PapayaWhip,Moccasin,PeachPuff,PaleGoldenRod,Khaki,DarkKhaki")
+    else if (i==5)  P_colors("GreenYellow,Chartreuse,LawnGreen,Lime,LimeGreen,PaleGreen,LightGreen,MediumSpringGreen,SpringGreen,MediumSeaGreen,SeaGreen,ForestGreen,Green,DarkGreen,YellowGreen,OliveDrab,DarkOliveGreen,MediumAquaMarine,DarkSeaGreen,LightSeaGreen,DarkCyan,Teal")
+    else if (i==6)  P_colors("Aqua,Cyan,LightCyan,PaleTurquoise,Aquamarine,Turquoise,MediumTurquoise,DarkTurquoise")
+    else if (i==7)  P_colors("CadetBlue,SteelBlue,LightSteelBlue,LightBlue,PowderBlue,LightSkyBlue,SkyBlue,CornflowerBlue,DeepSkyBlue,DodgerBlue,RoyalBlue,Blue,MediumBlue,DarkBlue,Navy,MidnightBlue")
+    else if (i==8)  P_colors("Cornsilk,BlanchedAlmond,Bisque,NavajoWhite,Wheat,BurlyWood,Tan,RosyBrown,SandyBrown,GoldenRod,DarkGoldenRod,Peru,Chocolate,Olive,SaddleBrown,Sienna,Brown,Maroon")
+    else if (i==9)  P_colors("White,Snow,HoneyDew,MintCream,Azure,AliceBlue,GhostWhite,WhiteSmoke,SeaShell,Beige,OldLace,FloralWhite,Ivory,AntiqueWhite,Linen,LavenderBlush,MistyRose")
+    else if (i==10) P_colors("Gainsboro,LightGray,Silver,DarkGray,DimGray,Gray,LightSlateGray,SlateGray,DarkSlateGray,Black")
+    else if (i==11) P_colors("Gainsboro,LightGrey,Silver,DarkGrey,DimGrey,Grey,LightSlateGrey,SlateGrey,DarkSlateGrey,Black")
+    else {
+        if (webcolors.N()==0) webcolors()
+        Colors(sort(webcolors.keys(),1))
+    }
+    pinfo("HTML colors from www.w3schools.com")
+    psource("www.w3schools.com/colors/colors_names.asp")
+    return(1)
 }
-`PAL'::P_spmap_reds(`RS' n0)
-{
-    `Int' n, i
-    `SS'  c
-    `RM'  C
-    `RC'  p
-    
-    n = __clip(n0, 2, 99)
-    p = ((1::n):-1) / (n-1)
-    C = (20 :- 20*p), (.2 :+ .8*p), (1 :- rowmax((J(n, 1, 0), 1.2*(p:-.5))))
-    C = RGB1_to_RGB(HSV_to_RGB1(C))
-    c = ""
-    for (i=1; i<=n; i++) c = c + (i==1 ? "" : ",") + invtokens(strofreal(C[i,]))
-    return(c)
-}
-`PAL'::P_spmap_rainbow(`RS' n0)
-{
-    `Int' n, i
-    `SS'  c
-    `RM'  C
-    
-    n = __clip(n0, 2, 99)
-    C = (240 :- 240*((1::n):-1)/(n-1)), J(n,2,1)
-    C = RGB1_to_RGB(HSV_to_RGB1(C))
-    c = ""
-    for (i=1; i<=n; i++) c = c + (i==1 ? "" : ",") + invtokens(strofreal(C[i,]))
-    return(c)
-}
-`PAL'::P_spmap_heat(`RS' n)
-{
-    if (n<=2)  return("255 255 0,255 0 0")
-    if (n==3)  return("255 255 0,255 128 0,255 0 0")
-    if (n==4)  return("255 255 128,255 255 0,255 128 0,255 0 0")
-    if (n==5)  return("255 255 128,255 255 0,255 170 0,255 85 0,255 0 0")
-    if (n==6)  return("255 255 128,255 255 0,255 191 0,255 128 0,255 64 0,255 0 0")
-    if (n==7)  return("255 255 128,255 255 0,255 204 0,255 153 0,255 102 0,255 51 0,255 0 0")
-    if (n==8)  return("255 255 191,255 255 64,255 255 0,255 204 0,255 153 0,255 102 0,255 51 0,255 0 0")
-    if (n==9)  return("255 255 191,255 255 64,255 255 0,255 213 0,255 170 0,255 128 0,255 85 0,255 42 0,255 0 0")
-    if (n==10) return("255 255 191,255 255 64,255 255 0,255 219 0,255 182 0,255 146 0,255 109 0,255 73 0,255 36 0,255 0 0")
-    if (n==11) return("255 255 191,255 255 64,255 255 0,255 223 0,255 191 0,255 159 0,255 128 0,255 96 0,255 64 0,255 32 0,255 0 0")
-    if (n==12) return("255 255 213,255 255 128,255 255 42,255 255 0,255 223 0,255 191 0,255 159 0,255 128 0,255 96 0,255 64 0,255 32 0,255 0 0")
-    if (n==13) return("255 255 213,255 255 128,255 255 42,255 255 0,255 227 0,255 198 0,255 170 0,255 142 0,255 113 0,255 85 0,255 57 0,255 28 0,255 0 0")
-    if (n==14) return("255 255 213,255 255 128,255 255 42,255 255 0,255 229 0,255 204 0,255 178 0,255 153 0,255 128 0,255 102 0,255 77 0,255 51 0,255 26 0,255 0 0")
-    if (n==15) return("255 255 213,255 255 128,255 255 42,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
-    if (n>=16) return("255 255 223,255 255 159,255 255 96,255 255 32,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
-}
-`PAL'::P_spmap_terrain(`RS' n)
-{
-    if (n<=2)  return("0 166 0,242 242 242")
-    if (n==3)  return("0 166 0,236 177 118,242 242 242")
-    if (n==4)  return("0 166 0,230 230 0,236 177 118,242 242 242")
-    if (n==5)  return("0 166 0,230 230 0,234 182 78,238 185 159,242 242 242")
-    if (n==6)  return("0 166 0,99 198 0,230 230 0,234 182 78,238 185 159,242 242 242")
-    if (n==7)  return("0 166 0,99 198 0,230 230 0,233 189 58,236 177 118,239 194 179,242 242 242")
-    if (n==8)  return("0 166 0,62 187 0,139 208 0,230 230 0,233 189 58,236 177 118,239 194 179,242 242 242")
-    if (n==9)  return("0 166 0,62 187 0,139 208 0,230 230 0,232 195 46,235 178 94,237 180 142,240 201 192,242 242 242")
-    if (n==10) return("0 166 0,45 182 0,99 198 0,160 214 0,230 230 0,232 195 46,235 178 94,237 180 142,240 201 192,242 242 242")
-    if (n==11) return("0 166 0,45 182 0,99 198 0,160 214 0,230 230 0,232 199 39,234 182 78,236 177 118,238 185 159,240 207 200,242 242 242")
-    if (n==12) return("0 166 0,36 179 0,76 191 0,122 204 0,173 217 0,230 230 0,232 199 39,234 182 78,236 177 118,238 185 159,240 207 200,242 242 242")
-    if (n==13) return("0 166 0,36 179 0,76 191 0,122 204 0,173 217 0,230 230 0,231 203 33,233 186 67,235 177 101,237 179 135,239 190 170,240 211 206,242 242 242")
-    if (n==14) return("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 203 33,233 186 67,235 177 101,237 179 135,239 190 170,240 211 206,242 242 242")
-    if (n==15) return("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
-    if (n>=16) return("0 166 0,25 175 0,53 184 0,83 193 0,116 202 0,151 211 0,189 220 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
-}
-`PAL'::P_spmap_topological(`RS' n)
-{
-    if (n<=2)  return("76 0 255,0 229 255")
-    if (n==3)  return("76 0 255,0 255 77,255 255 0")
-    if (n==4)  return("76 0 255,0 229 255,0 255 77,255 255 0")
-    if (n==5)  return("76 0 255,0 76 255,0 229 255,0 255 77,255 255 0")
-    if (n==6)  return("76 0 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
-    if (n==7)  return("76 0 255,0 76 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
-    if (n==8)  return("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
-    if (n==9)  return("76 0 255,0 76 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
-    if (n==10) return("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
-    if (n==11) return("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
-    if (n==12) return("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
-    if (n==13) return("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
-    if (n==14) return("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
-    if (n==15) return("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
-    if (n>=16) return("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
-}
-`PAL'::P_sfso_blue()        return("#1c3259,#374a83,#6473aa,#8497cf,#afbce2,#d8def2,#e8eaf7"
-                                 \ ",,,BFS-Blau,,,BFS-Blau 20%")
-`PAL'::P_sfso_brown()       return("#6b0616,#a1534e,#b67d6c,#cca58f,#ddc3a8,#eee3cd")
-`PAL'::P_sfso_orange()      return("#92490d,#ce6725,#d68c25,#e2b224,#eccf76,#f6e7be")
-`PAL'::P_sfso_red()         return("#6d0724,#a61346,#c62a4f,#d17477,#dea49f,#efd6d1")
-`PAL'::P_sfso_pink()        return("#7c0051,#a4006f,#c0007c,#cc669d,#da9dbf,#efd7e5")
-`PAL'::P_sfso_purple()      return("#5e0059,#890883,#a23392,#bf64a6,#d79dc5,#efd7e8")
-`PAL'::P_sfso_violet()      return("#3a0054,#682b86,#8c58a3,#a886bc,#c5b0d5,#e1d7eb")
-`PAL'::P_sfso_ltblue()      return("#076e8d,#1b9dc9,#76b8da,#abd0e7,#c8e0f2,#edf5fd")
-`PAL'::P_sfso_turquoise()   return("#005046,#107a6d,#3aa59a,#95c6c3,#cbe1df,#e9f2f5")
-`PAL'::P_sfso_green()       return("#3b6519,#68a239,#95c15b,#b3d17f,#d3e3af,#ecf2d1")
-`PAL'::P_sfso_olive()       return("#6f6f02,#a3a20a,#c5c00c,#e3df86,#eeecbc,#fefde6")
-`PAL'::P_sfso_black()       return("#3f3f3e,#838382,#b2b3b3,#d4d5d5,#e6e6e7,#f7f7f7")
-`PAL'::P_sfso_parties()     return("#6268AF,#f39f5e,#ea546f,#547d34,#cbd401,#ffff00,#26b300,#792a8f,#9fabd9,#f0da9d,#bebebe"
-                                 \ `"FDP,CVP,SP,SVP,GLP,BDP,Grüne,"small leftwing parties (PdA, Sol.)","small middle parties (EVP, CSP)","small rightwing parties (EDu, Lega)",other parties"')
-`PAL'::P_sfso_languages()   return("#c73e31,#4570ba,#4ca767,#ecce42,#7f5fa9"
-                                 \ "German,French,Italian,RhaetoRomanic,English")
-`PAL'::P_sfso_votes()       return("#6d2a83,#6d2a83*.8,#6d2a83*.6,#6d2a83*.4,#6d2a83*.2,#45974d*.2,#45974d*.4,#45974d*.6,#45974d*.8,#45974d"
-                                 \ "No,,,,,,,,,Yes")
 
 end
 
@@ -5051,9 +5671,11 @@ void `MAIN'::matplotlib(| `SS' pal0, `RS' n0, `RV' range)
         display("{err}colormap '" + pal0 + "' not found")
         exit(3499)
     }
-    pname = pal
+    pname = "matplotlib " + pal
     if (ispu) set(colipolate(RGB1, n, range), "RGB1")       // viridis and friends
     else      set(matplotlib_ip(R, G, B, n, range), "RGB1") // other palettes
+    pinfo   = pal + " colormap from matplotlib.org"
+    psource = "matplotlib.org"
 }
 
 `RM' `MAIN'::matplotlib_ip(`RM' R, `RM' G, `RM' B, `RS' n, | `RV' range0)

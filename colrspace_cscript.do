@@ -1419,7 +1419,7 @@ local intensity 0.01 0.1 0.5 1 2 10 100
 gr_setscheme, refscheme    // required so that .color.new works
 mata: S = ColrSpace()
 mata: S.palette("s2")
-mata: st_local("s2names", S.info(1))
+mata: st_local("s2names", S.names())
 foreach i of local intensity {
     local Test
     local space

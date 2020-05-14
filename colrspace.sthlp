@@ -1,5 +1,5 @@
 {smcl}
-{* 10may2020}{...}
+{* 14may2020}{...}
 {cmd:help colrspace}
 {hline}
 
@@ -342,6 +342,7 @@
 {p2col:{helpb colrspace##string:{it:S}.Colors()}}string input/output (vector){p_end}
 {p2col:{helpb colrspace##recycle:{it:S}.colrecycle()}}helper function for recycling{p_end}
 {p2col:{helpb colrspace##convert:{it:S}.convert()}}convert colors between spaces{p_end}
+{p2col:{helpb colrspace##cvalid:{it:S}.cvalid()}}check whether color is valid{p_end}
 {p2col:{helpb colrspace##cvd:{it:S}.cvd()}}color vision deficiency simulation{p_end}
 {p2col:{helpb colrspace##cvd:{it:S}.cvd_M()}}helper function to retrieve CVD matrix{p_end}
 {p2col:{helpb colrspace##cgen:{it:S}.generate()}}color generators{p_end}
@@ -358,11 +359,16 @@
 {p2col:{helpb colrspace##matplotlib:{it:S}.matplotlib_ip()}}helper function to create colormaps{p_end}
 {p2col:{helpb colrspace##mix:{it:S}.mix()}}mix colors{p_end}
 {p2col:{helpb colrspace##util:{it:S}.N()}}retrieve number of colors{p_end}
+{p2col:{helpb colrspace##names:{it:S}.names()}}color names input/output (scalar){p_end}
+{p2col:{helpb colrspace##names:{it:S}.Names()}}color names input/output (vector){p_end}
 {p2col:{helpb colrspace##opint:{it:S}.opacity()}}set/retrieve opacity{p_end}
 {p2col:{helpb colrspace##select:{it:S}.order()}}order colors{p_end}
 {p2col:{helpb colrspace##palettes:{it:S}.palette()}}retrieve colors from named palette{p_end}
 {p2col:{helpb colrspace##pclass:{it:S}.pclass()}}set/retrieve palette class{p_end}
+{p2col:{helpb colrspace##pexists:{it:S}.pexists()}}check whether named palette exists{p_end}
+{p2col:{helpb colrspace##pinfo:{it:S}.pinfo()}}set/retrieve palette description{p_end}
 {p2col:{helpb colrspace##pname:{it:S}.pname()}}set/retrieve palette name{p_end}
+{p2col:{helpb colrspace##psource:{it:S}.psource()}}set/retrieve palette source info{p_end}
 {p2col:{helpb colrspace##recycle:{it:S}.recycle()}}recycle colors{p_end}
 {p2col:{helpb colrspace##io:{it:S}.reset()}}reset colors in particular space{p_end}
 {p2col:{helpb colrspace##select:{it:S}.reverse()}}reverse order of colors{p_end}
@@ -845,6 +851,19 @@
         . {stata `"mata: S.colors("navy*.5 orange%80 maroon*.7%60")"'}
         . {stata "colorpalette mata(S)"}
 
+{marker cvalid}{...}
+{pstd}
+    To check whether a color specification is valid you can type
+
+        {it:flag} = {it:S}{cmd:.cvalid(}{it:colorspec}{cmd:)}
+
+{pstd}
+    where {it:colorspec} is a single color specification as described above. {it:flag}
+    will be 1 if the specification is valid, and 0 else. Note that
+    {it:S}{cmd:.cvalid()} will replace any existing colors in {it:S}. If the
+    color specification is valid, then {it:S} will contain the respective
+    color. If the color specification is invalid, {it:S} will contain no colors.
+
 {dlgtab:Color output}
 
 {pstd}
@@ -855,9 +874,8 @@
 
 {pstd}
     where {it:rgbforce}!=0 enforces exporting all colors using their in RGB
-    values. Colors that have been defined in terms of their Stata color names or
-    CMYK values are exported as is by default, because these
-    specifications are understood by Stata graphics. Specify {it:rgbforce}!=0
+    values. Colors that have been defined in terms of their Stata color names
+    are exported as is by default. Specify {it:rgbforce}!=0
     to export these colors as RGB values. {it:S}{cmd:.colors()} exports all
     colors; use {it:S}{cmd:.colors_added()} to export only the colors that have
     been added last.
@@ -879,6 +897,69 @@
         . {stata "mata: S.colors_added()"}
 
 {marker info}{...}
+{dlgtab:Names input}
+
+{pstd}
+    To import information from a string scalar {it:names} containing a list of color
+    names, type
+
+        {it:S}{cmd:.names}[{cmd:_added}]{cmd:(}{it:names}[{cmd:,} {it:delimiter}]{cmd:)}
+
+{pstd}
+    where string scalar {it:delimiter} sets the character(s) delimiting the names;
+    the default is to assume a space-separated list, i.e. {it:delimiter} = {cmd:" "}. To
+    avoid breaking a name that contains a delimiting character, enclose
+    the name in double quotes. {it:S}{cmd:.names()} affects all colors
+    defined in {it:S}; use {it:S}{cmd:.names_added()} to affect only the
+    colors that have been added last.
+
+{pstd}
+    To import names from a string vector {it:Names} (each
+    element containing a single name), type
+
+        {it:S}{cmd:.Names}[{cmd:_added}]{cmd:(}{it:Names}{cmd:)}
+
+{pstd}
+    Note that redefining the colors, e.g. by applying {it:S}{cmd:.colors(}{it:colors}{cmd:)}
+    or {it:S}{cmd:.set()}, will delete existing color names.
+
+{pstd}
+    Example (colors from {browse "http://getbootstrap.com/docs/3.3/"}):
+
+        . {stata "mata: S = ColrSpace()"}
+        . {stata `"mata: S.colors("#337ab7 #5cb85c #5bc0de #f0ad4e #d9534f")"'}
+        . {stata `"mata: S.names("primary success info warning danger")"'}
+        . {stata `"mata: S.pname("colors from Bootstrap 3.3")"'}
+        . {stata "colorpalette mata(S)"}
+
+{dlgtab:Names output}
+
+{pstd}
+    To export color names into a string scalar containing a
+    space-separated list of the descriptions, type
+
+        {it:names} = {it:S}{cmd:.names}[{cmd:_added}]{cmd:()}
+
+{pstd}
+    {it:S}{cmd:.names()} exports names from all
+    colors; use {it:S}{cmd:.names_added()} to export names only from the
+    colors that have been added last.
+
+{pstd}
+    Alternatively, to export the names into a string column vector (each
+    row containing a single name) type
+
+        {it:Names} = {it:S}{cmd:.Names}[{cmd:_added}]{cmd:()}
+
+{pstd}
+    Example:
+
+        . {stata "mata: S = ColrSpace()"}
+        . {stata `"mata: S.colors("SeaShell Crimson")"'}
+        . {stata "mata: S.colors()"}
+        . {stata "mata: S.names()"}
+
+{marker info}{...}
 {dlgtab:Description input}
 
 {pstd}
@@ -892,7 +973,7 @@
     the default is to assume a space-separated list, i.e. {it:delimiter} = {cmd:" "}. To
     avoid breaking a description that contains a delimiting character, enclose
     the description in double quotes. {it:S}{cmd:.info()} affects all colors
-    defined in {it:S}; use {it:S}{cmd:.colors_added()} to affect only the
+    defined in {it:S}; use {it:S}{cmd:.info_added()} to affect only the
     colors that have been added last.
 
 {pstd}
@@ -911,7 +992,7 @@
         . {stata "mata: S = ColrSpace()"}
         . {stata `"mata: S.colors("#337ab7 #5cb85c #5bc0de #f0ad4e #d9534f")"'}
         . {stata `"mata: S.info("primary success info warning danger")"'}
-        . {stata `"mata: S.pname("Bootstrap 3.3 colors")"'}
+        . {stata `"mata: S.pname("colors from Bootstrap 3.3")"'}
         . {stata "colorpalette mata(S)"}
 
 {dlgtab:Description output}
@@ -920,36 +1001,26 @@
     To export color descriptions into a string scalar containing a
     space-separated list of the descriptions, type
 
-        {it:info} = {it:S}{cmd:.info}[{cmd:_added}]{cmd:(}[{it:rgbforce}]{cmd:)}
+        {it:info} = {it:S}{cmd:.info}[{cmd:_added}]{cmd:()}
 
 {pstd}
-    where {it:rgbforce}!=0 changes the type of descriptions that are
-    exported. By default, {it:S}{cmd:.info()} exports whatever descriptions
-    have been defined. That is, empty string will be exported for colors
-    that have no description. However, if {it:rgbforce}!=0 is specified,
-    descriptions are automatically generated for colors that have no
-    description but have been defined in terms of their Stata color names or
-    CMYK values. Specifying {it:rgbforce}!=0 primarily makes sense in
-    connection with specifying {it:rgbforce}!=0 when calling
-    {it:S}{cmd:.colors()}. {it:S}{cmd:.info()} exports descriptions from all
-    colors; use {it:S}{cmd:.info_added()} to export descriptions only from the
-    colors that have been added last.
+    {it:S}{cmd:.info()} exports descriptions from all colors; use
+    {it:S}{cmd:.info_added()} to export descriptions only from the colors that
+    have been added last.
 
 {pstd}
     Alternatively, to export the color descriptions into a string column vector (each
     row containing a single description) type
 
-        {it:Info} = {it:S}{cmd:.Info}[{cmd:_added}]{cmd:(}[{it:rgbforce}]{cmd:)}
+        {it:Info} = {it:S}{cmd:.Info}[{cmd:_added}]{cmd:()}
 
 {pstd}
     Example:
 
         . {stata "mata: S = ColrSpace()"}
-        . {stata `"mata: S.colors("navy*.5 orange%80 maroon*.7%60 SeaShell Crimson")"'}
+        . {stata `"mata: S.colors("SeaShell Crimson")"'}
         . {stata "mata: S.colors()"}
         . {stata "mata: S.info()"}
-        . {stata "mata: S.colors(1)"}
-        . {stata "mata: S.info(1)"}
 
 
 {marker io}{...}
@@ -977,7 +1048,7 @@
 {phang}
     {it:C} provides the color values. In case of {it:space} = {cmd:"HEX"},
     {it:C} is a string vector of length {it:n} containing {it:n} hex RGB
-    values; in case of {it:space} = {cmd:"CMYK"}, {cmd:"CMYK1"}, {cmd:"RGBA"}, 
+    values; in case of {it:space} = {cmd:"CMYK"}, {cmd:"CMYK1"}, {cmd:"RGBA"},
     or {cmd:"RGBA1"}, {it:C} is a {it:n} x 4 real matrix; in case of {it:space} =
     {bind:{cmd:"CAM02} {it:mask}{cmd:"}}, {it:C} is a {it:n} x
     {cmd:strlen(}{it:mask}{cmd:)} real matrix; in all
@@ -1290,10 +1361,10 @@
 {phang}
     {it:positions} is a real vector specifying the positions of the origin
     colors. The default is to place them on a regular grid from 0
-    and 1. This default can also be selected by typing {cmd:.} (missing). If 
-    {it:positions} has less elements than there are colors, default 
-    positions are used for the remaining colors. If the same position is 
-    specified for multiple colors, these colors will be averaged before 
+    and 1. This default can also be selected by typing {cmd:.} (missing). If
+    {it:positions} has less elements than there are colors, default
+    positions are used for the remaining colors. If the same position is
+    specified for multiple colors, these colors will be averaged before
     applying interpolation.
 
 {phang}
@@ -1601,7 +1672,7 @@
 
 {pstd}
     {it:S}{cmd:.saturate()} has been inspired by the
-    {cmd:saturate()} and {cmd:desaturate()} functions in Gregor Aisch's 
+    {cmd:saturate()} and {cmd:desaturate()} functions in Gregor Aisch's
     {browse "http://gka.github.io/chroma.js/":chroma.js}.
 
 {marker luminate}{...}
@@ -1630,7 +1701,7 @@
 {phang}
     {it:method} selects the color space in which the colors are manipulated. It
     can be {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv"}, {cmd:"HCL"}, {cmd:"JCh"}
-    (CIECAM02 JCh), {cmd:"JMh"} or {cmd:"Jab"} (lowercase spelling 
+    (CIECAM02 JCh), {cmd:"JMh"} or {cmd:"Jab"} (lowercase spelling
     allowed). The default is {cmd:"JMh"}. This default can also be selected by
     typing {cmd:""}. {it:S}{cmd:.luminate()} works by converting the colors to
     the selected color space, adding {it:d} to the L channel (or J in case of
@@ -1655,7 +1726,7 @@
 
 {pstd}
     {it:S}{cmd:.luminate()} has been inspired by the
-    {cmd:darken()} and {cmd:brighten()} functions in Gregor Aisch's 
+    {cmd:darken()} and {cmd:brighten()} functions in Gregor Aisch's
     {browse "http://gka.github.io/chroma.js/":chroma.js}.
 
 
@@ -1770,7 +1841,7 @@
 {pstd}
     To import colors from a named color palette, type:
 
-        {it:C} = {it:S}{cmd:.}[{cmd:add_}]{cmd:palette(}[{cmd:"}{it:name}{cmd:"}{cmd:,} {it:n}{cmd:,} {it:noexpand}]{cmd:)}
+        {it:S}{cmd:.}[{cmd:add_}]{cmd:palette(}[{cmd:"}{it:name}{cmd:"}{cmd:,} {it:n}{cmd:,} {it:opt}]{cmd:)}
 
 {pstd}
     {it:S}{cmd:.palette()} replaces existing colors by the new colors; use
@@ -1781,34 +1852,19 @@
     help {helpb colorpalette}, if installed, for more information on these palettes):
 
 {p2colset 13 38 40 2}{...}
+{p2col:{cmd:s2}}15 qualitative colors as in Stata's {helpb scheme s2:s2color} scheme{p_end}
 {p2col:{cmd:s1}}15 qualitative colors as in Stata's {helpb scheme s1:s1color} scheme{p_end}
 {p2col:{cmd:s1r}}15 qualitative colors as in Stata's {helpb scheme s1:s1rcolor} scheme{p_end}
-{p2col:{cmd:s2}}15 qualitative colors as in Stata's {helpb scheme s2:s2color} scheme{p_end}
 {p2col:{cmd:economist}}15 qualitative colors as in Stata's {helpb scheme economist:economist} scheme{p_end}
 {p2col:{cmd:mono}}15 gray scales (qualitative) as in Stata's monochrome schemes{p_end}
 {p2col:{cmd:cblind}}9 colorblind-friendly colors (qualitative) by {browse "http://jfly.iam.u-tokyo.ac.jp/color/":Okabe and Ito (2002)}{p_end}
 {p2col:{cmd:plottig}}15 qualitative colors as in {cmd:plottig} by {browse "http://www.stata-journal.com/article.html?article=gr0070":Bischof (2017b)}{p_end}
 {p2col:{cmd:538}}13 qualitative colors as in {cmd:538} by {browse "http://ideas.repec.org/c/boc/bocode/s458404.html":Bischof (2017a)}{p_end}
-{p2col:{cmd:tfl}}7 qualitative colors as in {cmd:mrc} by {browse "http://ideas.repec.org/c/boc/bocode/s457703.html":Morris (2013)}{p_end}
 {p2col:{cmd:mrc}}8 qualitative colors as in {cmd:tfl} by {browse "http://ideas.repec.org/c/boc/bocode/s458103.html":Morris (2015)}{p_end}
+{p2col:{cmd:tfl}}7 qualitative colors as in {cmd:mrc} by {browse "http://ideas.repec.org/c/boc/bocode/s457703.html":Morris (2013)}{p_end}
 {p2col:{cmd:burd}}13 qualitative colors as in {cmd:burd} by {browse "http://ideas.repec.org/c/boc/bocode/s457623.html":Briatte (2013)}{p_end}
 {p2col:{cmd:lean}}15 gray scales (qualitative) as in {cmd:lean} by {browse "http://www.stata-journal.com/article.html?article=gr0002":Juul (2003)}{p_end}
-{p2col:{cmd:webcolors}}all 148 {help colrspace##webcolors:web colors}, alphabetically sorted{p_end}
-{p2col:{cmd:webcolors pink}}6 pink {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors purple}}19 purple {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors redorange}}14 red and orange {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors yellow}}11 yellow {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors green}}22 green {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors cyan}}8 cyan {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors blue}}16 blue {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors brown}}18 brown {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors white}}17 white {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors gray}}10 gray {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors grey}}10 grey {help colrspace##webcolors:web colors} (same color codes as {cmd:gray}){p_end}
-{p2col:{cmd:d3 10}}10 qualitative colors from {browse "http://d3js.org/":D3.js}{p_end}
-{p2col:{cmd:d3 20}}20 qualitative colors in pairs from {browse "http://d3js.org/":D3.js}{p_end}
-{p2col:{cmd:d3 20b}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
-{p2col:{cmd:d3 20c}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{cmd:tableau}}20 qualitative colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
 {p2col:{cmd:Accent}}8 accented colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
 {p2col:{cmd:Dark2}}8 dark colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
 {p2col:{cmd:Paired}}12 paired colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
@@ -1844,10 +1900,21 @@
 {p2col:{cmd:RdYlBu}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
 {p2col:{cmd:RdYlGn}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
 {p2col:{cmd:Spectral}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{cmd:viridis}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{cmd:plasma}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{cmd:inferno}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{cmd:magma}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{cmd:cividis}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{cmd:twilight}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{cmd:twilight shifted}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{cmd:matplotlib} [{it:name}]}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
 {p2col:{cmd:ptol qualitative}}1-12 qualitative colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)}{p_end}
 {p2col:{cmd:ptol diverging}}3-11 diverging colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)}{p_end}
 {p2col:{cmd:ptol rainbow}}4-12 rainbow colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)} (sequential){p_end}
-{p2col:{cmd:tableau}}20 qualitative colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{cmd:d3 10}}10 qualitative colors from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{cmd:d3 20}}20 qualitative colors in pairs from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{cmd:d3 20b}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{cmd:d3 20c}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
 {p2col:{cmd:lin carcolor}}6 car colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
 {p2col:{cmd:lin carcolor algorithm}}6 algorithm-selected car colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
 {p2col:{cmd:lin food}}7 food colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
@@ -1887,6 +1954,18 @@
 {p2col:{cmd:sfso parties}}11 qualitative colors by SFSO (2017){p_end}
 {p2col:{cmd:sfso languages}}5 qualitative colors by SFSO (2017){p_end}
 {p2col:{cmd:sfso votes}}10 diverging colors by SFSO (2017){p_end}
+{p2col:{cmd:webcolors}}all 148 {help colrspace##webcolors:web colors}, alphabetically sorted{p_end}
+{p2col:{cmd:webcolors pink}}6 pink {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors purple}}19 purple {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors redorange}}14 red and orange {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors yellow}}11 yellow {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors green}}22 green {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors cyan}}8 cyan {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors blue}}16 blue {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors brown}}18 brown {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors white}}17 white {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors gray}}10 gray {help colrspace##webcolors:web colors}{p_end}
+{p2col:{cmd:webcolors grey}}10 grey {help colrspace##webcolors:web colors} (same color codes as {cmd:gray}){p_end}
 
 {pmore}
     The palette names can be abbreviated and typed in lowercase letters (for example,
@@ -1914,14 +1993,16 @@
     equal to {it:n}.
 
 {phang}
-    {it:noexpand}!=0 omits recycling or interpolating colors if {it:n}, the number of
+    {it:opt} is interpreted as {it:range} when redirecting to
+    {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}. In all other cases,
+    {it:opt}!=0 prevents recycling or interpolating colors if {it:n}, the number of
     requested colors, is larger (smaller) than the maximum (minimum) number of
-    colors defined by a palette. That is, if {it:noexpand}!=0 is specified, the
+    colors defined by a palette. That is, if {it:opt}!=0 is specified, the
     resulting number of colors in {it:S} may be different from the requested number
-    of colors. Exception: {it:noexpand}!=0 does not suppress "recycling" of
+    of colors. Exception: {it:opt}!=0 does not suppress "recycling" of
     qualitative palettes if {it:n} is smaller than the (minimum) number of colors
     defined by the palette. In this case, the first {it:n} colors of the palette
-    are retrieved irrespective of whether {it:noexpand}!=0 is specified or not.
+    are retrieved irrespective of whether {it:opt}!=0 is specified or not.
 
 {pstd}
     Example:
@@ -1931,6 +2012,16 @@
         . {stata `"mata: S.add_palette("lin veg")"'}
         . {stata `"mata: S.pname("fruits and vegetables")"'}
         . {stata "colorpalette mata(S)"}
+
+{marker pexists}{...}
+{pstd}
+    To check whether {cmd:"}{it:name}{cmd:"} matches an existing palette you can type
+
+        {it:flag} = {it:S}{cmd:.pexists(}{cmd:"}{it:name}{cmd:"}{cmd:)}
+
+{pstd}
+    {it:flag} will be 1 if a matching palette was found, and 0 else. The
+    (expanded) palette name will be stored in {it:S}{cmd:.pname()}.
 
 {marker matplotlib}{...}
 {dlgtab:Matplotlib colormaps}
@@ -2349,6 +2440,40 @@
 {pstd}
     Functions {it:S}{cmd:.palette()} and {it:S}{cmd:.matplotlib()} automatically
     assign a palette name.
+
+{marker pinfo}{...}
+{dlgtab:Palette description}
+
+{pstd}
+    To assign a palette description to the colors in {it:S}, type
+
+        {it:S}{cmd:.pinfo(}{it:info}{cmd:)}
+
+{pstd}
+    where {it:info} is a string scalar. To retrieve the palette description, type
+
+        {it:info} = {it:S}{cmd:.pinfo()}
+
+{pstd}
+    Functions {it:S}{cmd:.palette()} and {it:S}{cmd:.matplotlib()} automatically
+    assign a palette description.
+
+{marker psource}{...}
+{dlgtab:Palette source}
+
+{pstd}
+    To assign information on the source of the colors in {it:S}, type
+
+        {it:S}{cmd:.psource(}{it:source}{cmd:)}
+
+{pstd}
+    where {it:source} is a string scalar. To retrieve the palette source, type
+
+        {it:source} = {it:S}{cmd:.psource()}
+
+{pstd}
+    Functions {it:S}{cmd:.palette()} and {it:S}{cmd:.matplotlib()} automatically
+    assign a palette source.
 
 {marker isipolate}{...}
 {dlgtab:Interpolation status}
