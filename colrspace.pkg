@@ -3,7 +3,7 @@ d colrspace: module providing a class-based color management system in Mata
 d 
 d Author: Ben Jann, University of Bern, ben.jann@soz.unibe.ch
 d
-d Distribution-Date: 20200514
+d Distribution-Date: 20200515
 f colrspace_cscript.do
 f lcolrspace.mlib
 f colrspace_source.sthlp

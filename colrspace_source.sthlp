@@ -1,4 +1,4 @@
-*! version 1.0.3  14may2020  Ben Jann
+*! version 1.0.4  15may2020  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -285,7 +285,7 @@ class `MAIN' {
         `RM'    cvd_M()       // retrieve CVD transformation matrix
     private:
         `RM'    CVD()
-        `RM'    cvd_M_d(), cvd_M_p(), cvd_M_t()
+        `RM'    _cvd_M(), cvd_M_d(), cvd_M_p(), cvd_M_t()
 
     // Color differences and contrast ratios
     public:
@@ -2237,14 +2237,16 @@ void `MAIN'::intensify(`RV' p0)
     }
     if (cols(p0)>1) p = p0'
     else            p = p0
+    if (N()==0) return
     if      (rows(p)<N()) p = colrecycle(p, N())
     else if (rows(p)>N()) recycle(rows(p))
-    C = get("RGB")
     if (missing(p)) {
         id = ::select(1::N(), p:<.)
         if (length(id)==0) return
-        C = C[id,]; p = p[id]
+        p = p[id]
     }
+    C = get("RGB")
+    if (length(id)) C = C[id,]
     for (i=rows(C); i; i--) C[i,] = _intensify(C[i,], p[i])
     reset(C, "RGB", id)
 }
@@ -2285,16 +2287,17 @@ void `MAIN'::saturate(`RV' p0, | `SS' method0, `Bool' level)
     if (length(p0)==0) return
     if (cols(p0)>1) p = p0'
     else            p = p0
+    if (N()==0) return
     if      (rows(p)<N()) p = colrecycle(p, N())
     else if (rows(p)>N()) recycle(rows(p))
-    C = get(method)
     if (missing(p)) {
         id = ::select(1::N(), p:<.)
         if (length(id)==0) return
-        C = C[id,]; p = p[id]
+        p = p[id]
     }
+    C = get(method)
+    if (length(id)) C = C[id,]
     for (i=rows(C); i; i--) {
-        if (p[i]>=.) continue
         if (level) C[i,2] = max((p[i],0))
         else       C[i,2] = max((C[i,2] + p[i], 0))
     }
@@ -2324,18 +2327,19 @@ void `MAIN'::luminate(`RV' p0, | `SS' method0, `Bool' level)
     if (length(p0)==0) return
     if (cols(p0)>1) p = p0'
     else            p = p0
+    if (N()==0) return
     if      (rows(p)<N()) p = colrecycle(p, N())
     else if (rows(p)>N()) recycle(rows(p))
-    C = get(method)
     if (missing(p)) {
         id = ::select(1::N(), p:<.)
         if (length(id)==0) return
-        C = C[id,]; p = p[id]
+        p = p[id]
     }
+    C = get(method)
+    if (length(id)) C = C[id,]
     if (method=="HCL") j = 3
     else               j = 1
     for (i=rows(C); i; i--) {
-        if (p[i]>=.) continue
         if (level) C[i,j] = max((p[i],0))
         else       C[i,j] = max((C[i,j] + p[i], 0))
     }
@@ -2351,14 +2355,49 @@ end
 
 mata:
 
-void `MAIN'::gray(| `RS' p, `SS' method)
+void `MAIN'::gray(| `RV' p0, `SS' method0)
 {
-    RGB = GRAY(RGB, "RGB1", p, method)
-    stok = J(N(), 1, `FALSE')
+    // note: the method proposed at https://en.wikipedia.org/wiki/Grayscale
+    // (set all RGB channels to Y of XYZ; and apply gamma) is equivalent to
+    // method "HCL" or "LCh" with p = 1
+    `IntC' id
+    `RC'   p
+    `SS'   method
+    `RM'   C
+    
+    if (args()==0) p0 = 1
+    method = findkey(strlower(method0), ("LCh", "HCL", "JCh", "JMh")', "LCh")
+    if (method=="") {
+        display("{err}method '" + method0 + "' not allowed")
+        exit(3498)
+    }
+    if (method=="JCh") method = "CAM02 JCh"
+    if (length(p0)==0) return
+    if (any(p0:<0) | any(p0:>1 :& p0:<.)) {
+        display("{err}{it:p} must be within 0 and 1")
+        exit(3300)
+    }
+    if (cols(p0)>1) p = p0'
+    else            p = p0
+    if (N()==0) return
+    if      (rows(p)<N()) p = colrecycle(p, N())
+    else if (rows(p)>N()) recycle(rows(p))
+    if (missing(p)) {
+        id = ::select(1::N(), p:<.)
+        if (length(id)==0) return
+        p = p[id]
+    }
+    C = get(method)
+    if (length(id)) C = C[id,]
+    C[,2] = C[,2] :* (1 :- p)
+    reset(C, method, id)
 }
 
 `RM' `MAIN'::GRAY(`RM' C, `SS' space, `RS' p0, `SS' method0)
 {
+    // note: the method proposed at https://en.wikipedia.org/wiki/Grayscale
+    // (set all RGB channels to Y of XYZ; and apply gamma) is equivalent to
+    // method "HCL" or "LCh" with p = 1
     `RS' p
     `SS' method
     `RM' G
@@ -2368,17 +2407,16 @@ void `MAIN'::gray(| `RS' p, `SS' method)
         display("{err}proportion must be within 0 and 1")
         exit(3300)
     }
-    // https://en.wikipedia.org/wiki/Grayscale: set all RGB channels to Y of XYZ
-    // (and apply gamma) => equivalent to method "HCL" or "LCh" if p = 1
     method = findkey(strlower(method0), ("LCh", "HCL", "JCh", "JMh")', "LCh")
     if (method=="") {
         display("{err}method '" + method0 + "' not allowed")
         exit(3498)
     }
     if (method=="JCh") method = "CAM02 JCh"
+    if (p==0) return(C) // no conversion needed
     G = convert(C, space, method)
-    if (p<. & p!=1) G[,2] = G[,2] * (1-p)
-    else            G[,2] = J(rows(G), 1, 0)
+    if (p!=1) G[,2] = G[,2] * (1-p)
+    else      G[,2] = J(rows(G), 1, 0)
     return(convert(G, method, space))
 }
 
@@ -2397,10 +2435,50 @@ end
 
 mata:
 
-void `MAIN'::cvd(| `RS' p, `SS' method)
+void `MAIN'::cvd(| `RV' p0, `SS' method0)
 {
-    RGB = CVD(RGB, "RGB1", p, method)
-    stok = J(N(), 1, `FALSE')
+    `Int'  i, m
+    `IntC' id
+    `RC'   p
+    `RS'   pi
+    `RM'   C, M
+    `SS'   method
+    
+    if (args()==0) p0 = 1
+    method = strlower(method0)
+    if      (smatch(method, "deuteranomaly"))  m = 1 // includes ""
+    else if (smatch(method, "protanomaly"))    m = 2
+    else if (smatch(method, "tritanomaly"))    m = 3
+    else {
+        display("{err}type '" + method0 + "' not allowed")
+        exit(3498)
+    }
+    if (length(p0)==0) return
+    if (any(p0:<0) | any(p0:>1 :& p0:<.)) {
+        display("{err}{it:p} must be within 0 and 1")
+        exit(3300)
+    }
+    if (cols(p0)>1) p = p0'
+    else            p = p0
+    if (N()==0) return
+    if      (rows(p)<N()) p = colrecycle(p, N())
+    else if (rows(p)>N()) recycle(rows(p))
+    if (missing(p)) {
+        id = ::select(1::N(), p:<.)
+        if (length(id)==0) return
+        p = p[id]
+    }
+    C = get("lRGB")
+    if (length(id)) C = C[id,]
+    pi = .
+    for (i=rows(C); i; i--) {
+        if (p[i]!=pi) { // update M only if p changed
+            pi = p[i]
+            M = _cvd_M(pi, m)'
+        }
+        C[i,] = C[i,] * M
+    }
+    reset(C, "lRGB", id)
 }
 
 `RM' `MAIN'::CVD(`RM' C, `SS' space, | `RS' p, `SS' method)
@@ -2408,6 +2486,7 @@ void `MAIN'::cvd(| `RS' p, `SS' method)
     `Int' i
     `RM'  M, CVD
     
+    if (p==0) return(C) // no conversion needed
     M = cvd_M(p, method)'
     CVD = convert(C, space, "lRGB")
     for (i=rows(CVD); i; i--) CVD[i,] = CVD[i,] * M
@@ -2416,8 +2495,8 @@ void `MAIN'::cvd(| `RS' p, `SS' method)
 
 `RM' `MAIN'::cvd_M(| `RS' p0, `SS' method0)
 {
-    `Int' a, b, i
-    `RS'  f, p
+    `Int' m
+    `RS'  p
     `SS'  method
     
     p = (p0<. ? p0 : 1)
@@ -2426,24 +2505,32 @@ void `MAIN'::cvd(| `RS' p, `SS' method)
         exit(3300)
     }
     method = strlower(method0)
-    if      (smatch(method, "deuteranomaly"))  i = 1 // includes ""
-    else if (smatch(method, "protanomaly"))    i = 2
-    else if (smatch(method, "tritanomaly"))    i = 3
+    if      (smatch(method, "deuteranomaly")) m = 1 // includes ""
+    else if (smatch(method, "protanomaly"))   m = 2
+    else if (smatch(method, "tritanomaly"))   m = 3
     else {
         display("{err}type '" + method0 + "' not allowed")
         exit(3498)
     }
+    return(_cvd_M(p, m))
+}
+
+`RM' `MAIN'::_cvd_M(`RS' p, `Int' m)
+{
+    `Int' a, b
+    `RS'  f
+    
     f = p/.1
     a = floor(f); b = ceil(f)
     if (a==b) {
-        if (i==1) return(cvd_M_d(a))
-        if (i==2) return(cvd_M_p(a))
-        if (i==3) return(cvd_M_t(a))
+        if (m==1) return(cvd_M_d(a))
+        if (m==2) return(cvd_M_p(a))
+        if (m==3) return(cvd_M_t(a))
     }
     f = f-a
-    if (i==1) return( (1-f)*cvd_M_d(a) :+ f*cvd_M_d(b) )
-    if (i==2) return( (1-f)*cvd_M_p(a) :+ f*cvd_M_p(b) )
-    if (i==3) return( (1-f)*cvd_M_t(a) :+ f*cvd_M_t(b) )
+    if (m==1) return( (1-f)*cvd_M_d(a) :+ f*cvd_M_d(b) )
+    if (m==2) return( (1-f)*cvd_M_p(a) :+ f*cvd_M_p(b) )
+    if (m==3) return( (1-f)*cvd_M_t(a) :+ f*cvd_M_t(b) )
 }
 
 `RM' `MAIN'::cvd_M_d(`Int' i)
@@ -2698,7 +2785,7 @@ end
 
 mata:
 
-`TM' `MAIN'::convert(`TM' C0, `SS' from, | `SS' to,  `RS' p, `SS' method)
+`TM' `MAIN'::convert(`TM' C0, `SS' from, | `SS' to, `RS' p, `SS' method)
 {
     `SR' FROM, TO
     `SM' PATH
@@ -5150,88 +5237,88 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (i==1) {
         P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
         P_names("Red,Silver,Black,Green,Brown,Blue")
-        pinfo("car colors (Turkers) by Lin et al. (2013)")
+        pinfo("Turkers-selected car colors by Lin et al. (2013)")
     }
     else if (i==2) {
         P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
         P_names("Red,Silver,Black,Green,Brown,Blue")
-        pinfo("car colors (algorithm) by Lin et al. (2013)")
+        pinfo("algorithm-selected car colors by Lin et al. (2013)")
     }
     else if (i==3) {
         P_colors("199 199 199,31 119 180,140 86 75,152 223 138,219 219 141,196 156 148,214 39 40")
-        P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
-        P_info("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
-        pinfo("food colors (Turkers) by Lin et al. (2013)")
+        //P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
+        P_names("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
+        pinfo("Turkers-selected food colors by Lin et al. (2013)")
     }
     else if (i==4) {
         P_colors("31 119 180,255 127 14,140 86 75,44 160 44,255 187 120,219 219 141,214 39 40")
-        P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
-        P_info("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
-        pinfo("food colors (algorithm) by Lin et al. (2013)")
+        //P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
+        P_names("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
+        pinfo("algorithm-selected food colors by Lin et al. (2013)")
     }
     else if (i==5) {
         P_colors("214 39 40,31 119 180,174 119 232,44 160 44,152 223 138")
         P_names("Speed,Reliability,Comfort,Safety,Efficiency")
-        pinfo("feature colors (Turkers) by Lin et al. (2013)")
+        pinfo("Turkers-selected feature colors by Lin et al. (2013)")
     }
     else if (i==6) {
         P_colors("214 39 40,31 119 180,140 86 75,255 127 14,44 160 44")
         P_names("Speed,Reliability,Comfort,Safety,Efficiency")
-        pinfo("feature colors (algorithm) by Lin et al. (2013)")
+        pinfo("algorithm-selected feature colors by Lin et al. (2013)")
     }
     else if (i==7) {
         P_colors("31 119 180,214 39 40,152 223 138,44 160 44,127 127 127")
         P_names("Sleeping,Working,Leisure,Eating,Driving")
-        pinfo("activity colors (Turkers) by Lin et al. (2013)")
+        pinfo("Turkers-selected activity colors by Lin et al. (2013)")
     }
     else if (i==8) {
         P_colors("140 86 75,255 127 14,31 119 180,227 119 194,214 39 40")
         P_names("Sleeping,Working,Leisure,Eating,Driving")
-        pinfo("activity colors (algorithm) by Lin et al. (2013)")
+        pinfo("algorithm-selected activity colors by Lin et al. (2013)")
     }
     else if (i==9) {
         P_colors("146 195 51,251 222 6,64 105 166,200 0 0,127 34 147,251 162 127,255 86 29")
         P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-        pinfo("fruit colors (Turkers) by Lin et al. (2013)")
+        pinfo("expert-selected fruit colors by Lin et al. (2013)")
     }
     else if (i==10) {
         P_colors("44 160 44,188 189 34,31 119 180,214 39 40,148 103 189,255 187 120,255 127 14")
         P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-        pinfo("fruit colors (algorithm) by Lin et al. (2013)")
+        pinfo("algorithm-selected fruit colors by Lin et al. (2013)")
     }
     else if (i==11) {
         P_colors("255 141 61,157 212 105,245 208 64,104 59 101,239 197 143,139 129 57,255 26 34")
         P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-        pinfo("vegetable colors (Turkers) by Lin et al. (2013)")
+        pinfo("expert-selected vegetable colors by Lin et al. (2013)")
     }
     else if (i==12) {
         P_colors("255 127 14,44 160 44,188 189 34,148 103 189,140 86 75,152 223 138,214 39 40")
         P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-        pinfo("vegetable colors (algorithm) by Lin et al. (2013)")
+        pinfo("algorithm-selected vegetable colors by Lin et al. (2013)")
     }
     else if (i==13) {
         P_colors("119 67 6,254 0 0,151 37 63,1 106 171,1 159 76,254 115 20,104 105 169")
-        P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
-        P_info("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
-        pinfo("drinks colors (Turkers) by Lin et al. (2013)")
+        //P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
+        P_names("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
+        pinfo("expert-selected drinks colors by Lin et al. (2013)")
     }
     else if (i==14) {
         P_colors("140 86 75,214 39 40,227 119 194,31 119 180,44 160 44,255 127 14,148 103 189")
-        P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
-        P_info("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
-        pinfo("drinks colors (algorithm) by Lin et al. (2013)")
+        //P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
+        P_names("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
+        pinfo("algorithm-selected drinks colors by Lin et al. (2013)")
     }
     else if (i==15) {
         P_colors("161 165 169,44 163 218,242 99 33,255 183 0,0 112 66,204 0 0,123 0 153")
-        P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
-        P_info("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
-        pinfo("brands colors (Turkers) by Lin et al. (2013)")
+        //P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
+        P_names("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
+        pinfo("expert-selected brands colors by Lin et al. (2013)")
     }
     else {
         P_colors("152 223 138,31 119 180,255 127 14,140 86 75,44 160 44,214 39 40,148 103 189")
-        P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
-        P_info("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
-        pinfo("brands colors (algorithm) by Lin et al. (2013)")
+        //P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
+        P_names("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
+        pinfo("algorithm-selected brands colors by Lin et al. (2013)")
     }
     psource("Lin et al. (2013)")
     return(1)

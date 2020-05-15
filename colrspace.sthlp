@@ -1,5 +1,5 @@
 {smcl}
-{* 14may2020}{...}
+{* 15may2020}{...}
 {cmd:help colrspace}
 {hline}
 
@@ -1172,16 +1172,17 @@
     {it:S}{cmd:.convert()} can also be used for grayscale conversion or
     color vision deficiency simulation (see below). The syntax is
 
-        {it:C} = {it:S}{cmd:.convert(}{it:C0}{cmd:,} {it:from}{cmd:,} {cmd:"gray"}[{cmd:,} {it:proportion}{cmd:,} {it:method}]{cmd:)}
+        {it:C} = {it:S}{cmd:.convert(}{it:C0}{cmd:,} {it:from}{cmd:,} {cmd:"gray"}[{cmd:,} {it:p}{cmd:,} {it:method}]{cmd:)}
 
-        {it:C} = {it:S}{cmd:.convert(}{it:C0}{cmd:,} {it:from}{cmd:,} {cmd:"cvd"}[{cmd:,} {it:severity}{cmd:,} {it:type}]{cmd:)}
+        {it:C} = {it:S}{cmd:.convert(}{it:C0}{cmd:,} {it:from}{cmd:,} {cmd:"cvd"}[{cmd:,} {it:p}{cmd:,} {it:method}]{cmd:)}
 
 {pstd}
-    where {it:proportion} and {it:method} are as described in
-    {help colrspace##gray:Grayscale conversion} and {it:severity} and
-    {it:type} are as described in
-    {help colrspace##cvd:Color vision deficiency simulation}. The adjusted colors will
-    be returned in the same color space or coding scheme as the input colors.
+    where {it:p} is a real scalar in [0,1] specifying the proportion of gray
+    or the severity of color vision deficiency. The default
+    is {it:p} = {cmd:1} (complete conversion to gray, maximum CVD severity). This default can also be selected
+    by typing {cmd:.} (missing). {it:method} selects the conversion method or
+    CVD type; see {help colrspace##gray:Grayscale conversion} and
+    {help colrspace##cvd:Color vision deficiency simulation}.
 
 
 {marker opint}{...}
@@ -1640,10 +1641,11 @@
 {phang}
     {it:d} is a real vector of saturation adjustments addends. Positive values
     increase saturation, negative values decrease saturation. If the number of
-    specified addends is smaller than the number of colors, the
-    addends will be recycled; if the number of addends is larger than the number of
-    colors, the colors will be recycled. Typically, reasonable addends are in a
-    range of about +/- 50.
+    specified addends is smaller than the number of colors, the addends will be
+    recycled; if the number of addends is larger than the number of colors, the
+    colors will be recycled. To skip adjusting a particular color, you may set
+    the corresponding addend to {cmd:.} (missing). Typically, reasonable
+    addends are in a range of about +/- 50.
 
 {phang}
     {it:method} selects the color space in which the colors are
@@ -1693,10 +1695,11 @@
 {phang}
     {it:d} is a real vector of luminance adjustments addends. Positive values
     increase luminance, negative values decrease luminance. If the number of
-    specified addends is smaller than the number of colors, the
-    addends will be recycled; if the number of addends is larger than the number of
-    colors, the colors will be recycled. Typically, reasonable addends are in a
-    range of about +/- 50.
+    specified addends is smaller than the number of colors, the addends will be
+    recycled; if the number of addends is larger than the number of colors, the
+    colors will be recycled. To skip adjusting a particular color, you may set
+    the corresponding addend to {cmd:.} (missing). Typically, reasonable
+    addends are in a range of about +/- 50.
 
 {phang}
     {it:method} selects the color space in which the colors are manipulated. It
@@ -1736,7 +1739,7 @@
 {pstd}
     To convert the colors in {it:S} to gray, type
 
-        {it:S}{cmd:.}[{cmd:add_}]{cmd:gray}[{cmd:_added}]{cmd:(}[{it:proportion}{cmd:,} {it:method}]{cmd:)}
+        {it:S}{cmd:.}[{cmd:add_}]{cmd:gray}[{cmd:_added}]{cmd:(}[{it:p}{cmd:,} {it:method}]{cmd:)}
 
 {pstd}
     {it:S}{cmd:.gray()} transforms all existing colors; use
@@ -1746,16 +1749,19 @@
     append the transformed colors. Arguments are as follows.
 
 {phang}
-    {it:proportion} in [0,1] specifies the proportion of gray. The default
-    is {cmd:1} (complete conversion to gray). This default can also be selected
-    by typing {cmd:.} (missing).
+    {it:p} is a real vector of proportions of gray, with {it:p} in [0,1]. The
+    default is {it:p} = {cmd:1} (complete conversion to gray). If the number of
+    specified proportions is smaller than the number of colors, the proportions
+    will be recycled; if the number of proportions is larger than the number of
+    colors, the colors will be recycled. To skip converting a particular color,
+    you may set the corresponding proportion to {cmd:.} (missing).
 
 {phang}
     {it:method} specifies the color space in which the colors are
     manipulated. It can be {cmd:"LCh"}, {cmd:"HCL"}, {cmd:"JCh"} (CIECAM02 JCh),
     or {cmd:"JMh"} (lowercase spelling allowed). The
     default is {cmd:"LCh"}. This default can also be selected by typing
-    {cmd:""}. Grayscale cconversion works by converting the colors the selected
+    {cmd:""}. Grayscale conversion works by converting the colors the selected
     color space, reducing the C channel (or M' in case of J'M'h) towards zero,
     and then converting the colors back.
 
@@ -1781,7 +1787,7 @@
     To convert the colors in {it:S} such that they look how they would appear to
     people suffering from color vision deficiency (color blindness), type
 
-        {it:S}{cmd:.}[{cmd:add_}]{cmd:cvd}[{cmd:_added}]{cmd:(}[{it:severity}{cmd:,} {it:type}]{cmd:)}
+        {it:S}{cmd:.}[{cmd:add_}]{cmd:cvd}[{cmd:_added}]{cmd:(}[{it:p}{cmd:,} {it:method}]{cmd:)}
 
 {pstd}
     {it:S}{cmd:.cvd()} transforms all existing colors; use
@@ -1791,13 +1797,16 @@
     append the transformed colors. Arguments are as follows.
 
 {phang}
-    {it:severity} in [0,1] specifies the severity of the deficiency. The default
-    is {cmd:1} (maximum severity, i.e. deuteranopia, protanopia, or
-    tritanopia, respectively). This default can also be selected
-    by typing {cmd:.} (missing).
+    {it:p} is a real vector of deficiency severities, with {it:p} in [0,1]. The
+    default is {it:p} = {cmd:1} (maximum severity, i.e. deuteranopia,
+    protanopia, or tritanopia, respectively). If the number of specified
+    severities is smaller than the number of colors, the severities will be
+    recycled; if the number of severities is larger than the number of colors,
+    the colors will be recycled. To skip converting a particular color, you may
+    set the corresponding severity to {cmd:.} (missing).
 
 {phang}
-    {it:type} specifies the type of color vision deficiency. It can be
+    {it:method} specifies the type of color vision deficiency. It can be
     {cmd:"deuteranomaly"}, {cmd:"protanomaly"}, or {cmd:"tritanomaly"}
     (abbreviations allowed). The default is {cmd:"deuteranomaly"}. This default
     can also be selected by typing {cmd:""}. See
@@ -1810,10 +1819,10 @@
     transformation matrices provided at
     {browse "http://www.inf.ufrgs.br/~oliveira/pubs_files/CVD_Simulation/CVD_Simulation.html":www.inf.ufrgs.br/~oliveira}
     (employing linear interpolation between matrices for intermediate severity values). The
-    transformations matrix for a specific combination of {it:severity} and {it:type} can be
+    transformations matrix for a specific combination of (scalar) {it:p} and {it:method} can be
     retrieved as follows:
 
-        {it:M} = {it:S}{cmd:.cvd_M(}[{it:severity}{cmd:,} {it:type}]{cmd:)}
+        {it:M} = {it:S}{cmd:.cvd_M(}[{it:p}{cmd:,} {it:method}]{cmd:)}
 
 {pstd}
     Example:

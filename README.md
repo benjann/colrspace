@@ -23,6 +23,16 @@ Installation from GitHub:
 
 Main changes:
 
+    15may2020
+    - the p argument in S.gray() and S.dvd() can now be a vector; colors will be 
+      recycled if p has more elements than there are colors (same behavior as in
+      S.intensify/luminate/saturate())
+      Note: the change does not apply to S.convert(), where the p argument for
+      for "gray" and "dvd" still has to be scalar 
+    - S.intensify/luminate/saturate() returned error if S contained no colors; this
+      is fixed
+    - palette info for -lin- was not fully accurate; this is corrected
+    
     14may2020
     - S.names() and S.Names() added (color names)
     - S.cvalid() added (check whether a color specification is valid)
