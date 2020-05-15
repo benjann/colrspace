@@ -1,6 +1,7 @@
 {smcl}
 {* 15may2020}{...}
-{cmd:help colrspace}
+{cmd:help colrspace}{...}
+{right:{browse "http://github.com/benjann/colrspace/"}}
 {hline}
 
 {title:Title}
