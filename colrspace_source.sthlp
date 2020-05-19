@@ -1,10 +1,9 @@
-*! version 1.0.4  15may2020  Ben Jann
+*! version 1.0.6  19may2020  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
 * {help colrspace_source##class:Class and struct definitions}
 * {help colrspace_source##new:Constructor}
-* {help colrspace_source##add:Add/added wrappers}
 * {help colrspace_source##util:Some utilities}
 * {help colrspace_source##illuminants:Illuminants}
 * {help colrspace_source##rgbspaces:RGB working spaces}
@@ -35,6 +34,8 @@ mata mata set matastrict on
 // class & struct
 local MAIN   ColrSpace
 local Main   class `MAIN' scalar
+local DATA   `MAIN'_DATA
+local Data   struct `DATA' scalar
 local CAM02  `MAIN'_CAM02
 local Cam02  struct `CAM02' scalar
 local AA     class AssociativeArray scalar
@@ -64,6 +65,7 @@ local TM     transmorphic matrix
 // pointer
 local PV     pointer vector
 local PS     pointer scalar
+local PData  pointer (`Data') scalar
 // boolean
 local Bool   real scalar
 local BoolC  real colvector
@@ -71,37 +73,29 @@ local TRUE   1
 local FALSE  0
 // palettes
 local PAL    `SC' `MAIN'
-// locals for add/added wrappers
-local add       set generate palette matplotlib
-local added     names Names info Info contrast delta get reset
-local add_added colors Colors opacity alpha intensity intensify saturate ///
-                luminate gray cvd ipolate recycle select order reverse
-local ADD `T'
-local comma
-foreach f in `add' `add_added' {
-    if "`f'"=="set" local ff add
-    else            local ff add_`f'
-    local ADD `ADD'`comma' `ff'()
-    local comma ","
-}
-local ADDED `T'
-local comma
-foreach f in `added' `add_added' {
-    local ADDED `ADDED' `comma' `f'_added()
-    local comma ","
-}
-local ADD_ADDED `T'
-local comma
-foreach f in `add_added' {
-    local ADD_ADDED `ADD_ADDED'`comma' add_`f'_added()
-    local comma ","
-}
 
 * {smcl}
 * {marker class}{bf:Class and struct definitions} {hline}
 * {asis}
 
 mata:
+
+struct `DATA' {
+    // meta data
+    `SS'    name          // name of color collection
+    `SS'    pclass        // class: qualitative, sequential, diverging
+    `SS'    note          // description of color collection
+    `SS'    source        // source of color collection
+    // colors
+    `Int'   n             // number of colors
+    `RM'    RGB           // N x 3 matrix of RGB 0-1 codes
+    `RC'    alpha         // N x 1 vectors of opacity values in [0,1]
+    `RC'    intensity     // N x 1 vectors of intensity values in [0,1]
+    `SC'    names         // N x 1 string vector of color names
+    `SC'    info          // N x 1 string vector of color information
+    `BoolC' stok          // N x 1 vector: Stata compatible "name"
+    `Bool'  isip          // 1 if colors were interpolated; 0 else
+}
 
 struct `CAM02' {
     // viewing conditions
@@ -120,54 +114,38 @@ class `MAIN' {
     // initialize default whitepoint and working space
     private:
         void    new()
-    
-    // add/added wrappers
-    public:
-        `ADD'                 // add_?() functions
-        `ADDED'               // ?_added() functions
-        `ADD_ADDED'           // add_?_added() functions
-        `RS'    N_added()     // number of added colors
-    private:
-        void    append()      // append new colors
-        void    update()      // update appended colors
-        `Int'   N0            // number of colors before last addition
-        
-    
-    // Color containers and some utilities
-    public:
-        `RS'    N()           // number of colors
-        `T'     pclass()      // set or return type of palette
-        `T'     pname()       // set or return name of palette
-        `T'     pinfo()       // set or return palette info
-        `T'     psource()     // set or return palette source
-        `Bool'  isipolate()   // 1 if interpolated; 0 else
-        `RM'    RGB()         // get copy of RGB; undocumented
-        `SC'    NAMES()       // retrieve copy of names; undocumented
-        `SC'    INFO()        // retrieve copy of info; undocumented
-        `BoolC' STOK()        // retrieve copy of stok; undocumented
-        `RM'    clip()        // clip values
-    private:
-        `RM'    RGB           // N x 3 matrix of RGB 0-1 codes
-        `RC'    alpha         // N x 1 vectors of opacity values in [0,1]
-        `RC'    intensity     // N x 1 vectors of intensity values in [0,1]
-        `SC'    names         // N x 1 string vector of color names
-        `SC'    info          // N x 1 string vector of color information
-        `BoolC' stok          // N x 1 vector: Stata compatible "name"
-        `SS'    pclass        // class of palette: qualitative, sequential, diverging
-        `SS'    pname         // palette name
-        `SS'    pinfo         // palette info
-        `SS'    psource       // palette source
-        `Bool'  isip          // 1 if interpolated; 0 else
         `SC'    SPACES        // main list of supported color metrics
         `SC'    SPACES2       // additional color metrics
         `SM'    EDGELIST      // edge list for color conversions
+
+    // Data containers
+    private:
+        `Data'  data          // main data container
+        `Data'  data1         // temporary data container
+        `PData' S             // pointer to relevant data container
+        `Int'   N1            // number of colors added last
+        void    replacedata() // replace data by data1
+        void    updatedata()  // replace last N1 colors in data by data1
+        void    appenddata()  // append data1 to data
+        void    removeadded() // remove last N1 colors from data
+        void    copydata()    // copy data1 to data
+        void    copyadded()   // copy last N1 colors from data to data1
+    
+    // Some utilities
+    public:
+        void    describe()    // describe contents
+        void    settings()    // describe settings
+        `RS'    N()           // number of colors
+        `RS'    N_added()     // number of added colors
+        `T'     name()        // set or return name of palette
+        `T'     pclass()      // set or return type of palette
+        `T'     note()        // set or return palette description
+        `T'     source()      // set or return palette source
+        `Bool'  isipolate()   // 1 if interpolated; 0 else
+        `RM'    clip()        // clip values
     private:
         `RV'    _clip()       // clip vector
         `RS'    __clip()      // clip value
-        void    rgb_set()     // set RGB and reinitialize all other containers
-        void    rgb_reset()   // reset RGB leaving other containers as is
-        void    info_reset()  // reset info based on specified colors
-        `SC'    _info_reset()
         `SS'    gettok()      // split first token from rest
         `Bool'  smatch()      // check abbreviated string
         `SS'    findkey()     // find key in list (ignoring case; allowing abbreviation)
@@ -217,80 +195,112 @@ class `MAIN' {
 
     // String IO
     public:
-        `T'     colors()      // parse or return string colors (scalar)
-        `T'     Colors()      // parse or return string colors (vector)
-        `T'     names()       // parse or return color names (scalar)
-        `T'     Names()       // parse or return color names (vector)
-        `T'     info()        // parse or return color info (scalar)
-        `T'     Info()        // parse or return color info (vector)
-        `Bool'  cvalid()      // check whether color specification is valid
+        `SS'    cvalid()       // check whether color specification is valid
+        `T'     colors()       // parse or return string colors (scalar)
+        `Int'   _colors()      // like colors(), but with return code
+        void    add_colors()   // append colors
+        `Int'   _add_colors()  // like add_colors(), but with return code
+        `SS'    colors_added() // return added colors (scalar)
+        `T'     Colors()       // parse or return string colors (vector)
+        `Int'   _Colors()      // like Colors(), but with return code
+        void    add_Colors()   // append colors
+        `Int'   _add_Colors()  // like add_Colors(), but with return code
+        `SC'    Colors_added() // return added colors (vector)
+        `T'     names()        // parse or return color names (scalar)
+        `T'     names_added()
+        `T'     Names()        // parse or return color names (vector)
+        `T'     Names_added()
+        `T'     info()         // parse or return color info (scalar)
+        `T'     info_added()
+        `T'     Info()         // parse or return color info (vector)
+        `T'     Info_added()
     private:
         `SS'    colors_get(), names_get(), info_get()
-        `SC'    Colors_get()
+        `SC'    Colors_get(), _Colors_get(), Names_get(), Info_get()
         void    colors_set(), names_set(), info_set()
-        void    Colors_set(), Names_set(), Info_set()
-        `SR'    parse_split(), parse_convert()
-        `Bool'  parse_named()
-        `SS'    parse_stcolorstyle(), _parse_stcolorstyle(), parse_webcolor()
+        void    Colors_set(), Names_set(), _Names_set(), Info_set(), _Info_set()
+        `Int'   _colors_set(), _Colors_set()
+        `Int'   parse_split(), _parse_split(), parse_convert(), _parse_convert()
+        `Bool'  parse_named(), iswebcolor()
+        `SS'    parse_stcolorstyle(), parse_webcolor()
         `SR'    _tokens()     // modified version of tokens
 
     // Set or retrieve colors
     public:
-        void    set(), reset()
-        `TM'    get()
+        void    set(), add(), reset(), reset_added()
+        `TM'    get(), get_added()
     private:
-        void    _set()
+        void    _set(), _reset(), __set()
+        `TM'    _get()
+        void    rgb_set()     // set RGB and reinitialize all other containers
+        void    rgb_reset()   // reset RGB leaving other containers as is
+        void    info_reset()  // reset info based on specified colors
+        `SC'    _info_reset()
 
     // Set or retrieve opacity and intensity
     public:
         `T'     opacity(), alpha(), intensity()
+        void    add_opacity(), add_alpha(), add_intensity()
+        `T'     opacity_added(), alpha_added(), intensity_added()
+        void    add_opacity_added(), add_alpha_added(), add_intensity_added()
     private:
-        void    _alpha()
+        `RC'    opacity_get(), alpha_get(), intensity_get()
+        void    opacity_set(), alpha_set(), intensity_set()
+        void    _alpha(), _intensity()
 
     // Color interpolation and mixing
     public:
-        void    ipolate()     // interpolate colors
+        void    ipolate(), add_ipolate(), ipolate_added(), add_ipolate_added()
+        void    mix(), add_mix(), mix_added(), add_mix_added()
         `RM'    colipolate()  // interpolate columns
-        void    mix()         // mix colors
     private:
-        `RM'    ipolate_get(), mix_get(), _ipolate(), _ipolate_pos()
+        void    _ipolate(), _mix()
+        `RM'    _ipolate_get(), _mix_get()
+        `RM'    __ipolate(), _ipolate_pos()
         `RC'    _ipolate_halign()
         `RV'    _ipolate_setrange()
         void    _ipolate_fromto(), _ipolate_collapse()
 
     // Recycle, select, and order
     public:
-        void    recycle()     // recycle colors
+        void    recycle(), add_recycle(), recycle_added(), add_recycle_added()
+        void    select(), add_select(), select_added(), add_select_added()
+        void    order(), add_order(), order_added(), add_order_added()
+        void    reverse(), add_reverse(), reverse_added(), add_reverse_added()
         `TM'    colrecycle()  // recycle columns
-        void    select()      // select (and reorder) colors
-        void    order(), reverse() // reorder colors
     private:
-        void    _select()
+        void    _recycle(), _select(), __select(), _order(), _reverse()
 
     // Intensify, saturate, luminate
     public:
-        void    intensify(), saturate(), luminate()
+        void    intensify(), add_intensify(), intensify_added(), add_intensify_added()
+        void    saturate(), add_saturate(), saturate_added(), add_saturate_added()
+        void    luminate(), add_luminate(), luminate_added(), add_luminate_added()
     private:
-        `RR'    _intensify()
+        void    _intensify(), _saturate(), _luminate()
+        `RR'    __intensify()
 
     // Grayscale conversion
     public:
-        void    gray()
+        void    gray(), add_gray(), gray_added(), add_gray_added()
     private:
+        void    _gray()
         `RM'    GRAY()
 
     // Color vision deficiency
     public:
-        void    cvd()         // apply color vision deficiency simulation
+        void    cvd(), add_cvd(), cvd_added(), add_cvd_added()
         `RM'    cvd_M()       // retrieve CVD transformation matrix
     private:
+        void    _cvd()
         `RM'    CVD()
         `RM'    _cvd_M(), cvd_M_d(), cvd_M_p(), cvd_M_t()
 
     // Color differences and contrast ratios
     public:
-        `RC'    contrast(), delta()
+        `RC'    contrast(), contrast_added(), delta(), delta_added()
     private:
+        `RC'    _contrast(), _delta()
         `RC'    delta_jab(), delta_euclid()
 
     // Translation between color spaces (without storing the colors)
@@ -343,9 +353,9 @@ class `MAIN' {
     
     // Color generators
     public:
-        void    generate()
+        void    generate(), add_generate()
     private:
-        void    generate_HUE(), generate_OTH(), generate_setup()
+        void    _generate(), generate_HUE(), generate_OTH(), generate_setup()
         `RM'    generate_qual(), generate_seq(), generate_div(),
                 generate_heat0(), generate_terrain0()
     
@@ -356,11 +366,11 @@ class `MAIN' {
     
     // Palettes
     public:
-        void    palette()
-        `Bool'  pexists()
+        `SS'    pexists()
+        void    palette(), add_palette()
     private:
         `Bool'  Palette()
-        void    P_pclass(), P_colors(), P_names(), P_info()
+        void    P_pclass(), P_colors(), P_names(), P_info(), P_note(), P_source()
         `Bool'  P_s1(), P_s1r(), P_s2(), P_economist(), P_mono(), P_cblind(),
                 P_plottig(), P_538(), P_mrc(), P_tfl(), P_burd(), P_lean(),
                 P_tableau(),
@@ -377,9 +387,10 @@ class `MAIN' {
     
     // matplotlib colormaps
     public:
-        void    matplotlib()
+        void    matplotlib(), add_matplotlib()
         `RM'    matplotlib_ip()
     private:
+        void    _matplotlib()
         `RC'    _matplotlib_ip()
         void    inferno(), magma(), plasma(), viridis(), cividis(), twilight()
 }
@@ -394,13 +405,13 @@ mata:
 
 void `MAIN'::new()
 {
+    S = &data
+    rgb_set(J(0, 3, .))
     rgbspace("")
     xyzwhite("")
     viewcond(.)
     ucscoefs("")
     chadapt("")
-    rgb_set(J(0, 3, .))
-    isip = `FALSE'
     SPACES   = ("CMYK1", "RGB1", "lRGB", "HSV", "HSL", "XYZ", "xyY", 
                 "Lab", "LCh", "Luv", "HCL", "CAM02", "JMh", "Jab")'
     SPACES2  = ("HEX", "CMYK", "RGB", "XYZ1", "xyY1")'
@@ -413,104 +424,94 @@ void `MAIN'::new()
                ("XYZ" , "Luv"  ) \ ("Luv"  , "HCL"  ) \
                ("XYZ" , "CAM02") \ ("CAM02", "JMh"  ) \ ("CAM02", "Jab"  )
     EDGELIST = EDGELIST \ EDGELIST[,(2,1)] \ ("RGB1", "GRAY") \ ("RGB1", "CVD")
-    N0 = 0
+    N1 = 0
 }
 
-end
-
-* {smcl}
-* {marker add}{bf:Add/added wrappers} {hline}
-* {asis}
-
-foreach f in `add' `add_added' {
-    if "`f'"=="set" local ff add
-    else            local ff add_`f'
-    mata `T' `MAIN'::`ff'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
-    {
-        `Main' S
-        `T'    T
-        S = this
-        if      (args()==0) T = S.`f'()
-        else if (args()==1) T = S.`f'(o1)
-        else if (args()==2) T = S.`f'(o1, o2)
-        else if (args()==3) T = S.`f'(o1, o2, o3)
-        else if (args()==4) T = S.`f'(o1, o2, o3, o4)
-        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5)
-        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6)
-        append(S)
-        return(T)
-    }
-}
-foreach f in `added' `add_added' {
-    mata `T' `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
-    {
-        `Main' S
-        `T'    T
-        S = this
-        S.select((N0+1)::max((N(), N0+1)))
-        if      (args()==0) T = S.`f'()
-        else if (args()==1) T = S.`f'(o1)
-        else if (args()==2) T = S.`f'(o1, o2)
-        else if (args()==3) T = S.`f'(o1, o2, o3)
-        else if (args()==4) T = S.`f'(o1, o2, o3, o4)
-        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5)
-        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6)
-        update(S)
-        return(T)
-    }
-}
-foreach f in `add_added' {
-    mata `T' `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
-    {
-        `Main' S
-        `T'    T
-        S = this
-        S.select((N0+1)::max((N(), N0+1)))
-        if      (args()==0) T = S.`f'()
-        else if (args()==1) T = S.`f'(o1)
-        else if (args()==2) T = S.`f'(o1, o2)
-        else if (args()==3) T = S.`f'(o1, o2, o3)
-        else if (args()==4) T = S.`f'(o1, o2, o3, o4)
-        else if (args()==5) T = S.`f'(o1, o2, o3, o4, o5)
-        else if (args()==6) T = S.`f'(o1, o2, o3, o4, o5, o6)
-        append(S)
-        return(T)
-    }
-}
-
-mata:
-
-void `MAIN'::append(`Main' S)
+void `MAIN'::replacedata()
 {
-    N0        = N()
-    RGB       = RGB       \ S.RGB()
-    alpha     = alpha     \ S.alpha()
-    intensity = intensity \ S.intensity()
-    names     = names     \ S.NAMES()
-    info      = info      \ S.INFO()
-    stok      = stok      \ S.STOK()
-    if (S.pclass()!="")        pclass  = S.pclass()
-    if (S.pname()!="")         pname   = S.pname()
-    if (S.pinfo()!="")         pinfo   = S.pinfo()
-    if (S.psource()!="")       psource = S.psource()
-    if (S.isipolate()==`TRUE') isip    = `TRUE'
+    N1 = data1.n
+    swap(data, data1)
 }
 
-void `MAIN'::update(`Main' S)
+void `MAIN'::updatedata()
 {
-    if (N0<N()) {
-        RGB       = RGB[|1,1 \ N0,.|]   \ S.RGB()
-        alpha     = alpha[|1 \ N0|]     \ S.alpha()
-        intensity = intensity[|1 \ N0|] \ S.intensity()
-        names     = names[|1 \ N0|]     \ S.NAMES()
-        info      = info[|1 \ N0|]      \ S.INFO()
-        stok      = stok[|1 \ N0|]      \ S.STOK()
+    removeadded()
+    appenddata()
+}
+
+void `MAIN'::appenddata()
+{
+    // append colors
+    N1             = data1.n
+    data.n         = data.n + data1.n
+    data.RGB       = data.RGB       \ data1.RGB
+    data.alpha     = data.alpha     \ data1.alpha
+    data.intensity = data.intensity \ data1.intensity
+    data.names     = data.names     \ data1.names
+    data.info      = data.info      \ data1.info
+    data.stok      = data.stok      \ data1.stok
+    // update metadata (if set in appended colors)
+    if (data1.pclass!="")  data.pclass = data1.pclass
+    if (data1.name!="")    data.name   = data1.name
+    if (data1.note!="")    data.note   = data1.note
+    if (data1.source!="")  data.source = data1.source
+    if (data1.isip)        data.isip   = data1.isip
+}
+
+void `MAIN'::removeadded()
+{
+    `Int' n
+    
+    if (N1=0) return
+    n = data.n - N1
+    if (n==0) {
+        data.n         = 0
+        data.RGB       = J(0, 3, .)
+        data.alpha     = J(0, 1, .)
+        data.intensity = J(0, 1, .)
+        data.names     = J(0, 1, "")
+        data.info      = J(0, 1, "")
+        data.stok      = J(0, 1, `FALSE')
+        return
     }
-    if (S.pclass()!="")        pclass   = S.pclass()
-    if (S.pname()!="")         pname    = S.pname()
-    if (S.pinfo()!="")         pinfo    = S.pinfo()
-    if (S.psource()!="")       psource  = S.psource()
-    if (S.isipolate()==`TRUE') isip     = `TRUE'
+    data.n         = n
+    data.RGB       = data.RGB[|1,1 \ n,.|]
+    data.alpha     = data.alpha[|1 \ n|]
+    data.intensity = data.intensity[|1 \ n|]
+    data.names     = data.names[|1 \ n|]
+    data.info      = data.info[|1 \ n|]
+    data.stok      = data.stok[|1 \ n|]
+}
+
+void `MAIN'::copydata()
+{
+    data1 = data
+}
+
+void `MAIN'::copyadded()
+{
+    `Int' r
+    
+    data1 = data
+    if (data1.n==N1) return
+    r = data1.n - N1 + 1
+    if (r<=1) {
+        data1.n         = 0
+        data1.RGB       = J(0, 3, .)
+        data1.alpha     = J(0, 1, .)
+        data1.intensity = J(0, 1, .)
+        data1.names     = J(0, 1, "")
+        data1.info      = J(0, 1, "")
+        data1.stok      = J(0, 1, `FALSE')
+        return
+    }
+    data1.n         = N1
+    data1.RGB       = data1.RGB[|r,1 \ .,.|]
+    data1.alpha     = data1.alpha[|r \ .|]
+    data1.intensity = data1.intensity[|r \ .|]
+    data1.names     = data1.names[|r \ .|]
+    data1.info      = data1.info[|r \ .|]
+    data1.stok      = data1.stok[|r \ .|]
 }
 
 end
@@ -521,43 +522,116 @@ end
 
 mata:
 
-`RS' `MAIN'::N() return(rows(RGB))
+void `MAIN'::describe(| `Bool' shrt)
+{
+    `Int' i, n, l
+    `SS'  ifmt
+    `SM'  M
+    
+    display("")
+    printf(`"{txt}  name()      = {res}"%s"\n"', name())
+    printf(`"{txt}  pclass()    = {res}"%s"\n"', pclass())
+    printf(`"{txt}  note()      = {res}"%s"\n"', note())
+    printf(`"{txt}  source()    = {res}"%s"\n"', source())
+    printf(`"{txt}  isipolate() = {res}%g\n"'  , isipolate())
+    printf(`"{txt}  N()         = {res}%g\n"'  , n = N())
+    printf(`"{txt}  N_added()   = {res}%g\n"'  , N_added())
+    if (n==0) return
+    if (args()==1 & shrt) return
+    l = floor(log10(n))+1
+    ifmt = "%"+strofreal(l)+"s"
+    M = abbrev((Colors(1), Names(), Info()),23)
+    display("")
+    printf(" "*(2+l+2) + "{txt}%-24s%-24s%-24s\n","Colors()","Names()","Info()")
+    printf("{txt}  {hline " + strofreal(72+2+l) +"}\n")
+    for (i=1;i<=n;i++) {
+        printf("{txt}  "+ifmt+"  {res}%-24s%-24s%-24s\n"',
+            strofreal(i),M[i,1], M[i,2], M[i,3])
+    }
+}
 
-`RS' `MAIN'::N_added() return(rows(RGB) - N0)
+void `MAIN'::settings()
+{
+    `RM' M
+    
+    M = rgb_gamma()
+    printf("\n{txt}  rgb_gamma():  {it:gamma} = {res}%g\n",M[1])
+    if (length(M)>1) {
+        printf("{txt}               {it:offset} = {res}%g\n",M[2])
+        printf("{txt}           {it:transition} = {res}%g\n",M[3])
+        printf("{txt}                {it:slope} = {res}%g\n",M[4])
+    }
+    M = rgb_white()
+    printf("\n{txt}  rgb_white():      {it:X} = {res}%g\n",M[1])
+    printf("{txt}                    {it:Y} = {res}%g\n",M[2])
+    printf("{txt}                    {it:Z} = {res}%g\n",M[3])
+    M = rgb_xy()
+    if (length(M)) {
+        printf("\n{txt}  rgb_xy():     {it:red x} = {res}%g\n",M[1,1])
+        printf("{txt}                {it:red y} = {res}%g\n",M[1,2])
+        printf("{txt}              {it:green x} = {res}%g\n",M[2,1])
+        printf("{txt}              {it:green y} = {res}%g\n",M[2,2])
+        printf("{txt}               {it:blue x} = {res}%g\n",M[3,1])
+        printf("{txt}               {it:blue y} = {res}%g\n",M[3,2])
+    }
+    else {
+        M = rgb_M()
+        printf("\n{txt}  rgb_M():     {it:red SX} = {res}%g\n",M[1,1])
+        printf("{txt}               {it:red SY} = {res}%g\n",M[2,1])
+        printf("{txt}               {it:red SZ} = {res}%g\n",M[3,1])
+        printf("{txt}             {it:green SX} = {res}%g\n",M[1,2])
+        printf("{txt}             {it:green SY} = {res}%g\n",M[2,2])
+        printf("{txt}             {it:green SZ} = {res}%g\n",M[3,2])
+        printf("{txt}              {it:blue SX} = {res}%g\n",M[1,3])
+        printf("{txt}              {it:blue SY} = {res}%g\n",M[2,3])
+        printf("{txt}              {it:blue SZ} = {res}%g\n",M[3,3])
+    }
+    M = xyzwhite()
+    printf("\n{txt}  xyzwhite():       {it:X} = {res}%g\n",M[1])
+    printf("{txt}                    {it:Y} = {res}%g\n",M[2])
+    printf("{txt}                    {it:Z} = {res}%g\n",M[3])
+    M = viewcond()
+    printf("\n{txt}  viewcond():     {it:Y_b} = {res}%g\n",M[1])
+    printf("{txt}                  {it:L_A} = {res}%g\n",M[2])
+    printf("{txt}                    {it:F} = {res}%g\n",M[3])
+    printf("{txt}                    {it:c} = {res}%g\n",M[4])
+    printf("{txt}                  {it:N_c} = {res}%g\n",M[5])
+    M = ucscoefs()
+    printf("\n{txt}  ucscoefs():     {it:K_L} = {res}%g\n",M[1])
+    printf("{txt}                  {it:c_1} = {res}%g\n",M[2])
+    printf("{txt}                  {it:c_2} = {res}%g\n",M[3])
+    printf(`"\n{txt}  chadapt():   {it:method} = {res}"%s"\n"',chadapt())
+}
+
+`RS' `MAIN'::N() return(data.n)
+
+`RS' `MAIN'::N_added() return(N1)
+
+`T' `MAIN'::name(| `SS' s)
+{
+    if (args()==0) return(data.name)
+    data.name = s
+}
 
 `T' `MAIN'::pclass(| `SS' s)
 {
-    if (args()==0) return(pclass)
-    pclass = s
+    if (args()==0) return(data.pclass)
+    data.pclass = s
 }
 
-`T' `MAIN'::pname(| `SS' s)
+`T' `MAIN'::note(| `SS' s)
 {
-    if (args()==0) return(pname)
-    pname = s
+    if (args()==0) return(data.note)
+    data.note = s
 }
 
-`T' `MAIN'::pinfo(| `SS' s)
+`T' `MAIN'::source(| `SS' s)
 {
-    if (args()==0) return(pinfo)
-    pinfo = s
+    if (args()==0) return(data.source)
+    data.source = s
 }
 
-`T' `MAIN'::psource(| `SS' s)
-{
-    if (args()==0) return(psource)
-    psource = s
-}
-
-`Bool' `MAIN'::isipolate() return(isip)
-
-`RM' `MAIN'::RGB() return(RGB)
-
-`SC' `MAIN'::NAMES() return(names)
-
-`SC' `MAIN'::INFO() return(info)
-
-`BoolC' `MAIN'::STOK() return(stok)
+`Bool' `MAIN'::isipolate() return(data.isip)
 
 `RM' `MAIN'::clip(`RM' C0, `RS' a, `RS' b)
 {
@@ -581,59 +655,6 @@ mata:
 
 `RS' `MAIN'::__clip(`RS' c, `RS' a, `RS' b) 
     return(c<a ? a : (c<=b ? c : (c>=. ? c : b)))
-
-void `MAIN'::rgb_set(`RM' rgb)
-{
-    assert_cols(rgb, 3)
-    RGB   = rgb
-    alpha = intensity = J(N(), 1, .)
-    stok  = J(N(), 1, `FALSE')
-    names = J(N(), 1, "")
-    info  = J(N(), 1, "")
-    isip  = `FALSE'
-}
-
-void `MAIN'::rgb_reset(`RM' rgb, | `IntV' p)
-{
-    if (length(p)==0) {
-        assert_size(rgb, N(), 3)
-        RGB   = rgb
-        names = J(N(), 1, "")
-        info  = J(N(), 1, "")
-        stok  = J(N(), 1, `FALSE')
-        return
-    }
-    assert_size(rgb, length(p), 3)
-    RGB[p,] = rgb
-    names[p] = J(length(p), 1, "")
-    info[p]  = J(length(p), 1, "")
-    stok[p]  = J(length(p), 1, `FALSE')
-}
-
-void `MAIN'::info_reset(`SS' c, `T' C, | `SS' fmt, `IntV' p)
-{
-    if (length(p)==0) info     = _info_reset(c, C, fmt)
-    else              info[p] = _info_reset(c, C, fmt)
-}
-
-`SC' `MAIN'::_info_reset(`SS' c, `T' C, `SS' fmt)
-{
-    `Int' i
-    `SC'  info
-    
-    if (isstring(C)) {
-        info = J(length(C), 1, (c!="" ? c + " " : ""))
-        if (cols(C)!=1) info = info + C'
-        else            info = info + C
-        return(info)
-    }
-    info = J(rows(C), 1, (c!="" ? c + " " : ""))
-    for (i=1; i<=cols(C); i++) {
-        if (i>1) info = info :+ " "
-        info = info + strofreal(C[,i], fmt)
-    }
-    return(info)
-}
 
 `SS' `MAIN'::gettok(`SS' s0, | `SS' rest)
 {
@@ -1019,7 +1040,7 @@ void `MAIN'::rgbspace(| `SS' space0)
     if (missing(gamma)) exit(error(127))   // missings not allowed
     if (length(gamma)!=1 & length(gamma)!=4) exit(error(503)) // wrong size
     rgb_gamma = gamma
-    stok = J(N(), 1, `FALSE')
+    data.stok = J(data.n, 1, `FALSE')   // !!!
 }
 
 `T' `MAIN'::rgb_white(| `TV' X, `RS' Y, `RS' Z)
@@ -1029,7 +1050,7 @@ void `MAIN'::rgbspace(| `SS' space0)
     else if (args()==2) rgb_white = _white((X,Y))
     else                rgb_white = _white(X)
     if (length(rgb_xy)) rgb_xy(rgb_xy) // recompute transformation matrices
-    stok = J(N(), 1, `FALSE')
+    data.stok = J(data.n, 1, `FALSE')   // !!!
 }
 
 `T' `MAIN'::rgb_xy(| `RM' xy)
@@ -1043,7 +1064,7 @@ void `MAIN'::rgbspace(| `SS' space0)
     rgb_M = rgb_M :* (luinv(rgb_M) * rgb_white')'
     rgb_invM = luinv(rgb_M)
     rgb_xy = xy
-    stok = J(N(), 1, `FALSE')
+    data.stok = J(data.n, 1, `FALSE')  // !!!
 }
 
 `T' `MAIN'::rgb_M(| `RM' M)
@@ -1054,7 +1075,7 @@ void `MAIN'::rgbspace(| `SS' space0)
     rgb_M = M * 100
     rgb_invM = luinv(rgb_M)
     rgb_xy = J(0,0,.)
-    stok = J(N(), 1, `FALSE')
+    data.stok = J(data.n, 1, `FALSE')   // !!!
 }
 
 `T' `MAIN'::rgb_invM(| `RM' invM)
@@ -1065,7 +1086,7 @@ void `MAIN'::rgbspace(| `SS' space0)
     rgb_invM = invM / 100
     rgb_M = luinv(rgb_invM)
     rgb_xy = J(0,0,.)
-    stok = J(N(), 1, `FALSE')
+    data.stok = J(data.n, 1, `FALSE')   // !!!
 }
 
 end
@@ -1273,19 +1294,114 @@ end
 
 mata:
 
-
-`T' `MAIN'::colors(| `TS' opt1, `SS' opt2)
+`SS' `MAIN'::cvalid(| `SS' c0)
 {
-    if (args()==0)                     return(colors_get(`FALSE'))
-    if (args()==1 & isstring(opt1)==0) return(colors_get(opt1))
-    colors_set(opt1, opt2)
+    `SS' c
+    
+    S = &data1 // (use temporary data object)
+    if (parse_split(c0)) return("")
+    if (parse_convert()) return("")
+    c = Names_get()
+    if (c=="") c = Colors_get(0)
+    return(c)
 }
 
-`T' `MAIN'::Colors(| `TV' opt)
+`T' `MAIN'::colors(| `TS' o1, `SS' o2)
 {
-    if (args()==0)        return(Colors_get(`FALSE'))
-    if (isstring(opt)==0) return(Colors_get(opt))
-    Colors_set(opt)
+    // get
+    if (args()==0 | (args()==1 & isstring(o1)==0)) {
+        S = &data
+        if (args()==0) return(colors_get(`FALSE'))
+        return(colors_get(o1))
+    }
+    // set
+    S = &data1
+    colors_set(o1, o2)
+    replacedata()
+}
+
+void `MAIN'::add_colors(`SS' c, | `SS' wchar)
+{
+    S = &data1
+    colors_set(c, wchar)
+    appenddata()
+}
+
+`SS' `MAIN'::colors_added(| `Bool' rgbforce)
+{
+    S = &data1
+    copyadded()
+    if (args()==0) return(colors_get(`FALSE'))
+    return(colors_get(rgbforce))
+}
+
+`Int' `MAIN'::_colors(`SS' c, | `SS' wchar)
+{
+    `Int' i
+    
+    S = &data1
+    i = _colors_set(c, wchar)
+    if (i==0) replacedata()
+    return(i)
+}
+
+`Int' `MAIN'::_add_colors(`SS' c, | `SS' wchar)
+{
+    `Int' i
+    
+    S = &data1
+    i = _colors_set(c, wchar)
+    if (i==0) appenddata()
+    return(i)
+}
+
+`T' `MAIN'::Colors(| `TV' o1)
+{
+    // get
+    if (args()==0 | isstring(o1)==0) {
+        S = &data
+        if (args()==0) return(Colors_get(`FALSE'))
+        return(Colors_get(o1))
+    }
+    // set
+    S = &data1
+    Colors_set(o1)
+    replacedata()
+}
+
+void `MAIN'::add_Colors(`SV' C)
+{
+    S = &data1
+    Colors_set(C)
+    appenddata()
+}
+
+`SC' `MAIN'::Colors_added(| `Bool' rgbforce)
+{
+    S = &data1
+    copyadded()
+    if (args()==0) return(Colors_get(`FALSE'))
+    return(Colors_get(rgbforce))
+}
+
+`Int' `MAIN'::_Colors(`SV' C)
+{
+    `Int' i
+    
+    S = &data1
+    i = _Colors_set(C)
+    if (i==0) replacedata()
+    return(i)
+}
+
+`Int' `MAIN'::_add_Colors(`SV' C)
+{
+    `Int' i
+    
+    S = &data1
+    i = _Colors_set(C)
+    if (i==0) appenddata()
+    return(i)
 }
 
 `SS' `MAIN'::colors_get(`Bool' rgbforce)
@@ -1294,7 +1410,7 @@ mata:
     `SC'  C
 
      C = Colors_get(rgbforce)
-     for (i = N(); i; i--) {
+     for (i = S->n; i; i--) {
          if (strpos(C[i], " ")) C[i] = `"""' + C[i] + `"""'
      }
      return(invtokens(C'))
@@ -1302,12 +1418,21 @@ mata:
 
 `SC' `MAIN'::Colors_get(`Bool' rgbforce)
 {
+    return(_Colors_get(rgbforce,
+        _get("RGB"),
+        S->alpha,
+        S->intensity,
+        S->names,
+        S->stok))
+}
+
+`SC' `MAIN'::_Colors_get(`Bool' rgbforce, `RM' RGB, `RC' alpha, 
+    `RC' intensity, `SC' names, `RC' stok)
+{
     `Int' i
     `SC'  C
-    `RM'  RGB
      
-     RGB = get("RGB")
-     i = N()
+     i = rows(RGB)
      C = J(i, 1, "")
      for (; i; i--) {
          if (rgbforce)             C[i] = invtokens(strofreal(RGB[i,]))
@@ -1323,41 +1448,40 @@ void `MAIN'::colors_set(`SS' c, `SS' wchar) Colors_set(_tokens(c, wchar))
 
 void `MAIN'::Colors_set(`SV' C)
 {
-    `SR' s
+    `Int' i
     
-    s = parse_split(C)
-    if (length(s)) {
-        display("{err}color specification '" + s + "' is invalid")
-        exit(3498)
-    }
-    s = parse_convert()
-    if (length(s)) {
-        display("{err}color '" + s + "' invalid/not found")
+    i = parse_split(C)
+    if (i==0) i = parse_convert()
+    if (i) {
+        display("{err}color specification '" + C[i] + "' is invalid")
         exit(3498)
     }
 }
 
-`Bool' `MAIN'::cvalid(| `SS' c)
+`Int' `MAIN'::_colors_set(`SS' c, `SS' wchar) return(_Colors_set(_tokens(c, wchar)))
+
+`Int' `MAIN'::_Colors_set(`SV' C)
 {
-    if (length(parse_split(c)))  {
-        set(J(0,3,.))
-        return(0)
-    }
-    if (length(parse_convert())) {
-        set(J(0,3,.))
-        return(0)
-    }
-    return(1)
+    `Int' i
+    
+    i = parse_split(C)
+    if (i==0) i = parse_convert()
+    return(i)
 }
 
-`SR' `MAIN'::parse_split(`SV' C)
+`Int' `MAIN'::parse_split(`SV' C)
+{
+    rgb_set(J(length(C), 3, .))
+    return(_parse_split(C, S->alpha, S->intensity, S->info))
+}
+
+`Int' `MAIN'::_parse_split(`SV' C, `RC' alpha, `RC' intensity, `SC' info)
 {
     `Int' n, i
     `SS'  tok
     `T'   t
     
     n = length(C)
-    rgb_set(J(n, 3, .))
     t = tokeninit("", ("%","*"), "")
     for (i=1; i<=n; i++) {
         tokenset(t, C[i])
@@ -1365,62 +1489,67 @@ void `MAIN'::Colors_set(`SV' C)
         if ((tok = tokenget(t))=="") continue
         if (tok=="%") {
             alpha[i] = strtoreal(tokenget(t))/100
-            if (alpha[i]<0 | alpha[i]>1) return(C[i])
+            if (alpha[i]<0 | alpha[i]>1) return(i)
             if ((tok = tokenget(t))=="") continue
             if (tok=="*") {
                 intensity[i] = strtoreal(tokenget(t))
-                if (intensity[i]<0 | intensity[i]>255) return(C[i])
+                if (intensity[i]<0 | intensity[i]>255) return(i)
             }
         }
         else if (tok=="*") {
             intensity[i] = strtoreal(tokenget(t))
-            if (intensity[i]<0 | intensity[i]>255) return(C[i])
+            if (intensity[i]<0 | intensity[i]>255) return(i)
             if ((tok = tokenget(t))=="") continue
             if (tok=="%") {
                 alpha[i] = strtoreal(tokenget(t))/100
-                if (alpha[i]<0 | alpha[i]>1) return(C[i])
+                if (alpha[i]<0 | alpha[i]>1) return(i)
             }
         }
-        else return(C[i])
+        else return(i)
         if (tokenrest(t)=="") continue
-        return(C[i])
+        return(i)
     }
     // done
-    return(J(1,0,""))
+    return(0)
 }
 
-`SR' `MAIN'::parse_convert()
+`Int' `MAIN'::parse_convert()
 {
-    `Int'  r, i, l
+    return(_parse_convert(S->n, S->RGB, S->alpha, S->names, S->info, S->stok))
+}
+
+`Int' `MAIN'::_parse_convert(`Int' r, `RM' RGB, `RC' alpha, `SC' names,
+    `SC' info, `RC' stok)
+{
+    `Int'  i, l
     `RR'   TMP
     `SR'   tok
     `SS'   t
     `SC'   type
     `IntC' p
 
-    r = N()
     type = J(r, 1, "")
     for (i=1; i<=r; i++) {
         tok = strtrim(info[i])
         if (substr(tok,1,1)=="#") { // HEX color
             RGB[i,] = _HEX_to_RGB(tok)/255
-            if (missing(RGB[i,])) return(info[i])
+            if (missing(RGB[i,])) return(i)
             continue
         }
         tok = tokens(tok)
         l = length(tok)
-        if (l==0) return(info[i])
-        if (l==2) return(info[i])
+        if (l==0) return(i)
+        if (l==2) return(i)
         if (l==1) { // named color
-            if (parse_named(tok, i)) return(tok)
+            if (parse_named(tok, i, RGB, info, stok)) return(i)
             names[i] = tok
             continue
         }
         if (l==3) { // RGB [0-255]
             TMP = strtoreal(tok)
-            if (_clip(round(TMP),0,255)!=TMP) return(info[i])
+            if (_clip(round(TMP),0,255)!=TMP) return(i)
             RGB[i,] = TMP/255
-            if (missing(RGB[i,])) return(info[i])
+            if (missing(RGB[i,])) return(i)
             info[i] = ""
             continue
         }
@@ -1428,30 +1557,30 @@ void `MAIN'::Colors_set(`SV' C)
             if (strtoreal(tok[1])<.) { 
                 TMP = strtoreal(tok)
                 if (all(TMP:<=1)) { // CMYK [0-1]
-                    if (any(TMP:<0)) return(info[i])
+                    if (any(TMP:<0)) return(i)
                     RGB[i,] = _CMYK1_to_RGB1(TMP)
                 }
                 else {              // CMYK [0-255]
-                    if (_clip(round(TMP),0,255)!=TMP) return(info[i])
+                    if (_clip(round(TMP),0,255)!=TMP) return(i)
                     RGB[i,] = _CMYK1_to_RGB1(TMP/255) 
                 }
-                if (missing(RGB[i,])) return(info[i])
+                if (missing(RGB[i,])) return(i)
                 continue
             }
         }
         t = strlower(tok[1]) // check whether CMYK
         if (t==substr("cmyk1", 1, max((2, strlen(t))))) {
-            if (l!=5) return(info[i])
+            if (l!=5) return(i)
             TMP = strtoreal(tok[|2 \ .|])
             if (t=="cmyk1") RGB[i,] = _CMYK1_to_RGB1(TMP)     // CMYK [0-1]
             else            RGB[i,] = _CMYK1_to_RGB1(TMP/255) // CMYK [0-255]
-            if (missing(RGB[i,])) return(info[i])
+            if (missing(RGB[i,])) return(i)
             continue
         }
         if (l==5) { // check whether RGBA/RGBA1
             if (t=="rgba" | t=="rgba1") {
                 TMP = strtoreal(tok[5])
-                if (TMP<0 | TMP>1) return(info[i])
+                if (TMP<0 | TMP>1) return(i)
                 if (alpha[i]<.) {
                     display("{err}opacity not allowed with RGBA")
                     exit(3498)
@@ -1463,65 +1592,46 @@ void `MAIN'::Colors_set(`SV' C)
             }
         }
         type[i] = invtokens(tok[|1 \ l-3|])   // get color space info
-        if (type[i]=="") return(info[i])
+        if (type[i]=="") return(i)
         RGB[i,] = strtoreal(tok[|l-3+1 \ .|]) // get value (last 3 elements)
-        if (missing(RGB[i,])) return(info[i])
+        if (missing(RGB[i,])) return(i)
     }
     // convert remaining colors
     for (i=r; i; i--) {
         t = type[i]
         if (t=="") continue
-        if (convert_parse(tok, t, 0)) return(info[i])
+        if (convert_parse(tok, t, 0)) return(i)
         p = ::select(1::r, type:==t)
         RGB[p,] = convert(RGB[p,], t, "RGB1")
         type[p] = J(length(p), 1, "")
     }
     // done
-    return(J(1,0,""))
+    return(0)
 }
 
-`Bool' `MAIN'::parse_named(`SS' s, `Int' i)
+`Bool' `MAIN'::parse_named(`SS' s, `Int' i, `RM' RGB, `SC' info, `RC' stok)
 {
     `SS' c
     `RR' RGB1
     
-    // named color provided by official Stata (as of Stata 15.1)
-    if (anyof(("black", "blue", "bluishgray", "bluishgray8", "brown", "chocolate",
-    "cranberry", "cyan", "dimgray", "dkgreen", "dknavy", "dkorange", "ebblue",
-    "ebg", "edkbg", "edkblue", "eggshell", "eltblue", "eltgreen", "emerald",
-    "emidblue", "erose", "forest_green", "gold", "gray", "green", "gs0", "gs1",
-    "gs10", "gs11", "gs12", "gs13", "gs14", "gs15", "gs16", "gs2", "gs3", "gs4",
-    "gs5", "gs6", "gs7", "gs8", "gs9", "khaki", "lavender", "lime", "ltblue",
-    "ltbluishgray", "ltbluishgray8", "ltkhaki", "magenta", "maroon", "midblue",
-    "midgreen", "mint", "navy", "navy8", "none", "olive", "olive_teal", "orange",
-    "orange_red", "pink", "purple", "red", "sand", "sandb", "sienna", "stone",
-    "sunflowerlime", "teal", "white", "yellow"), s)) {
-        c = _parse_stcolorstyle(findfile("color-"+s+".style"))
+    // get color from color-<name>.style; this includes Stata's official colors
+    if (!iswebcolor(s)) { // only if no exact match in webcolors
+        c = parse_stcolorstyle(s)
+        if (c!="") {
+            RGB1 = strtoreal(tokens(c))/255
+            if (length(RGB1)!=3) return(1) // invalid RGB code
+            info[i] = ""
+            stok[i] = `TRUE'
+            RGB[i,] = RGB1
+            return(0)
+        }
     }
-    if (c!="") {
-        RGB1 = strtoreal(tokens(c))/255
-        if (length(RGB1)!=3) return(1)
-        info[i] = ""
-        stok[i] = `TRUE'
-        RGB[i,] = RGB1
-        return(0)
-    }
-    // web color
+    // get web color
     c = parse_webcolor(s)
     if (c!="") {
         RGB1 = _HEX_to_RGB(c)/255
-        if (missing(RGB1)) return(1)
+        if (missing(RGB1)) return(1) // invalid HEX code
         info[i] = c
-        RGB[i,] = RGB1
-        return(0)
-    }
-    // user color provided as color-<name>.style
-    c = parse_stcolorstyle(s)
-    if (c!="") {
-        RGB1 = strtoreal(tokens(c))/255
-        if (length(RGB1)!=3) return(1)
-        info[i] = ""
-        stok[i] = `TRUE'
         RGB[i,] = RGB1
         return(0)
     }
@@ -1531,26 +1641,22 @@ void `MAIN'::Colors_set(`SV' C)
 
 `SS' `MAIN'::parse_stcolorstyle(`SS' s) // read RGB from color-<name>.style
 {   
-    `SS' fn, dir, basename
+    `SS' fn, dir, basename, line
+    `RS' fh
+    `SM' EOF
+    
     pragma unset dir
     pragma unset basename
 
-    if (!st_isname(s)) return("")
+    // look for color-<name>.style along adopath
     fn = findfile("color-"+s+".style")
     if (fn=="") return("")
-    // findfile() is not case sensitive, but -graph- is; must check case
-        pathsplit(fn, dir, basename) 
-        if (length(dir(dir, "files", basename))==0) return("") // no match
-    return(_parse_stcolorstyle(fn))
-}
 
-`SS' `MAIN'::_parse_stcolorstyle(`SS' fn)
-{
-    `RS' fh
-    `SS' line
-    `SM' EOF
-    
-    if (fn=="") return("")
+    // findfile() is not case sensitive, but -graph- is; must check case
+    pathsplit(fn, dir, basename) 
+    if (length(dir(dir, "files", basename))==0) return("") // no match
+
+    // read RGB from file
     fh  = fopen(fn, "r")
     EOF = J(0, 0, "")
     while ((line=fget(fh))!=EOF) {
@@ -1566,14 +1672,20 @@ void `MAIN'::Colors_set(`SV' C)
     return("") // no valid color definition found
 }
 
+`Bool' `MAIN'::iswebcolor(`SS' s) // check for exact match, including case
+{
+    if (webcolors.N()==0) webcolors()
+    return(webcolors.exists(s))
+}
+
 `SS' `MAIN'::parse_webcolor(`SS' s0)
 {
     `SS'  s, c
     
-    if (webcolors.N()==0) webcolors()
-    c = webcolors.get(s0)
+    // webcolors already filled-in because iswebcolors() has been called
+    c = webcolors.get(s0) // only finds exact match, including case
     if (c=="") {
-        s = findkey(s0, webcolors.keys())
+        s = findkey(s0, webcolors.keys()) // ignore case and allow abbreviation
         if (s!="") {
             s0 = s
             c = webcolors.get(s0)
@@ -1582,16 +1694,120 @@ void `MAIN'::Colors_set(`SV' C)
     return(c)
 }
 
-`T' `MAIN'::names(| `SS' c, `SS' wchar)
+`T' `MAIN'::names(| `SS' o1, `SS' o2)
 {
-    if (args()==0) return(names_get())
-    names_set(c, wchar)
+    // get
+    if (args()==0) {
+        S = &data
+        return(names_get())
+    }
+    // set
+    S = &data1
+    copydata()
+    names_set(o1, o2)
+    replacedata()
 }
 
-`T' `MAIN'::Names(| `SV' C)
+`T' `MAIN'::names_added(| `SS' o1, `SS' o2)
 {
-    if (args()==0) return(names)
-    Names_set(C)
+    // get
+    if (args()==0) {
+        S = &data1
+        copyadded()
+        return(names_get())
+    }
+    // set
+    S = &data1
+    copyadded()
+    names_set(o1, o2)
+    updatedata()
+}
+
+`T' `MAIN'::Names(| `SV' o1)
+{
+    // get
+    if (args()==0) {
+        S = &data
+        return(Names_get())
+    }
+    // set
+    S = &data1
+    copydata()
+    Names_set(o1)
+    replacedata()
+}
+
+`T' `MAIN'::Names_added(| `SS' o1, `SS' o2)
+{
+    // get
+    if (args()==0) {
+        S = &data1
+        copyadded()
+        return(Names_get())
+    }
+    // set
+    S = &data1
+    copyadded()
+    Names_set(o1, o2)
+    updatedata()
+}
+
+`T' `MAIN'::info(| `SS' o1, `SS' o2)
+{
+    // get
+    if (args()==0) {
+        S = &data
+        return(info_get())
+    }
+    // set
+    S = &data1
+    copydata()
+    info_set(o1, o2)
+    replacedata()
+}
+
+`T' `MAIN'::info_added(| `SS' o1, `SS' o2)
+{
+    // get
+    if (args()==0) {
+        S = &data1
+        copyadded()
+        return(info_get())
+    }
+    // set
+    S = &data1
+    copyadded()
+    info_set(o1, o2)
+    updatedata()
+}
+
+`T' `MAIN'::Info(| `SV' o1)
+{
+    // get
+    if (args()==0) {
+        S = &data
+        return(Info_get())
+    }
+    // set
+    S = &data1
+    copydata()
+    Info_set(o1)
+    replacedata()
+}
+
+`T' `MAIN'::Info_added(| `SS' o1, `SS' o2)
+{
+    // get
+    if (args()==0) {
+        S = &data1
+        copyadded()
+        return(Info_get())
+    }
+    // set
+    S = &data1
+    copyadded()
+    Info_set(o1, o2)
+    updatedata()
 }
 
 `SS' `MAIN'::names_get()
@@ -1599,37 +1815,26 @@ void `MAIN'::Colors_set(`SV' C)
     `Int' i
     `SC'  C
      
-     C = names
+     C = S->names
      if (allof(C, "")) return("")
-     for (i = N(); i; i--) {
+     for (i = rows(C); i; i--) {
          if      (C[i]=="")          C[i] = `""""'
          else if (strpos(C[i], " ")) C[i] = `"""' + C[i] + `"""'
      }
      return(invtokens(C'))
 }
 
-void `MAIN'::names_set(`SS' c, `SS' wchar)
-{
-    Names_set(_tokens(c, wchar))
-}
+`SC' `MAIN'::Names_get() return(S->names)
 
-void `MAIN'::Names_set(`SV' C)
+void `MAIN'::names_set(`SS' c, `SS' wchar) Names_set(_tokens(c, wchar))
+
+void `MAIN'::Names_set(`SV' C) _Names_set(C, S->n, S->names)
+
+void `MAIN'::_Names_set(`SV' C, `Int' n, `SC' names)
 {
     `Int' i
     
-    for (i = min((length(C), N())); i; i--) names[i] = C[i]
-}
-
-`T' `MAIN'::info(| `SS' c, `SS' wchar)
-{
-    if (args()==0) return(info_get())
-    info_set(c, wchar)
-}
-
-`T' `MAIN'::Info(| `SV' C)
-{
-    if (args()==0) return(info)
-    Info_set(C)
+    for (i = min((length(C), n)); i; i--) names[i] = C[i]
 }
 
 `SS' `MAIN'::info_get()
@@ -1637,25 +1842,26 @@ void `MAIN'::Names_set(`SV' C)
     `Int' i
     `SC'  C
      
-     C = info
+     C = S->info
      if (allof(C, "")) return("")
-     for (i = N(); i; i--) {
+     for (i = rows(C); i; i--) {
          if      (C[i]=="")          C[i] = `""""'
          else if (strpos(C[i], " ")) C[i] = `"""' + C[i] + `"""'
      }
      return(invtokens(C'))
 }
 
-void `MAIN'::info_set(`SS' c, `SS' wchar)
-{
-    Info_set(_tokens(c, wchar))
-}
+`SC' `MAIN'::Info_get() return(S->info)
 
-void `MAIN'::Info_set(`SV' C)
+void `MAIN'::info_set(`SS' c, `SS' wchar) Info_set(_tokens(c, wchar))
+
+void `MAIN'::Info_set(`SV' C) _Info_set(C, S->n, S->info)
+
+void `MAIN'::_Info_set(`SV' C, `Int' n, `SC' info)
 {
     `Int' i
     
-    for (i = min((length(C), N())); i; i--) info[i] = C[i]
+    for (i = min((length(C), n)); i; i--) info[i] = C[i]
 }
 
 // modified version of tokens; omits delimiters and inserts empty elements 
@@ -1693,25 +1899,66 @@ end
 
 mata:
 
-void `MAIN'::set(`T' C, | `SS' space) _set(C, space, 0)
-
-void `MAIN'::reset(`T' C, | `SS' space, `IntV' p) _set(C, space, 1, p)
-
-void `MAIN'::_set(`T' C, `SS' space, `Bool' reset, | `IntV' p0)
+void `MAIN'::set(`T' C, | `SS' space)
 {
-    `SS'   s
-    `SR'   S
+    S = &data1
+    _set(C, space)
+    replacedata()
+}
+
+void `MAIN'::add(`T' C, | `SS' space)
+{
+    S = &data1
+    _set(C, space)
+    appenddata()
+}
+
+void `MAIN'::reset(`T' C, | `SS' space, `IntV' p)
+{
+    S = &data1
+    copydata()
+    _reset(C, space, p)
+    replacedata()
+}
+
+void `MAIN'::reset_added(`T' C, | `SS' space, `IntV' p)
+{
+    S = &data1
+    copyadded()
+    _reset(C, space, p)
+    updatedata()
+}
+
+`TM' `MAIN'::get(| `SS' space)
+{
+    S = &data
+    return(_get(space))
+}
+
+`TM' `MAIN'::get_added(| `SS' space)
+{
+    S = &data1
+    copyadded()
+    return(_get(space))
+}
+
+void `MAIN'::_set(`T' C, `SS' space)             __set(C, space, 0)
+
+void `MAIN'::_reset(`T' C, `SS' space, `IntV' p) __set(C, space, 1, p)
+
+void `MAIN'::__set(`T' C, `SS' space, `Bool' reset, | `IntV' p0)
+{
+    `SR'   s
     `RC'   a
     `IntV' p
-    pragma unset S
     
     // preprocess p
     if (reset) {
         p = p0
         if (p==.) p = J(1,0,.)
         else {
-            p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(N():+1:+p)
-            if (any(p:<1 :| p:>N())) {
+            p = (sign(p):!=-1):*p :+ (sign(p):==-1):*((S->n):+1:+p)
+            if (any(p:<1 :| p:>(S->n))) {
                 display("{err}p contains invalid indices")
                 exit(3300)
             }
@@ -1731,35 +1978,93 @@ void `MAIN'::_set(`T' C, `SS' space, `Bool' reset, | `IntV' p0)
         if (reset) rgb_reset(convert(C[,(1,2,3)], s, "RGB1"), p)
         else       rgb_set(convert(C[,(1,2,3)], s, "RGB1"))
         if (reset) {
-            if (length(p)) alpha[p] = C[,4]
-            else           alpha = C[,4]
+            if (length(p)) S->alpha[p] = C[,4]
+            else           S->alpha = C[,4]
         }
-        else alpha = C[,4]
+        else S->alpha = C[,4]
         return
     }
     if (reset) rgb_reset(convert(C, space, "RGB1"), p)
     else       rgb_set(convert(C, space, "RGB1"))
     // generate info
-    (void) convert_parse(S, space, 0)
-    if      (S[1]=="RGB")   return
-    if      (S[1]=="RGB1")  return
-    if      (S[1]=="HEX")   info_reset("", C, "", p)
-    else if (S[1]=="CMYK")  info_reset("", C, "%9.0f", p)
-    else if (S[1]=="CMYK1") info_reset("", C, "%9.3g", p)
-    else if (anyof(("lRGB", "XYZ1", "xyY", "xyY1", "HSV", "HSL"), S[1]))
-                            info_reset(S[1], C, "%9.3g", p)
-    else if (S[1]=="CAM02") info_reset(S[2]!="" ? S[2] : "CAM02", C, "%9.0f", p)
-    else                    info_reset(S[1], C, "%9.0f", p)
+    (void) convert_parse(s, space, 0) // will replace s
+    if      (s[1]=="RGB")   return
+    if      (s[1]=="RGB1")  return
+    if      (s[1]=="HEX")   info_reset("", C, "", p)
+    else if (s[1]=="CMYK")  info_reset("", C, "%9.0f", p)
+    else if (s[1]=="CMYK1") info_reset("", C, "%9.3g", p)
+    else if (anyof(("lRGB", "XYZ1", "xyY", "xyY1", "HSV", "HSL"), s[1]))
+                            info_reset(s[1], C, "%9.3g", p)
+    else if (s[1]=="CAM02") info_reset(s[2]!="" ? s[2] : "CAM02", C, "%9.0f", p)
+    else                    info_reset(s[1], C, "%9.0f", p)
 }
 
-`TM' `MAIN'::get(| `SS' space)
+void `MAIN'::rgb_set(`RM' rgb)
+{
+    `Int' n
+    
+    n = rows(rgb)
+    assert_cols(rgb, 3)
+    S->n         = n
+    S->RGB       = rgb
+    S->alpha     = J(n, 1, .)
+    S->intensity = J(n, 1, .)
+    S->stok      = J(n, 1, `FALSE')
+    S->names     = J(n, 1, "")
+    S->info      = J(n, 1, "")
+    S->isip      = `FALSE'
+}
+
+void `MAIN'::rgb_reset(`RM' rgb, | `IntV' p)
+{
+    if (length(p)==0) {
+        assert_size(rgb, S->n, 3)
+        S->RGB   = rgb
+        S->names = J(rows(rgb), 1, "")
+        S->info  = J(rows(rgb), 1, "")
+        S->stok  = J(rows(rgb), 1, `FALSE')
+        return
+    }
+    assert_size(rgb, length(p), 3)
+    S->RGB[p,]  = rgb
+    S->names[p] = J(length(p), 1, "")
+    S->info[p]  = J(length(p), 1, "")
+    S->stok[p]  = J(length(p), 1, `FALSE')
+}
+
+void `MAIN'::info_reset(`SS' c, `T' C, | `SS' fmt, `IntV' p)
+{
+    if (length(p)==0) S->info    = _info_reset(c, C, fmt)
+    else              S->info[p] = _info_reset(c, C, fmt)
+}
+
+`SC' `MAIN'::_info_reset(`SS' c, `T' C, `SS' fmt)
+{
+    `Int' i
+    `SC'  info
+    
+    if (isstring(C)) {
+        info = J(length(C), 1, (c!="" ? c + " " : ""))
+        if (cols(C)!=1) info = info + C'
+        else            info = info + C
+        return(info)
+    }
+    info = J(rows(C), 1, (c!="" ? c + " " : ""))
+    for (i=1; i<=cols(C); i++) {
+        if (i>1) info = info :+ " "
+        info = info + strofreal(C[,i], fmt)
+    }
+    return(info)
+}
+
+`TM' `MAIN'::_get(| `SS' space)
 {
     `SS' s
     
     s = strtrim(strlower(space))
-    if (s=="rgba")  return((convert(RGB, "RGB1", "RGB"), editmissing(alpha, 1)))
-    if (s=="rgba1") return((RGB, editmissing(alpha, 1)))
-    return(convert(RGB, "RGB1", space))
+    if (s=="rgba")  return((convert(S->RGB, "RGB1", "RGB"), editmissing(S->alpha, 1)))
+    if (s=="rgba1") return((S->RGB, editmissing(S->alpha, 1)))
+    return(convert(S->RGB, "RGB1", space))
 }
 
 end
@@ -1768,67 +2073,128 @@ end
 * {marker opacity}{bf:Set or retrieve opacity and intensity} {hline}
 * {asis}
 
+foreach f in opacity alpha intensity {
+    mata `T' `MAIN'::`f'(| `RV' O, `RS' noreplace)
+    {
+        // get
+        if (args()==0) {
+            S = &data
+            return(`f'_get())
+        }
+        // set
+        if (args()<2) noreplace = `FALSE'
+        S = &data1
+        copydata()
+        `f'_set(O, noreplace)
+        replacedata()
+    }
+    mata void `MAIN'::add_`f'(`RV' O, | `RS' noreplace)
+    {
+        if (args()<2) noreplace = `FALSE'
+        S = &data1
+        copydata()
+        `f'_set(O, noreplace)
+        appenddata()
+    }
+    mata `T' `MAIN'::`f'_added(| `RV' O, `RS' noreplace)
+    {
+        // get
+        if (args()==0) {
+            S = &data1
+            copyadded()
+            return(`f'_get())
+        }
+        // set
+        if (args()<2) noreplace = `FALSE'
+        S = &data1
+        copydata()
+        `f'_set(O, noreplace)
+        replacedata()
+    }
+    mata void `MAIN'::add_`f'_added(`RV' O, | `RS' noreplace)
+    {
+        if (args()<2) noreplace = `FALSE'
+        S = &data1
+        copyadded()
+        `f'_set(O, noreplace)
+        appenddata()
+    }
+}
 mata:
 
-`T' `MAIN'::opacity(| `RV' O, `RS' noreplace)
+`RC' `MAIN'::opacity_get()
 {
-    if (args()==0) return(alpha*100)
-    if (args()<2) noreplace = `FALSE'
+    return(S->alpha * 100)
+}
+
+void `MAIN'::opacity_set(`RV' O, `RS' noreplace)
+{
+    if (length(O)==0) return
     if (any( ((O:<.):&(O:>100)) :| (O:<0) )) {
         display("{err}opacity must be in [0,100]")
         exit(3300)
     }
-    _alpha(O/100, noreplace)
+    _alpha(O/100, noreplace, S->n, S->alpha)
 }
 
-`T' `MAIN'::alpha(| `RV' A, `RS' noreplace)
+`RC' `MAIN'::alpha_get()
 {
-    if (args()==0) return(alpha)
-    if (args()<2) noreplace = `FALSE'
-    if (any( ((A:<.):&(A:>1)) :| (A:<0) )) {
+    return(S->alpha)
+}
+
+void `MAIN'::alpha_set(`RV' O, `RS' noreplace)
+{
+    if (length(O)==0) return
+    if (any( ((O:<.):&(O:>1)) :| (O:<0) )) {
         display("{err}alpha must be in [0,1]")
         exit(3300)
     }
-    _alpha(A, noreplace)
+    _alpha(O, noreplace, S->n, S->alpha)
 }
 
-
-void `MAIN'::_alpha(`RV' A0, `RS' noreplace)
+void `MAIN'::_alpha(`RV' A0, `RS' noreplace, `RS' n, `RC' alpha)
 {
     `Int' i
     `RC'  A
     
-    if (length(A0)==0) return
     if (cols(A0)>1) A = A0'
     else            A = A0
-    if      (rows(A)<N()) A = colrecycle(A, N())
-    else if (rows(A)>N()) recycle(rows(A))
+    if      (rows(A) < n) A = colrecycle(A, n)
+    else if (rows(A) > n) _recycle(rows(A))
     if (noreplace) {
-        for (i=N(); i; i--) {
+        for (i=n; i; i--) {
             if (alpha[i]<.) A[i] = alpha[i]
         }
     }
     alpha = A
 }
 
-`T' `MAIN'::intensity(| `RV' I0, `RS' noreplace)
+`RC' `MAIN'::intensity_get()
 {
-    `Int' i
-    `RC'  I
+    return(S->intensity)
+}
 
-    if (args()==0) return(intensity)
-    if (args()<2) noreplace = `FALSE'
-    if (length(I0)==0) return
-    if (any( ((I0:<.):&(I0:>255)) :| (I0:<0) )) {
+void `MAIN'::intensity_set(| `RV' O, `RS' noreplace)
+{
+    if (length(O)==0) return
+    if (any( ((O:<.):&(O:>255)) :| (O:<0) )) {
         display("{err}intensity multiplier must be in [0,255]")
         exit(3300)
     }
+    _intensity(O, noreplace, S->n, S->intensity)
+}
+
+void `MAIN'::_intensity(`RV' I0, `RS' noreplace, `RS' n, `RC' intensity)
+{
+    `Int' i
+    `RC'  I
+    
     if (cols(I0)>1) I = I0'
     else            I = I0
-    if      (rows(I)<N()) I = colrecycle(I, N())
-    else if (rows(I)>N()) recycle(rows(I))
+    if      (rows(I) < n) I = colrecycle(I, n)
+    else if (rows(I) > n) _recycle(rows(I))
     if (noreplace) {
-        for (i=N(); i; i--) {
+        for (i=n; i; i--) {
             if (intensity[i]<.) I[i] = intensity[i]
         }
     }
@@ -1841,9 +2207,93 @@ end
 * {marker ipolate}{bf:Color interpolation and mixing} {hline}
 * {asis}
 
+foreach f in recycle select order reverse ipolate mix intensify saturate ///
+    luminate gray cvd {
+    mata void `MAIN'::`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    {
+        S = &data1
+        copydata()
+        if      (args()==0) _`f'()
+        else if (args()==1) _`f'(o1)
+        else if (args()==2) _`f'(o1, o2)
+        else if (args()==3) _`f'(o1, o2, o3)
+        else if (args()==4) _`f'(o1, o2, o3, o4)
+        else if (args()==5) _`f'(o1, o2, o3, o4, o5)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
+        replacedata()
+    }
+    mata void `MAIN'::add_`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    {
+        S = &data1
+        copydata()
+        if      (args()==0) _`f'()
+        else if (args()==1) _`f'(o1)
+        else if (args()==2) _`f'(o1, o2)
+        else if (args()==3) _`f'(o1, o2, o3)
+        else if (args()==4) _`f'(o1, o2, o3, o4)
+        else if (args()==5) _`f'(o1, o2, o3, o4, o5)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
+        appenddata()
+    }
+    mata void `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    {
+        S = &data1
+        copyadded()
+        if      (args()==0) _`f'()
+        else if (args()==1) _`f'(o1)
+        else if (args()==2) _`f'(o1, o2)
+        else if (args()==3) _`f'(o1, o2, o3)
+        else if (args()==4) _`f'(o1, o2, o3, o4)
+        else if (args()==5) _`f'(o1, o2, o3, o4, o5)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
+        updatedata()
+    }
+    mata void `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    {
+        S = &data1
+        copyadded()
+        if      (args()==0) _`f'()
+        else if (args()==1) _`f'(o1)
+        else if (args()==2) _`f'(o1, o2)
+        else if (args()==3) _`f'(o1, o2, o3)
+        else if (args()==4) _`f'(o1, o2, o3, o4)
+        else if (args()==5) _`f'(o1, o2, o3, o4, o5)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
+        appenddata()
+    }
+}
 mata:
 
-void `MAIN'::ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos, 
+`RM' `MAIN'::colipolate(`RM' C, `Int' n, | `RV' range0, `RS' power, `RV' pos, 
+    `Bool' pad)
+{
+    `Bool' haspos
+    `Int'  r
+    `RV'   range
+    `RC'   from, to
+    
+    if (args()<6) pad = `FALSE'
+    if (power<=0) {
+        printf("{err}power = %g not allowed; must be strictly positive\n", power)
+        exit(3498)
+    }
+    haspos = length(pos)>0 & any(pos:<.)
+    if (n>=.) return(C)                           // return unchanged C
+    if (n<1)  return(J(0, cols(C), missingof(C))) // return void
+    r = rows(C)
+    if (r==0) return(J(n, cols(C), missingof(C))) // return missing
+    if (r==1) return(J(n, 1, C))                  // duplicate
+    range = _ipolate_setrange(range0)
+    if (r==n) {
+        if (range==(0,1) & haspos==`FALSE') return(C) // no interpolation needed
+        if (range==(1,0) & haspos==`FALSE') return(C[r::1,]) // reverse order
+    }
+    _ipolate_fromto(r, n, range, power, (haspos ? pos : .), pad, from=., to=.)
+    if (haspos) return(_ipolate_pos(C, from, to))
+    return(__ipolate(C, from, to))
+}
+
+void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos, 
     `Bool' pad)
 {
     `Int'  jh
@@ -1861,37 +2311,37 @@ void `MAIN'::ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos,
         exit(3498)
     }
     // convert RGB1 to interpolation space
-    C = ipolate_get(space, mask, jh=0)
+    C = _ipolate_get(space, mask, jh=0)
     if (mask!="") space = space + " " + mask
     // get opacity and intensity
-    if (any(alpha:<.))     A = editmissing(alpha, 1)
-    else                   A = J(N(), 0, .)
-    if (any(intensity:<.)) I = editmissing(intensity, 1)
-    else                   I = J(N(), 0, .)
+    if (any(S->alpha:<.))     A = editmissing(S->alpha, 1)
+    else                      A = J(S->n, 0, .)
+    if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
+    else                      I = J(S->n, 0, .)
     // interpolate
     C = colipolate((C,A,I), n, range, power, pos, pad)
     if (length(I)) {; I = C[,cols(C)]; C = C[|1,1 \ n,cols(C)-1|]; }
     if (length(A)) {; A = C[,cols(C)]; C = C[|1,1 \ n,cols(C)-1|]; }
     // convert back to RGB1
     if (jh) C[,jh] = mod(C[,jh] :+ .5, 360) :- .5
-    set(C, space)
-    isip = `TRUE'
+    _set(C, space)
+    S->isip = `TRUE'
     // reset opacity and intensity if necessary
     if (length(A)) {
-        if (pad) alpha = clip(A, 0, 1)
-        else     alpha = A
+        if (pad) S->alpha = clip(A, 0, 1)
+        else     S->alpha = A
     }
     if (length(I)) {
-        if (pad) intensity = clip(I, 0, 255)
-        else     intensity = I
+        if (pad) S->intensity = clip(I, 0, 255)
+        else     S->intensity = I
     }
 }
 
-`RM' `MAIN'::ipolate_get(`SS' space, `SS' mask, `Int' j)
+`RM' `MAIN'::_ipolate_get(`SS' space, `SS' mask, `Int' j)
 {
     `RM'   C
     
-    C = get(space + (mask!="" ? " " + mask : ""))
+    C = _get(space + (mask!="" ? " " + mask : ""))
     if (space=="CAM02") {
         if (mask=="") j = 3 // default mask is JCh
         else          j = strpos(mask, "h")
@@ -1923,35 +2373,6 @@ void `MAIN'::ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos,
         else                    C[i] = b
     }
     return(C)
-}
-
-`RM' `MAIN'::colipolate(`RM' C, `Int' n, | `RV' range0, `RS' power, `RV' pos, 
-    `Bool' pad)
-{
-    `Bool' haspos
-    `Int'  r
-    `RV'   range
-    `RC'   from, to
-    
-    if (args()<6) pad = `FALSE'
-    if (power<=0) {
-        printf("{err}power = %g not allowed; must be strictly positive\n", power)
-        exit(3498)
-    }
-    haspos = length(pos)>0 & any(pos:<.)
-    if (n>=.) return(C)                           // return unchanged C
-    if (n<1)  return(J(0, cols(C), missingof(C))) // return void
-    r = rows(C)
-    if (r==0) return(J(n, cols(C), missingof(C))) // return missing
-    if (r==1) return(J(n, 1, C))                  // duplicate
-    range = _ipolate_setrange(range0)
-    if (r==n) {
-        if (range==(0,1) & haspos==`FALSE') return(C) // no interpolation needed
-        if (range==(1,0) & haspos==`FALSE') return(C[r::1,]) // reverse order
-    }
-    _ipolate_fromto(r, n, range, power, (haspos ? pos : .), pad, from=., to=.)
-    if (haspos) return(_ipolate_pos(C, from, to))
-    return(_ipolate(C, from, to))
 }
 
 `RV' `MAIN'::_ipolate_setrange(`RV' range0)
@@ -1998,15 +2419,15 @@ void `MAIN'::_ipolate_fromto(`Int' r, `Int' n, `RV' range, `RS' power,
     `RM'  C
 
     a = from0[|1 \ rows(from0)-1|]; b = from0[|2 \ rows(from0)|]
-    if (all(a:<b)) return(_ipolate(C0, from0, to)) // strictly ascending
-    if (all(a:>b)) return(_ipolate(C0, from0, to)) // strictly descending
+    if (all(a:<b)) return(__ipolate(C0, from0, to)) // strictly ascending
+    if (all(a:>b)) return(__ipolate(C0, from0, to)) // strictly descending
     p = ::order(from0, 1)
     from = from0[p]; C = C0[p,]
     a = from[|1 \ rows(from)-1|]; b = from[|2 \ rows(from)|]
-    if (any(a:==b)==0) return(_ipolate(C, from, to)) // no doubles
+    if (any(a:==b)==0) return(__ipolate(C, from, to)) // no doubles
     _ipolate_collapse(C, from)
     if (rows(C)==1) return(J(rows(to), 1, C))
-    return(_ipolate(C, from, to))
+    return(__ipolate(C, from, to))
 }
 
 void `MAIN'::_ipolate_collapse(`RM' C, `RC' from)
@@ -2029,7 +2450,7 @@ void `MAIN'::_ipolate_collapse(`RM' C, `RC' from)
     C = C[|j,1 \ .,.|]; from = from[|j \ .|]
 }
 
-`RM' `MAIN'::_ipolate(`RM' y0, `RC' x0, `RC' x1)
+`RM' `MAIN'::__ipolate(`RM' y0, `RC' x0, `RC' x1)
 {
     `Int' i, j, k, l, n0, n1, c, reverse
     `RM'  y1
@@ -2060,7 +2481,7 @@ void `MAIN'::_ipolate_collapse(`RM' C, `RC' from)
     return(y1)
 }
 
-void `MAIN'::mix(| `SS' space0, `RV' w0)
+void `MAIN'::_mix(| `SS' space0, `RV' w0)
 {
     `Int'  jh
     `SS'   space, mask
@@ -2074,7 +2495,7 @@ void `MAIN'::mix(| `SS' space0, `RV' w0)
         exit(3498)
     }
     // convert RGB1 to interpolation space
-    C = mix_get(space, mask, jh=0)
+    C = _mix_get(space, mask, jh=0)
     if (mask!="") space = space + " " + mask
     // weights
     if (length(w0)==0) w = 1
@@ -2082,14 +2503,14 @@ void `MAIN'::mix(| `SS' space0, `RV' w0)
     else {
         if (cols(w0)>1) w = w0'
         else            w = w0
-        if      (rows(w)<N()) w = colrecycle(w, N())
-        else if (rows(w)>N()) w = w[|1 \ N()|]
+        if      (rows(w)<(S->n)) w = colrecycle(w, S->n)
+        else if (rows(w)>(S->n)) w = w[|1 \ S->n|]
     }
     // get opacity and intensity
-    if (any(alpha:<.))     A = editmissing(alpha, 1)
-    else                   A = J(N(), 0, .)
-    if (any(intensity:<.)) I = editmissing(intensity, 1)
-    else                   I = J(N(), 0, .)
+    if (any(S->alpha:<.))     A = editmissing(S->alpha, 1)
+    else                      A = J(S->n, 0, .)
+    if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
+    else                      I = J(S->n, 0, .)
     // average
     C = mean((C,A,I), w)
     if (length(I)) {; I = C[cols(C)]; C = C[|1 \ cols(C)-1|]; }
@@ -2099,17 +2520,17 @@ void `MAIN'::mix(| `SS' space0, `RV' w0)
         C[jh] = mod(atan2(C[jh], C[cols(C)])*180/pi() + .5, 360) - .5
         C = C[|1 \ cols(C)-1|]
     }
-    set(C, space)
+    _set(C, space)
     // reset opacity if necessary
-    if (length(A)) alpha     = A
-    if (length(I)) intensity = I
+    if (length(A)) S->alpha     = A
+    if (length(I)) S->intensity = I
 }
 
-`RM' `MAIN'::mix_get(`SS' space, `SS' mask, `Int' j)
+`RM' `MAIN'::_mix_get(`SS' space, `SS' mask, `Int' j)
 {
     `RM'   C
     
-    C = get(space + (mask!="" ? " " + mask : ""))
+    C = _get(space + (mask!="" ? " " + mask : ""))
     if (space=="CAM02") {
         if (mask=="") j = 3 // default mask is JCh
         else          j = strpos(mask, "h")
@@ -2123,7 +2544,6 @@ void `MAIN'::mix(| `SS' space0, `RV' w0)
     return(C)
 }
 
-
 end
 
 * {smcl}
@@ -2131,21 +2551,6 @@ end
 * {asis}
 
 mata:
-
-void `MAIN'::recycle(`Int' n0)
-{
-    `Int' n
-    
-    n = n0
-    if (n>=. | n<0) return
-    if (n==N())     return
-    RGB       = colrecycle(RGB, n)
-    alpha     = colrecycle(alpha, n)
-    intensity = colrecycle(intensity, n)
-    names     = colrecycle(names, n)
-    info      = colrecycle(info, n)
-    stok      = colrecycle(stok, n)
-}
 
 `TM' `MAIN'::colrecycle(`TM' M0, `Int' n)
 {
@@ -2161,51 +2566,75 @@ void `MAIN'::recycle(`Int' n0)
     return(M)
 }
 
-void `MAIN'::select(`IntV' p0)
+void `MAIN'::_recycle(`Int' n)
 {
+    if (n>=. | n<0) return
+    if (n==(S->n))  return
+    S->n         = n
+    S->RGB       = colrecycle(S->RGB, n)
+    S->alpha     = colrecycle(S->alpha, n)
+    S->intensity = colrecycle(S->intensity, n)
+    S->names     = colrecycle(S->names, n)
+    S->info      = colrecycle(S->info, n)
+    S->stok      = colrecycle(S->stok, n)
+}
+
+void `MAIN'::_select(`IntV' p0)
+{
+    `Int'  n
     `IntC' p
     
+    n = S->n
     p = p0
     if (cols(p)!=1) _transpose(p)
-    p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(N():+1:+p)
-    p = ::select(p, p:>=1 :& p:<=N())
-    _select(p)
+    p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(n:+1:+p)
+    p = ::select(p, p:>=1 :& p:<=n)
+    __select(p)
 }
 
-void `MAIN'::order(`IntV' p0)
+void `MAIN'::__select(`IntC' p)
 {
-    `IntC' p, rest
+    `Int' n
     
-    p = p0
-    if (cols(p)!=1) _transpose(p)
-    p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(N():+1:+p)
-    p = ::select(p, p:>=1 :& p:<=N())
-    if (length(p)==0) return
-    rest = 1::N()
-    rest[p] = J(length(p), 1, .)
-    rest = ::select(rest, rest:<.)
-    if (length(rest)) p = p \ rest
-    _select(p)
-}
-
-void `MAIN'::reverse()
-{
-    if (N()<=1) return
-    _select(N()::1)
-}
-
-void `MAIN'::_select(`IntM' p)
-{
-    if (length(p)==0) {
+    n = length(p)
+    if (n==0) {
         rgb_set(J(0, 3, .))
         return
     }
-    RGB       = RGB[p,]
-    alpha     = alpha[p]
-    intensity = intensity[p]
-    names     = names[p]
-    info      = info[p,]
-    stok      = stok[p]
+    S->n         = n
+    S->RGB       = S->RGB[p,]
+    S->alpha     = S->alpha[p]
+    S->intensity = S->intensity[p]
+    S->names     = S->names[p]
+    S->info      = S->info[p,]
+    S->stok      = S->stok[p]
+}
+
+void `MAIN'::_order(`IntV' p0)
+{
+    `Int'  n
+    `IntC' p, rest
+    
+    n = S->n
+    p = p0
+    if (cols(p)!=1) _transpose(p)
+    p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(n:+1:+p)
+    p = ::select(p, p:>=1 :& p:<=n)
+    if (length(p)==0) return
+    rest = 1::n
+    rest[p] = J(length(p), 1, .)
+    rest = ::select(rest, rest:<.)
+    if (length(rest)) p = p \ rest
+    __select(p)
+}
+
+void `MAIN'::_reverse()
+{
+    `Int'  n
+
+    n = S->n
+    if (n<=1) return
+    __select(n::1)
 }
 
 end
@@ -2223,7 +2652,7 @@ mata:
 // 1 <  p <= 255 makes color darker
 // output is always within [0,255] and rounded
 
-void `MAIN'::intensify(`RV' p0)
+void `MAIN'::_intensify(`RV' p0)
 {
     `Int'   i
     `IntC'  id
@@ -2237,21 +2666,21 @@ void `MAIN'::intensify(`RV' p0)
     }
     if (cols(p0)>1) p = p0'
     else            p = p0
-    if (N()==0) return
-    if      (rows(p)<N()) p = colrecycle(p, N())
-    else if (rows(p)>N()) recycle(rows(p))
+    if ((S->n)==0) return
+    if      (rows(p)<(S->n)) p = colrecycle(p, S->n)
+    else if (rows(p)>(S->n)) _recycle(rows(p))
     if (missing(p)) {
-        id = ::select(1::N(), p:<.)
+        id = ::select(1::(S->n), p:<.)
         if (length(id)==0) return
         p = p[id]
     }
-    C = get("RGB")
+    C = _get("RGB")
     if (length(id)) C = C[id,]
-    for (i=rows(C); i; i--) C[i,] = _intensify(C[i,], p[i])
-    reset(C, "RGB", id)
+    for (i=rows(C); i; i--) C[i,] = __intensify(C[i,], p[i])
+    _reset(C, "RGB", id)
 }
 
-`RR' `MAIN'::_intensify(`RR' C0, `RS' p)
+`RR' `MAIN'::__intensify(`RR' C0, `RS' p)
 {   // C0 is assumed to be rounded and clipped to [0,255]
     `RS' m
     `RR' C
@@ -2269,7 +2698,7 @@ void `MAIN'::intensify(`RV' p0)
 // similar to color.saturate()/color.desaturate() in chroma.js
 // source: https://gka.github.io/chroma.js/
 
-void `MAIN'::saturate(`RV' p0, | `SS' method0, `Bool' level)
+void `MAIN'::_saturate(`RV' p0, | `SS' method0, `Bool' level)
 {
     `Int'  i
     `IntC' id
@@ -2287,28 +2716,28 @@ void `MAIN'::saturate(`RV' p0, | `SS' method0, `Bool' level)
     if (length(p0)==0) return
     if (cols(p0)>1) p = p0'
     else            p = p0
-    if (N()==0) return
-    if      (rows(p)<N()) p = colrecycle(p, N())
-    else if (rows(p)>N()) recycle(rows(p))
+    if ((S->n)==0) return
+    if      (rows(p)<(S->n)) p = colrecycle(p, S->n)
+    else if (rows(p)>(S->n)) _recycle(rows(p))
     if (missing(p)) {
-        id = ::select(1::N(), p:<.)
+        id = ::select(1::(S->n), p:<.)
         if (length(id)==0) return
         p = p[id]
     }
-    C = get(method)
+    C = _get(method)
     if (length(id)) C = C[id,]
     for (i=rows(C); i; i--) {
         if (level) C[i,2] = max((p[i],0))
         else       C[i,2] = max((C[i,2] + p[i], 0))
     }
-    reset(C, method, id)
+    _reset(C, method, id)
 }
 
 // Change luminance/brightness
 // similar to color.brighten()/color.darken() in chroma.js
 // source: https://gka.github.io/chroma.js/
 
-void `MAIN'::luminate(`RV' p0, | `SS' method0, `Bool' level)
+void `MAIN'::_luminate(`RV' p0, | `SS' method0, `Bool' level)
 {
     `Int'  i, j
     `IntC' id
@@ -2327,15 +2756,15 @@ void `MAIN'::luminate(`RV' p0, | `SS' method0, `Bool' level)
     if (length(p0)==0) return
     if (cols(p0)>1) p = p0'
     else            p = p0
-    if (N()==0) return
-    if      (rows(p)<N()) p = colrecycle(p, N())
-    else if (rows(p)>N()) recycle(rows(p))
+    if ((S->n)==0) return
+    if      (rows(p)<(S->n)) p = colrecycle(p, S->n)
+    else if (rows(p)>(S->n)) _recycle(rows(p))
     if (missing(p)) {
-        id = ::select(1::N(), p:<.)
+        id = ::select(1::(S->n), p:<.)
         if (length(id)==0) return
         p = p[id]
     }
-    C = get(method)
+    C = _get(method)
     if (length(id)) C = C[id,]
     if (method=="HCL") j = 3
     else               j = 1
@@ -2343,7 +2772,7 @@ void `MAIN'::luminate(`RV' p0, | `SS' method0, `Bool' level)
         if (level) C[i,j] = max((p[i],0))
         else       C[i,j] = max((C[i,j] + p[i], 0))
     }
-    reset(C, method, id)
+    _reset(C, method, id)
 }
 
 end
@@ -2355,7 +2784,7 @@ end
 
 mata:
 
-void `MAIN'::gray(| `RV' p0, `SS' method0)
+void `MAIN'::_gray(| `RV' p0, `SS' method0)
 {
     // note: the method proposed at https://en.wikipedia.org/wiki/Grayscale
     // (set all RGB channels to Y of XYZ; and apply gamma) is equivalent to
@@ -2379,18 +2808,18 @@ void `MAIN'::gray(| `RV' p0, `SS' method0)
     }
     if (cols(p0)>1) p = p0'
     else            p = p0
-    if (N()==0) return
-    if      (rows(p)<N()) p = colrecycle(p, N())
-    else if (rows(p)>N()) recycle(rows(p))
+    if ((S->n)==0) return
+    if      (rows(p)<(S->n)) p = colrecycle(p, S->n)
+    else if (rows(p)>(S->n)) _recycle(rows(p))
     if (missing(p)) {
-        id = ::select(1::N(), p:<.)
+        id = ::select(1::(S->n), p:<.)
         if (length(id)==0) return
         p = p[id]
     }
-    C = get(method)
+    C = _get(method)
     if (length(id)) C = C[id,]
     C[,2] = C[,2] :* (1 :- p)
-    reset(C, method, id)
+    _reset(C, method, id)
 }
 
 `RM' `MAIN'::GRAY(`RM' C, `SS' space, `RS' p0, `SS' method0)
@@ -2435,7 +2864,7 @@ end
 
 mata:
 
-void `MAIN'::cvd(| `RV' p0, `SS' method0)
+void `MAIN'::_cvd(| `RV' p0, `SS' method0)
 {
     `Int'  i, m
     `IntC' id
@@ -2460,15 +2889,15 @@ void `MAIN'::cvd(| `RV' p0, `SS' method0)
     }
     if (cols(p0)>1) p = p0'
     else            p = p0
-    if (N()==0) return
-    if      (rows(p)<N()) p = colrecycle(p, N())
-    else if (rows(p)>N()) recycle(rows(p))
+    if ((S->n)==0) return
+    if      (rows(p)<(S->n)) p = colrecycle(p, S->n)
+    else if (rows(p)>(S->n)) _recycle(rows(p))
     if (missing(p)) {
-        id = ::select(1::N(), p:<.)
+        id = ::select(1::(S->n), p:<.)
         if (length(id)==0) return
         p = p[id]
     }
-    C = get("lRGB")
+    C = _get("lRGB")
     if (length(id)) C = C[id,]
     pi = .
     for (i=rows(C); i; i--) {
@@ -2478,7 +2907,7 @@ void `MAIN'::cvd(| `RV' p0, `SS' method0)
         }
         C[i,] = C[i,] * M
     }
-    reset(C, "lRGB", id)
+    _reset(C, "lRGB", id)
 }
 
 `RM' `MAIN'::CVD(`RM' C, `SS' space, | `RS' p, `SS' method)
@@ -2655,21 +3084,36 @@ mata:
 // Contrast Ratio according to Web Content Accessibility Guidelines (WCAG) 2.0 
 // source https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
 
-`RC' `MAIN'::contrast(| `IntM' P0)
+`RC' `MAIN'::contrast(| `IntM' P)
+{
+    S = &data
+    if (args()==0) return(_contrast())
+    return(_contrast(P))
+}
+
+`RC' `MAIN'::contrast_added(| `IntM' P)
+{
+    S = &data1
+    copyadded()
+    if (args()==0) return(_contrast())
+    return(_contrast(P))
+}
+
+`RC' `MAIN'::_contrast(| `IntM' P0)
 {
     `Int'  i, n, p1, p2
     `RS'   l1, l2
     `IntM' P
     `RC'   L, C
     
-    if ((n = N())<1) return(J(0,1,.))
+    if ((n = S->n)<1) return(J(0,1,.))
     if (args()<1 | P0==.) {
         if (n<2) return(J(0,1,.))
         P = ((1::(n-1)), (2::n))
     }
     else P = P0
     assert_cols(P, 2)
-    L = get("XYZ")[,2] :+ 5
+    L = _get("XYZ")[,2] :+ 5
     C = J(i = rows(P), 1, .)
     for (; i; i--) {
         p1 = P[i,1]; p2 = P[i,2]
@@ -2690,7 +3134,26 @@ mata:
 //   C. Fernandez-Maloigne (ed). Advanced color image processing and analysis. 
 //   New York: Springer. https://doi.org/10.1007/978-1-4419-6190-7_2
 
-`RC' `MAIN'::delta(| `IntM' P0, `SS' method0, `Bool' noclip)
+`RC' `MAIN'::delta(| `IntM' P, `SS' method, `Bool' noclip)
+{
+    S = &data
+    if (args()==0) return(_delta())
+    if (args()==1) return(_delta(P))
+    if (args()==2) return(_delta(P, method))
+    return(_delta(P, method, noclip))
+}
+
+`RC' `MAIN'::delta_added(| `IntM' P, `SS' method, `Bool' noclip)
+{
+    S = &data1
+    copyadded()
+    if (args()==0) return(_delta())
+    if (args()==1) return(_delta(P))
+    if (args()==2) return(_delta(P, method))
+    return(_delta(P, method, noclip))
+}
+
+`RC' `MAIN'::_delta(| `IntM' P0, `SS' method0, `Bool' noclip)
 {
     `SS'   method, coefs, space
     `Int'  n
@@ -2719,7 +3182,7 @@ mata:
         else               space = method
     }
     // determine positions
-    if ((n = N())<1) return(J(0,1,.))
+    if ((n = S->n)<1) return(J(0,1,.))
     if (args()<1 | P0==.) {
         if (n<2) return(J(0,1,.))
         P = ((1::(n-1)), (2::n))
@@ -2727,8 +3190,8 @@ mata:
     else P = P0
     assert_cols(P, 2)
     // get colors
-    if (noclip==`TRUE') C = get(space)
-    else                C = convert(clip(get("lRGB"), 0, 1), "lRGB", space)
+    if (noclip==`TRUE') C = _get(space)
+    else                C = convert(clip(_get("lRGB"), 0, 1), "lRGB", space)
     // compute differences
     if (method=="Jab") return(delta_jab(C, P, coefs))
     return(delta_euclid(C, P))
@@ -2743,7 +3206,7 @@ mata:
     
     if (coefs=="") KL = ucscoefs()[1]
     else           KL = ucscoefs_get(coefs)[1]
-    n = N()
+    n = rows(C)
     D = J(i = rows(P), 1, .)
     for (; i; i--) {
         p1 = P[i,1]; p2 = P[i,2]
@@ -2763,7 +3226,7 @@ mata:
     `RR'   a, b
     `RC'   D
     
-    n = N()
+    n = rows(C)
     D = J(i = rows(P), 1, .)
     for (; i; i--) {
         p1 = P[i,1]; p2 = P[i,2]
@@ -3921,6 +4384,32 @@ mata:
 
 void `MAIN'::generate(| `SS' space, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
 {
+    S = &data1
+    if      (args()==0) _generate()
+    else if (args()==1) _generate(space)
+    else if (args()==2) _generate(space, o2)
+    else if (args()==3) _generate(space, o2, o3)
+    else if (args()==4) _generate(space, o2, o3, o4)
+    else if (args()==5) _generate(space, o2, o3, o4, o5)
+    else                _generate(space, o2, o3, o4, o5, o6)
+    replacedata()
+}
+
+void `MAIN'::add_generate(| `SS' space, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+{
+    S = &data1
+    if      (args()==0) _generate()
+    else if (args()==1) _generate(space)
+    else if (args()==2) _generate(space, o2)
+    else if (args()==3) _generate(space, o2, o3)
+    else if (args()==4) _generate(space, o2, o3, o4)
+    else if (args()==5) _generate(space, o2, o3, o4, o5)
+    else                _generate(space, o2, o3, o4, o5, o6)
+    appenddata()
+}
+
+void `MAIN'::_generate(| `SS' space, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+{
     if (args()<5) o5 = .       // l
     if (args()<4) o4 = .       // c
     if (args()<3) o3 = .       // h
@@ -3953,8 +4442,8 @@ void `MAIN'::generate_HUE(`Int' n, `RV' h, `RS' c, `RS' l, `Bool' reverse)
     for (i=1; i<=n; i++) {
          C[i,1] = mod((h1 + (n<=1 ? 0 : (i-1) * (h2-h1) / (n-1))) * dir, 360) 
     }
-    pclass = "qualitative"
-    set(C, "HCL")
+    _set(C, "HCL")
+    S->pclass = "qualitative"
 }
 
 void `MAIN'::generate_OTH(`SS' space0, `Int' n0, `RV' h0, `RV' c0, 
@@ -3963,6 +4452,7 @@ void `MAIN'::generate_OTH(`SS' space0, `Int' n0, `RV' h0, `RV' c0,
     `SS'  space, pclass
     `RS'  n, h, c, l, p
     `RM'  C
+    pragma unset pclass
     
     space = findkey(gettok(space0, pclass), ("HCL", "LCh", "JMh", "HSV", "HSL")')
     if (space=="") {
@@ -3972,19 +4462,20 @@ void `MAIN'::generate_OTH(`SS' space0, `Int' n0, `RV' h0, `RV' c0,
     n = n0; h = h0; c = c0; l = l0; p = p0
     if (space=="LCh" | space=="JMh") swap(h, l)
     generate_setup(space, n, pclass, h, c, l, p)
-    this.pclass = pclass
-    if      (pclass=="qualitative") C = generate_qual(n, h, c, l)
-    else if (pclass=="sequential")  C = generate_seq(n, h, c, l, p)
-    else if (pclass=="diverging")   C = generate_div(n, h, c, l, p)
-    else if (pclass=="heat0")       C = generate_heat0(n, h, c, l)
-    else if (pclass=="terrain0")    C = generate_terrain0(n, h, c, l)
+    S->pclass = pclass
+    if      (pclass=="qualitative")  C = generate_qual(n, h, c, l)
+    else if (pclass=="sequential")   C = generate_seq(n, h, c, l, p)
+    else if (pclass=="diverging")    C = generate_div(n, h, c, l, p)
+    else if (pclass=="heat0")        C = generate_heat0(n, h, c, l)
+    else if (pclass=="terrain0")     C = generate_terrain0(n, h, c, l)
     if (space=="LCh" | space=="JMh") C = C[,(3,2,1)]
-    set(C, space)
+    _set(C, space)
 }
 
 void `MAIN'::generate_setup(`SS' space, `Int' n, `SS' pclass0, `RV' h, `RV' c, 
     `RV' l, `RV' p)
 {
+    `SS'  pclass
     `RV'  d
     
     if (n>=.)        n = 15
@@ -4093,7 +4584,7 @@ void `MAIN'::generate_setup(`SS' space, `Int' n, `SS' pclass0, `RV' h, `RV' c,
         C[i,] = (mod(h[2], 360), s[1] - (s[1]-s[2])/(2*n2) + 
         (n2==1 ? 0 : (i-n1-1) * (s[2] - s[1] + (s[1]-s[2])/n2) / (n2-1)), v[1])
     }
-    this.pclass = "sequential"
+    S->pclass = "sequential"
     return(C)
 }
 
@@ -4117,7 +4608,7 @@ void `MAIN'::generate_setup(`SS' space, `Int' n, `SS' pclass0, `RV' h, `RV' c,
                  s[1] + (i-n1)*(s[2]-s[1])/(n2-1), 
                  v[2] + (i-n1)*(v3-v[2])/(n2-1))
     }
-    this.pclass = "sequential"
+    S->pclass = "sequential"
     return(C)
 }
 
@@ -4292,32 +4783,53 @@ end
 
 mata:
 
-`Bool' `MAIN'::pexists(| `SS' pal)
+`SS' `MAIN'::pexists(| `SS' pal)
 {
     `SS' PAL
     pragma unset PAL
     
-    if (Palette(0, PAL, pal)) {
-        pname = PAL
-        return(1)
-    }
-    return(0)
+    if (Palette(0, PAL, pal)) return(PAL)
+    return("")
 }
 
 void `MAIN'::palette(| `SS' pal, `RS' n, `RV' opt)
 {
+    `Int' rc
     `SS' PAL
     pragma unset PAL
-
-    if (Palette(1, PAL, pal, n, opt)==0) {
+    
+    S = &data1
+    if      (args()<2)  rc = Palette(1, PAL, pal)
+    else if (args()==2) rc = Palette(1, PAL, pal, n)
+    else                rc = Palette(1, PAL, pal, n, opt)
+    if (rc==0) {
         display("{err}palette '" + pal + "' not found")
         exit(3499)
     }
-    pname = PAL
+    S->name = PAL
+    replacedata()
+}
+
+void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' opt)
+{
+    `Int' rc
+    `SS' PAL
+    pragma unset PAL
+    
+    S = &data1
+    if      (args()<2)  rc = Palette(1, PAL, pal)
+    else if (args()==2) rc = Palette(1, PAL, pal, n)
+    else                rc = Palette(1, PAL, pal, n, opt)
+    if (rc==0) {
+        display("{err}palette '" + pal + "' not found")
+        exit(3499)
+    }
+    S->name = PAL
+    appenddata()
 }
 
 `Bool' `MAIN'::Palette(`Bool' r, `SS' p, `SS' pal, | `RS' n0, `RV' opt)
-{
+{   // palette will only be read if r!=0; returns 1 if palette is found and 0 else
     `Int'  n
     
     // prepare
@@ -4389,29 +4901,31 @@ void `MAIN'::palette(| `SS' pal, `RS' n, `RV' opt)
     else return(0)
     
     // interpolation/recycling
-    if (n0<. & n0!=N()) {
-        if (n<N() & pclass=="qualitative") recycle(n0) // select first n colors
+    if (n0<. & n0!=(S->n)) {
+        if (n<(S->n) & (S->pclass)=="qualitative") _recycle(n0) // select first n colors
         else if (!length(opt) | opt==0) { // ok to recycle or interpolate
-            if (pclass=="qualitative") recycle(n0)
-            else                       ipolate(n0)
+            if ((S->pclass)=="qualitative") _recycle(n0)
+            else                            _ipolate(n0)
         }
     }
     return(1)
 }
 void `MAIN'::P_pclass(`RC' i)
 {
-    pclass = ("qualitative","sequential","diverging")[i]
+    S->pclass = ("qualitative","sequential","diverging")[i]
 }
-void `MAIN'::P_colors(`SS' s) colors(s, ",")
-void `MAIN'::P_names(`SS' s)  names(s, ",")
-void `MAIN'::P_info(`SS' s)   info(s, ",")
+void `MAIN'::P_colors(`SS' s) colors_set(s, ",")
+void `MAIN'::P_names(`SS' s)  names_set(s, ",")
+void `MAIN'::P_info(`SS' s)   info_set(s, ",")
+void `MAIN'::P_note(`SS' s)   S->note = s
+void `MAIN'::P_source(`SS' s) S->source = s
 `Bool' `MAIN'::P_s2(`Bool' r, `SS' p)
 {
     if (!smatch(p, "s2")) return(0)
     if (!r) return(1)
     P_pclass(1)
     P_colors("navy,maroon,forest_green,dkorange,teal,cranberry,lavender,khaki,sienna,emidblue,emerald,brown,erose,gold,bluishgray")
-    pinfo("colors used for p1 to p15 in Stata's s2color scheme")
+    P_note("colors used for p1 to p15 in Stata's s2color scheme")
     return(1)
 }
 `Bool' `MAIN'::P_s1(`Bool' r, `SS' p)
@@ -4420,7 +4934,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("dkgreen,orange_red,navy,maroon,teal,sienna,orange,magenta,cyan,red,lime,brown,purple,olive_teal,ltblue")
-    pinfo("colors used for p1 to p15 in Stata's s1color scheme")
+    P_note("colors used for p1 to p15 in Stata's s1color scheme")
     return(1)
 }
 `Bool' `MAIN'::P_s1r(`Bool' r, `SS' p)
@@ -4429,7 +4943,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("yellow,lime,midblue,magenta,orange,red,ltblue,sandb,mint,olive_teal,orange_red,blue,pink,teal,sienna")
-    pinfo("colors used for p1 to p15 in Stata's s1rcolor scheme")
+    P_note("colors used for p1 to p15 in Stata's s1rcolor scheme")
     return(1)
 }
 `Bool' `MAIN'::P_economist(`Bool' r, `SS' p)
@@ -4438,7 +4952,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("edkblue,emidblue,eltblue,emerald,erose,ebblue,eltgreen,stone,navy,maroon,brown,lavender,teal,cranberry,khaki")
-    pinfo("colors used for p1 to p15 in Stata's economist scheme")
+    P_note("colors used for p1 to p15 in Stata's economist scheme")
     return(1)
 }
 
@@ -4448,7 +4962,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("gs6,gs10,gs8,gs4,black,gs12,gs2,gs7,gs9,gs11,gs13,gs5,gs3,gs14,gs15")
-    pinfo("gray scales used for p1 to p15 in Stata's monochrome schemes")
+    P_note("gray scales used for p1 to p15 in Stata's monochrome schemes")
     return(1)
 }
 `Bool' `MAIN'::P_cblind(`Bool' r, `SS' p)
@@ -4458,8 +4972,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     P_pclass(1)
     P_colors("#000000,#999999,#E69F00,#56B4E9,#009E73,#F0E442,#0072B2,#D55E00,#CC79A7")
     P_names("Black,Gray,Orange,Sky Blue,bluish Green,Yellow,Blue,Vermillion,reddish Purple")
-    pinfo("colorblind-friendly colors suggested by Okabe and Ito (2002), including gray as suggested at www.cookbook-r.com")
-    psource("Okabe and Ito (2002)")
+    P_note("colorblind-friendly colors suggested by Okabe and Ito (2002), including gray as suggested at www.cookbook-r.com")
+    P_source("Okabe and Ito (2002)")
     return(1)
 }
 `Bool' `MAIN'::P_plottig(`Bool' r, `SS' p)
@@ -4470,8 +4984,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     P_colors("black,97 156 255,0 192 175,201 152 0,185 56 255,248 118 109,0 176 246,0 186 56,163 165 0,231 107 243,255 103 164,0 188 216,107 177 0,229 135 0,253 97 209")
     P_names("black,plb1,plg1,ply1,pll1,plr1,plb2,plg2,ply2,pll2,plr2,plb3,plg3,ply3,pll3")
     P_info(",blue,lght greenish,yellow/brownish,purple,red,bluish,greenish,yellow/brownish,purple,red,blue,green,orange,purple")
-    pinfo("colors used for p1 to p15 in the plottig scheme by Bischof (2017)")
-    psource("Bischof (2017)")
+    P_note("colors used for p1 to p15 in the plottig scheme by Bischof (2017)")
+    P_source("Bischof (2017)")
     return(1)
 }
 `Bool' `MAIN'::P_538(`Bool' r, `SS' p)
@@ -4482,8 +4996,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     P_colors("3 144 214,254 48 11,120 172 68,247 187 5,229 138 233,254 133 3,242 242 242,205 205 206,155 155 155,162 204 246,254 181 167,42 161 237,255 244 241")
     P_names("538b,538r,538g,538y,538m,538o,538background,538axis,538label,538bs6,538rs6,538bs1,538rs11")
     P_info(",,,,,,,,,used for ci,used for ci2,used for contour_begin,used for contour_end")
-    pinfo("colors used for p1 to p6, background, labels, axes etc. in the 538 scheme by Bischof (2017)")
-    psource("Bischof (2017)")
+    P_note("colors used for p1 to p6, background, labels, axes etc. in the 538 scheme by Bischof (2017)")
+    P_source("Bischof (2017)")
     return(1)
 }
 `Bool' `MAIN'::P_mrc(`Bool' r, `SS' p)
@@ -4493,8 +5007,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     P_pclass(1)
     P_colors("33 103 126,106 59 119,130 47 90,208 114 50,255 219 0,181 211 52,138 121 103")
     P_names("mrcblue,mrcpurple,mrcred,mrcorange,mrcyellow,mrcgreen,mrcgrey")
-    pinfo("colors used for p1 to p7 in the mrc scheme by Morris (2013)")
-    psource("Morris (2013)")
+    P_note("colors used for p1 to p7 in the mrc scheme by Morris (2013)")
+    P_source("Morris (2013)")
     return(1)
 }
 `Bool' `MAIN'::P_tfl(`Bool' r, `SS' p)
@@ -4504,8 +5018,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     P_pclass(1)
     P_colors("220 36 31, 0 25 168, 0 114 41, 232 106 16, 137 78 36, 117 16 86, 255 206 0, 65 75 86")
     P_names("tflred,tflblue,tflgreen,tflorange,tflbrown,tflpurple,tflyellow,tflgrey")
-    pinfo("colors used for p1 to p8 in the tfl scheme by Morris (2015)")
-    psource("Morris (2015)")
+    P_note("colors used for p1 to p8 in the tfl scheme by Morris (2015)")
+    P_source("Morris (2015)")
     return(1)
 }
 `Bool' `MAIN'::P_burd(`Bool' r, `SS' p)
@@ -4516,8 +5030,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     P_colors("33 102 172,178 24 43,27 120 55,230 97 1,1 102 94,197 27 125,118 42 131,140 81 10,77 77 77,103 169 207,209 229 240,239 138 98,253 219 199")
     P_names("Bu,Rd,Gn,Or,BG,Pi,Pu,Br,Gy")
     P_info("Bu from RdBu-7,Rd from RdBu-7,Gn from PRGn-7,Or from PuOr-7,BG from BrBG-7,Pi from PiYG-7,Pu from PuOr-7,Br from BrBG-7,Gy from RdGy-7,used for ci_arealine,used for ci_area,used for ci2_arealine,used for ci2_area")
-    pinfo("colors used for p1 to p9 and for CIs in the burd scheme by Briatte (2013)")
-    psource("Briatte (2013)")
+    P_note("colors used for p1 to p9 and for CIs in the burd scheme by Briatte (2013)")
+    P_source("Briatte (2013)")
     return(1)
 }
 `Bool' `MAIN'::P_lean(`Bool' r, `SS' p)
@@ -4526,8 +5040,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("gs14,gs10,gs12,gs8,gs16,gs13,gs10,gs7,gs4,gs0,gs14,gs10,gs12,gs0,gs16")
-    pinfo("gray scales used for p1area to p15area in schemes lean1 and lean2 by Juul (2003)")
-    psource("Juul (2003)")
+    P_note("gray scales used for p1area to p15area in schemes lean1 and lean2 by Juul (2003)")
+    P_source("Juul (2003)")
     return(1)
 }
 `Bool' `MAIN'::P_tableau(`Bool' r, `SS' p)
@@ -4536,8 +5050,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf,#aec7e8,#ffbb78,#98df8a,#ff9896,#c5b0d5,#c49c94,#f7b6d2,#c7c7c7,#dbdb8d,#9edae5")
-    pinfo("categorical colors provided by Lin et al. (2013)")
-    psource("Lin et al. (2013)")
+    P_note("categorical colors provided by Lin et al. (2013)")
+    P_source("Lin et al. (2013)")
     return(1)
 }
 `Bool' `MAIN'::P_Accent(`Bool' r, `SS' p)
@@ -4546,8 +5060,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("127 201 127,190 174 212,253 192 134,255 255 153,56 108 176,240 2 127,191 91 23,102 102 102")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Dark2(`Bool' r, `SS' p)
@@ -4556,8 +5070,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("27 158 119,217 95 2,117 112 179,231 41 138,102 166 30,230 171 2,166 118 29,102 102 102")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Paired(`Bool' r, `SS' p)
@@ -4566,8 +5080,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("166 206 227,31 120 180,178 223 138,51 160 44,251 154 153,227 26 28,253 191 111,255 127 0,202 178 214,106 61 154,255 255 153,177 89 40")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Pastel1(`Bool' r, `SS' p)
@@ -4576,8 +5090,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("251 180 174,179 205 227,204 235 197,222 203 228,254 217 166,255 255 204,229 216 189,253 218 236,242 242 242")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Pastel2(`Bool' r, `SS' p)
@@ -4586,8 +5100,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("179 226 205,253 205 172,203 213 232,244 202 228,230 245 201,255 242 174,241 226 204,204 204 204")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Set1(`Bool' r, `SS' p)
@@ -4596,8 +5110,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("228 26 28,55 126 184,77 175 74,152 78 163,255 127 0,255 255 51,166 86 40,247 129 191,153 153 153")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Set2(`Bool' r, `SS' p)
@@ -4606,8 +5120,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("102 194 165,252 141 98,141 160 203,231 138 195,166 216 84,255 217 47,229 196 148,179 179 179")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Set3(`Bool' r, `SS' p)
@@ -4616,8 +5130,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (!r) return(1)
     P_pclass(1)
     P_colors("141 211 199,255 255 179,190 186 218,251 128 114,128 177 211,253 180 98,179 222 105,252 205 229,217 217 217,188 128 189,204 235 197,255 237 111")
-    pinfo("categorical colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("categorical colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Blues(`Bool' r, `SS' p, `RS' n)
@@ -4632,8 +5146,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("239 243 255,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
     else if (n==8)  P_colors("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
     else if (n>=9)  P_colors("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 81 156,8 48 107")
-    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (single hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_BuGn(`Bool' r, `SS' p, `RS' n)
@@ -4648,8 +5162,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("237 248 251,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
     else if (n==8)  P_colors("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
     else if (n>=9)  P_colors("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 109 44,0 68 27")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_BuPu(`Bool' r, `SS' p, `RS' n)
@@ -4664,8 +5178,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("237 248 251,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
     else if (n==8)  P_colors("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
     else if (n>=9)  P_colors("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,129 15 124,77 0 75")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_GnBu(`Bool' r, `SS' p, `RS' n)
@@ -4680,8 +5194,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("240 249 232,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
     else if (n==8)  P_colors("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
     else if (n>=9)  P_colors("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 104 172,8 64 129")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Greens(`Bool' r, `SS' p, `RS' n)
@@ -4696,8 +5210,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("237 248 233,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
     else if (n==8)  P_colors("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
     else if (n>=9)  P_colors("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 109 44,0 68 27")
-    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (single hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Greys(`Bool' r, `SS' p, `RS' n)
@@ -4712,8 +5226,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("247 247 247,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
     else if (n==8)  P_colors("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
     else if (n>=9)  P_colors("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37,0 0 0")
-    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (single hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_OrRd(`Bool' r, `SS' p, `RS' n)
@@ -4728,8 +5242,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("254 240 217,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
     else if (n==8)  P_colors("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
     else if (n>=9)  P_colors("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,179 0 0,127 0 0")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Oranges(`Bool' r, `SS' p, `RS' n)
@@ -4744,8 +5258,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("254 237 222,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
     else if (n==8)  P_colors("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
     else if (n>=9)  P_colors("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,166 54 3,127 39 4")
-    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (single hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_PuBu(`Bool' r, `SS' p, `RS' n)
@@ -4760,8 +5274,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("241 238 246,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
     else if (n==8)  P_colors("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
     else if (n>=9)  P_colors("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,4 90 141,2 56 88")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_PuBuGn(`Bool' r, `SS' p, `RS' n)
@@ -4776,8 +5290,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("246 239 247,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
     else if (n==8)  P_colors("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
     else if (n>=9)  P_colors("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 108 89,1 70 54")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_PuRd(`Bool' r, `SS' p, `RS' n)
@@ -4792,8 +5306,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("241 238 246,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
     else if (n==8)  P_colors("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
     else if (n>=9)  P_colors("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,152 0 67,103 0 31")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Purples(`Bool' r, `SS' p, `RS' n)
@@ -4808,8 +5322,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("242 240 247,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
     else if (n==8)  P_colors("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
     else if (n>=9)  P_colors("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,84 39 143,63 0 125")
-    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (single hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_RdPu(`Bool' r, `SS' p, `RS' n)
@@ -4824,8 +5338,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("254 235 226,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
     else if (n==8)  P_colors("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
     else if (n>=9)  P_colors("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119,73 0 106")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Reds(`Bool' r, `SS' p, `RS' n)
@@ -4840,8 +5354,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("254 229 217,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
     else if (n==8)  P_colors("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
     else if (n>=9)  P_colors("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,165 15 21,103 0 13")
-    pinfo("sequential colors (single hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (single hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_YlGn(`Bool' r, `SS' p, `RS' n)
@@ -4856,8 +5370,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("255 255 204,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
     else if (n==8)  P_colors("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
     else if (n>=9)  P_colors("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 104 55,0 69 41")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_YlGnBu(`Bool' r, `SS' p, `RS' n)
@@ -4872,8 +5386,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("255 255 204,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
     else if (n==8)  P_colors("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
     else if (n>=9)  P_colors("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,37 52 148,8 29 88")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_YlOrBr(`Bool' r, `SS' p, `RS' n)
@@ -4888,8 +5402,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("255 255 212,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
     else if (n==8)  P_colors("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
     else if (n>=9)  P_colors("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,153 52 4,102 37 6")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_YlOrRd(`Bool' r, `SS' p, `RS' n)
@@ -4904,8 +5418,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==7)  P_colors("255 255 178,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
     else if (n==8)  P_colors("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
     else if (n>=9)  P_colors("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,189 0 38,128 0 38")
-    pinfo("sequential colors (multi-hue) by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_BrBG(`Bool' r, `SS' p, `RS' n)
@@ -4922,8 +5436,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94")
     else if (n==10) P_colors("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
     else if (n>=11) P_colors("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_PRGn(`Bool' r, `SS' p, `RS' n)
@@ -4940,8 +5454,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55")
     else if (n==10) P_colors("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
     else if (n>=11) P_colors("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_PiYG(`Bool' r, `SS' p, `RS' n)
@@ -4958,8 +5472,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33")
     else if (n==10) P_colors("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
     else if (n>=11) P_colors("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_PuOr(`Bool' r, `SS' p, `RS' n)
@@ -4976,8 +5490,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136")
     else if (n==10) P_colors("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
     else if (n>=11) P_colors("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_RdBu(`Bool' r, `SS' p, `RS' n)
@@ -4994,8 +5508,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172")
     else if (n==10) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
     else if (n>=11) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_RdGy(`Bool' r, `SS' p, `RS' n)
@@ -5012,8 +5526,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77")
     else if (n==10) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
     else if (n>=11) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_RdYlBu(`Bool' r, `SS' p, `RS' n)
@@ -5030,8 +5544,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180")
     else if (n==10) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
     else if (n>=11) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_RdYlGn(`Bool' r, `SS' p, `RS' n)
@@ -5048,8 +5562,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80")
     else if (n==10) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
     else if (n>=11) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_Spectral(`Bool' r, `SS' p, `RS' n)
@@ -5066,43 +5580,43 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (n==9)  P_colors("213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189")
     else if (n==10) P_colors("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
     else if (n>=11) P_colors("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
-    pinfo("diverging colors by Brewer et al. (2003)")
-    psource("colorbrewer2.org")
+    P_note("diverging colors by Brewer et al. (2003)")
+    P_source("colorbrewer2.org")
     return(1)
 }
 `Bool' `MAIN'::P_viridis(`Bool' r, `SS' p, `RS' n, `RV' range)
 {
     if (!smatch(p, "viridis")) return(0)
     if (!r) return(1)
-    matplotlib(p, n, range)
+    _matplotlib(p, n, range)
     return(1)
 }
 `Bool' `MAIN'::P_magma(`Bool' r, `SS' p, `RS' n, `RV' range)
 {
     if (!smatch(p, "magma")) return(0)
     if (!r) return(1)
-    matplotlib(p, n, range)
+    _matplotlib(p, n, range)
     return(1)
 }
 `Bool' `MAIN'::P_inferno(`Bool' r, `SS' p, `RS' n, `RV' range)
 {
     if (!smatch(p, "inferno")) return(0)
     if (!r) return(1)
-    matplotlib(p, n, range)
+    _matplotlib(p, n, range)
     return(1)
 }
 `Bool' `MAIN'::P_plasma(`Bool' r, `SS' p, `RS' n, `RV' range)
 {
     if (!smatch(p, "plasma")) return(0)
     if (!r) return(1)
-    matplotlib(p, n, range)
+    _matplotlib(p, n, range)
     return(1)
 }
 `Bool' `MAIN'::P_cividis(`Bool' r, `SS' p, `RS' n, `RV' range)
 {
     if (!smatch(p, "cividis")) return(0)
     if (!r) return(1)
-    matplotlib(p, n, range)
+    _matplotlib(p, n, range)
     return(1)
 }
 `Bool' `MAIN'::P_twilight(`Bool' r, `SS' p, `RS' n, `RV' range)
@@ -5111,7 +5625,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if      (smatch(p, "twilight"))          {; if (!r) return(1); }
     else if (smatch(p, "twilight shifted"))  {; if (!r) return(1); }
     else return(0)
-    matplotlib(p, n, range)
+    _matplotlib(p, n, range)
     return(1)
 }
 `Bool' `MAIN'::P_matplotlib(`Bool' r, `SS' p, `RS' n, `RV' range)
@@ -5138,7 +5652,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (smatch(p, "matplotlib jet"))               {; if (!r) return(1); }
     else if (smatch(p, "matplotlib hot"))               {; if (!r) return(1); }
     else return(0)
-    matplotlib(rest, n, range)
+    _matplotlib(rest, n, range)
     return(1)
 }
 `Bool' `MAIN'::P_ptol(`Bool' r, `SS' p,`RS' n)
@@ -5164,7 +5678,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
         else if (n==10) P_colors("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
         else if (n==11) P_colors("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
         else if (n>=12) P_colors("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,170 68 102,136 34 85,170 68 153")
-        pinfo("qualitative colors by Tol (2012)")
+        P_note("qualitative colors by Tol (2012)")
     }
     else if (i==2) {
         if      (n<=4)  P_colors("64 64 150,87 163 173,222 167 58,217 33 32")
@@ -5176,7 +5690,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
         else if (n==10) P_colors("120 28 129,63 71 155,66 119 189,82 157 183,98 172 155,134 187 106,199 185 68,227 156 55,231 109 46,217 33 32")
         else if (n==11) P_colors("120 28 129,64 64 150,65 108 183,77 149 190,91 167 167,110 179 135,161 190 86,211 179 63,229 148 53,230 104 45,217 33 32")
         else if (n>=12) P_colors("120 28 129,65 59 147,64 101 177,72 139 194,85 161 177,99 173 153,127 185 114,181 189 76,217 173 60,230 142 52,230 100 44,217 33 32")
-        pinfo("rainbow colors by Tol (2012)")
+        P_note("rainbow colors by Tol (2012)")
     }
     else {
         if      (n<=3)  P_colors("153 199 236,255 250 210,245 162 117")
@@ -5188,9 +5702,9 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
         else if (n==9)  P_colors("58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62")
         else if (n==10) P_colors("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
         else if (n>=11) P_colors("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
-        pinfo("diverging colors by Tol (2012)")
+        P_note("diverging colors by Tol (2012)")
     }
-    psource("Tol (2012)")
+    P_source("Tol (2012)")
     return(1)
 }
 `Bool' `MAIN'::P_d3(`Bool' r, `SS' p)
@@ -5207,8 +5721,8 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (i==2)  P_colors("#1f77b4,#aec7e8,#ff7f0e,#ffbb78,#2ca02c,#98df8a,#d62728,#ff9896,#9467bd,#c5b0d5,#8c564b,#c49c94,#e377c2,#f7b6d2,#7f7f7f,#c7c7c7,#bcbd22,#dbdb8d,#17becf,#9edae5")
     else if (i==3)  P_colors("#393b79,#5254a3,#6b6ecf,#9c9ede,#637939,#8ca252,#b5cf6b,#cedb9c,#8c6d31,#bd9e39,#e7ba52,#e7cb94,#843c39,#ad494a,#d6616b,#e7969c,#7b4173,#a55194,#ce6dbd,#de9ed6")
     else            P_colors("#3182bd,#6baed6,#9ecae1,#c6dbef,#e6550d,#fd8d3c,#fdae6b,#fdd0a2,#31a354,#74c476,#a1d99b,#c7e9c0,#756bb1,#9e9ac8,#bcbddc,#dadaeb,#636363,#969696,#bdbdbd,#d9d9d9")
-    pinfo("categorical colors from D3.js, using values found at github.com/d3")
-    psource("github.com/d3")
+    P_note("categorical colors from D3.js, using values found at github.com/d3")
+    P_source("github.com/d3")
     return(1)
 }
 `Bool' `MAIN'::P_lin(`Bool' r, `SS' p)
@@ -5237,90 +5751,90 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (i==1) {
         P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
         P_names("Red,Silver,Black,Green,Brown,Blue")
-        pinfo("Turkers-selected car colors by Lin et al. (2013)")
+        P_note("Turkers-selected car colors by Lin et al. (2013)")
     }
     else if (i==2) {
         P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
         P_names("Red,Silver,Black,Green,Brown,Blue")
-        pinfo("algorithm-selected car colors by Lin et al. (2013)")
+        P_note("algorithm-selected car colors by Lin et al. (2013)")
     }
     else if (i==3) {
         P_colors("199 199 199,31 119 180,140 86 75,152 223 138,219 219 141,196 156 148,214 39 40")
         //P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
         P_names("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
-        pinfo("Turkers-selected food colors by Lin et al. (2013)")
+        P_note("Turkers-selected food colors by Lin et al. (2013)")
     }
     else if (i==4) {
         P_colors("31 119 180,255 127 14,140 86 75,44 160 44,255 187 120,219 219 141,214 39 40")
         //P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
         P_names("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
-        pinfo("algorithm-selected food colors by Lin et al. (2013)")
+        P_note("algorithm-selected food colors by Lin et al. (2013)")
     }
     else if (i==5) {
         P_colors("214 39 40,31 119 180,174 119 232,44 160 44,152 223 138")
         P_names("Speed,Reliability,Comfort,Safety,Efficiency")
-        pinfo("Turkers-selected feature colors by Lin et al. (2013)")
+        P_note("Turkers-selected feature colors by Lin et al. (2013)")
     }
     else if (i==6) {
         P_colors("214 39 40,31 119 180,140 86 75,255 127 14,44 160 44")
         P_names("Speed,Reliability,Comfort,Safety,Efficiency")
-        pinfo("algorithm-selected feature colors by Lin et al. (2013)")
+        P_note("algorithm-selected feature colors by Lin et al. (2013)")
     }
     else if (i==7) {
         P_colors("31 119 180,214 39 40,152 223 138,44 160 44,127 127 127")
         P_names("Sleeping,Working,Leisure,Eating,Driving")
-        pinfo("Turkers-selected activity colors by Lin et al. (2013)")
+        P_note("Turkers-selected activity colors by Lin et al. (2013)")
     }
     else if (i==8) {
         P_colors("140 86 75,255 127 14,31 119 180,227 119 194,214 39 40")
         P_names("Sleeping,Working,Leisure,Eating,Driving")
-        pinfo("algorithm-selected activity colors by Lin et al. (2013)")
+        P_note("algorithm-selected activity colors by Lin et al. (2013)")
     }
     else if (i==9) {
         P_colors("146 195 51,251 222 6,64 105 166,200 0 0,127 34 147,251 162 127,255 86 29")
         P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-        pinfo("expert-selected fruit colors by Lin et al. (2013)")
+        P_note("expert-selected fruit colors by Lin et al. (2013)")
     }
     else if (i==10) {
         P_colors("44 160 44,188 189 34,31 119 180,214 39 40,148 103 189,255 187 120,255 127 14")
         P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-        pinfo("algorithm-selected fruit colors by Lin et al. (2013)")
+        P_note("algorithm-selected fruit colors by Lin et al. (2013)")
     }
     else if (i==11) {
         P_colors("255 141 61,157 212 105,245 208 64,104 59 101,239 197 143,139 129 57,255 26 34")
         P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-        pinfo("expert-selected vegetable colors by Lin et al. (2013)")
+        P_note("expert-selected vegetable colors by Lin et al. (2013)")
     }
     else if (i==12) {
         P_colors("255 127 14,44 160 44,188 189 34,148 103 189,140 86 75,152 223 138,214 39 40")
         P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-        pinfo("algorithm-selected vegetable colors by Lin et al. (2013)")
+        P_note("algorithm-selected vegetable colors by Lin et al. (2013)")
     }
     else if (i==13) {
         P_colors("119 67 6,254 0 0,151 37 63,1 106 171,1 159 76,254 115 20,104 105 169")
         //P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
         P_names("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
-        pinfo("expert-selected drinks colors by Lin et al. (2013)")
+        P_note("expert-selected drinks colors by Lin et al. (2013)")
     }
     else if (i==14) {
         P_colors("140 86 75,214 39 40,227 119 194,31 119 180,44 160 44,255 127 14,148 103 189")
         //P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
         P_names("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
-        pinfo("algorithm-selected drinks colors by Lin et al. (2013)")
+        P_note("algorithm-selected drinks colors by Lin et al. (2013)")
     }
     else if (i==15) {
         P_colors("161 165 169,44 163 218,242 99 33,255 183 0,0 112 66,204 0 0,123 0 153")
         //P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
         P_names("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
-        pinfo("expert-selected brands colors by Lin et al. (2013)")
+        P_note("expert-selected brands colors by Lin et al. (2013)")
     }
     else {
         P_colors("152 223 138,31 119 180,255 127 14,140 86 75,44 160 44,214 39 40,148 103 189")
         //P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
         P_names("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
-        pinfo("algorithm-selected brands colors by Lin et al. (2013)")
+        P_note("algorithm-selected brands colors by Lin et al. (2013)")
     }
-    psource("Lin et al. (2013)")
+    P_source("Lin et al. (2013)")
     return(1)
 }
 `Bool' `MAIN'::P_spmap(`Bool' r, `SS' pal,`RS' n0)
@@ -5344,34 +5858,34 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
         n = __clip(n0, 2, 99)
         p = ((1::n):-1) / (n-1)
         C = J(n,1,208), (.2 :+ .8*p), (1 :- .6*p)
-        set(C, "HSV")
-        pinfo("light blue to blue color scheme from the spmap package by Pisati (2007)")
+        _set(C, "HSV")
+        P_note("light blue to blue color scheme from the spmap package by Pisati (2007)")
     }
     else if (i==2) {
         n = __clip(n0, 2, 99)
         p = ((1::n):-1) / (n-1)
         C = (122 :+ 20*p), (.2 :+ .8*p), (1 :- .7*p)
-        set(C, "HSV")
-        pinfo("light green to green color scheme from the spmap package by Pisati (2007)")
+        _set(C, "HSV")
+        P_note("light green to green color scheme from the spmap package by Pisati (2007)")
     }
     else if (i==3) {
         n = __clip(n0, 2, 99)
         C = J(n,2,0), (.88 :- .88*((1::n):-1)/(n-1))
-        set(C, "HSV")
-        pinfo("light gray to black color scheme from the spmap package by Pisati (2007)")
+        _set(C, "HSV")
+        P_note("light gray to black color scheme from the spmap package by Pisati (2007)")
     }
     else if (i==4) {
         n = __clip(n0, 2, 99)
         p = ((1::n):-1) / (n-1)
         C = (20 :- 20*p), (.2 :+ .8*p), (1 :- rowmax((J(n, 1, 0), 1.2*(p:-.5))))
-        set(C, "HSV")
-        pinfo("light red to red color scheme from the spmap package by Pisati (2007)")
+        _set(C, "HSV")
+        P_note("light red to red color scheme from the spmap package by Pisati (2007)")
     }
     else if (i==5) {
         n = __clip(n0, 2, 99)
         C = (240 :- 240*((1::n):-1)/(n-1)), J(n,2,1)
-        set(C, "HSV")
-        pinfo("rainbow color scheme from the spmap package by Pisati (2007)")
+        _set(C, "HSV")
+        P_note("rainbow color scheme from the spmap package by Pisati (2007)")
     }
     else if (i==6) {
         if      (n0<=2)  P_colors("255 255 0,255 0 0")
@@ -5389,7 +5903,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
         else if (n0==14) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 229 0,255 204 0,255 178 0,255 153 0,255 128 0,255 102 0,255 77 0,255 51 0,255 26 0,255 0 0")
         else if (n0==15) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
         else if (n0>=16) P_colors("255 255 223,255 255 159,255 255 96,255 255 32,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
-        pinfo("heat color scheme from the spmap package by Pisati (2007)")
+        P_note("heat color scheme from the spmap package by Pisati (2007)")
     }
     else if (i==7) {
         if      (n0<=2)  P_colors("0 166 0,242 242 242")
@@ -5407,7 +5921,7 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
         else if (n0==14) P_colors("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 203 33,233 186 67,235 177 101,237 179 135,239 190 170,240 211 206,242 242 242")
         else if (n0==15) P_colors("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
         else if (n0>=16) P_colors("0 166 0,25 175 0,53 184 0,83 193 0,116 202 0,151 211 0,189 220 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
-        pinfo("terrain color scheme from the spmap package by Pisati (2007)")
+        P_note("terrain color scheme from the spmap package by Pisati (2007)")
     }
     else {
         if      (n0<=2)  P_colors("76 0 255,0 229 255")
@@ -5425,9 +5939,9 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
         else if (n0==14) P_colors("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
         else if (n0==15) P_colors("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
         else if (n0>=16) P_colors("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
-        pinfo("topological color scheme from the spmap package by Pisati (2007)")
+        P_note("topological color scheme from the spmap package by Pisati (2007)")
     }
-    psource("Pisati (2007)")
+    P_source("Pisati (2007)")
     return(1)
 }
 `Bool' `MAIN'::P_sfso(`Bool' r, `SS' p)
@@ -5455,71 +5969,71 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     if (i==1) {
         P_colors("#1c3259,#374a83,#6473aa,#8497cf,#afbce2,#d8def2,#e8eaf7")
         P_names(",,,BFS-Blau,,,BFS-Blau 20%")
-        pinfo("dark blue to light blue color scheme")
+        P_note("dark blue to light blue color scheme")
     }
     else if (i==2) {
         P_colors("#6b0616,#a1534e,#b67d6c,#cca58f,#ddc3a8,#eee3cd")
-        pinfo("dark brown to light brown color scheme")
+        P_note("dark brown to light brown color scheme")
     }
     else if (i==3) {
         P_colors("#92490d,#ce6725,#d68c25,#e2b224,#eccf76,#f6e7be")
-        pinfo("dark orange to light orange color scheme")
+        P_note("dark orange to light orange color scheme")
     }
     else if (i==4) {
         P_colors("#6d0724,#a61346,#c62a4f,#d17477,#dea49f,#efd6d1")
-        pinfo("dark red to light red color scheme")
+        P_note("dark red to light red color scheme")
     }
     else if (i==5) {
         P_colors("#7c0051,#a4006f,#c0007c,#cc669d,#da9dbf,#efd7e5")
-        pinfo("dark pink to light pink color scheme")
+        P_note("dark pink to light pink color scheme")
     }
     else if (i==6) {
         P_colors("#5e0059,#890883,#a23392,#bf64a6,#d79dc5,#efd7e8")
-        pinfo("dark purple to light purple color scheme")
+        P_note("dark purple to light purple color scheme")
     }
     else if (i==7) {
         P_colors("#3a0054,#682b86,#8c58a3,#a886bc,#c5b0d5,#e1d7eb")
-        pinfo("dark violet to light violet color scheme")
+        P_note("dark violet to light violet color scheme")
     }
     else if (i==8) {
         P_colors("#076e8d,#1b9dc9,#76b8da,#abd0e7,#c8e0f2,#edf5fd")
-        pinfo("lighter version of blue color scheme")
+        P_note("lighter version of blue color scheme")
     }
     else if (i==9) {
         P_colors("#005046,#107a6d,#3aa59a,#95c6c3,#cbe1df,#e9f2f5")
-        pinfo("dark turquoise to light turquoise color scheme")
+        P_note("dark turquoise to light turquoise color scheme")
     }
     else if (i==10) {
         P_colors("#3b6519,#68a239,#95c15b,#b3d17f,#d3e3af,#ecf2d1")
-        pinfo("dark green to light green color scheme")
+        P_note("dark green to light green color scheme")
     }
     else if (i==11) {
         P_colors("#6f6f02,#a3a20a,#c5c00c,#e3df86,#eeecbc,#fefde6")
-        pinfo("dark olive to light olive color scheme")
+        P_note("dark olive to light olive color scheme")
     }
     else if (i==12) {
         P_colors("#3f3f3e,#838382,#b2b3b3,#d4d5d5,#e6e6e7,#f7f7f7")
-        pinfo("dark gray to light gray color scheme")
+        P_note("dark gray to light gray color scheme")
     }
     else if (i==13) {
         P_pclass(1)
         P_colors("#6268AF,#f39f5e,#ea546f,#547d34,#cbd401,#ffff00,#26b300,#792a8f,#9fabd9,#f0da9d,#bebebe")
         P_names("FDP,CVP,SP,SVP,GLP,BDP,Grüne,small leftwing parties,small middle parties,small rightwing parties,other parties")
-        pinfo("Swiss parties color scheme")
+        P_note("Swiss parties color scheme")
     }
     else if (i==14) {
         P_pclass(1)
         P_colors("#c73e31,#4570ba,#4ca767,#ecce42,#7f5fa9")
         P_names("German,French,Italian,Rhaeto-Romanic,English")
-        pinfo("Swiss language region color scheme")
+        P_note("Swiss language region color scheme")
     }
     else {
         P_pclass(3)
         P_colors("#6d2a83,#8a559c,#a77fb5,#c5aacd,#e2d4e6,#daeadb,#b5d5b8,#8fc194,#6aac71,#45974d")
         P_names("No,,,,,,,,,Yes")
-        pinfo("vote share color scheme")
+        P_note("vote share color scheme")
     }
-    psource("Swiss Federal Statistical Office")
+    P_source("Swiss Federal Statistical Office")
     return(1)
 }
 `Bool' `MAIN'::P_webcolors(`Bool' r, `SS' p)
@@ -5554,10 +6068,10 @@ void `MAIN'::P_info(`SS' s)   info(s, ",")
     else if (i==11) P_colors("Gainsboro,LightGrey,Silver,DarkGrey,DimGrey,Grey,LightSlateGrey,SlateGrey,DarkSlateGrey,Black")
     else {
         if (webcolors.N()==0) webcolors()
-        Colors(sort(webcolors.keys(),1))
+        Colors_set(sort(webcolors.keys(),1))
     }
-    pinfo("HTML colors from www.w3schools.com")
-    psource("www.w3schools.com/colors/colors_names.asp")
+    P_note("HTML colors from www.w3schools.com")
+    P_source("www.w3schools.com/colors/colors_names.asp")
     return(1)
 }
 
@@ -5574,14 +6088,28 @@ end
 
 mata:
 
-void `MAIN'::matplotlib(| `SS' pal0, `RS' n0, `RV' range)
+void `MAIN'::matplotlib(| `SS' pal, `RS' n, `RV' range)
+{
+    S = &data1
+    _matplotlib(pal, n, range)
+    replacedata()
+}
+
+void `MAIN'::add_matplotlib(| `SS' pal, `RS' n, `RV' range)
+{
+    S = &data1
+    _matplotlib(pal, n, range)
+    appenddata()
+}
+
+void `MAIN'::_matplotlib(| `SS' pal0, `RS' n0, `RV' range)
 {
     `SS'   pal
     `Bool' ispu
     `Int'  n
     `RM'   R, G, B, RGB1
     
-    pclass = "sequential"
+    S->pclass = "sequential"
     ispu = `FALSE'
     n = (n0<. ? (n0<0 ? 0 : n0) : 15)
     pal = strlower(pal0)
@@ -5594,14 +6122,14 @@ void `MAIN'::matplotlib(| `SS' pal0, `RS' n0, `RV' range)
     else if (smatch(pal, "twilight")) { 
         twilight(RGB1) 
         ispu = `TRUE'
-        pclass = "diverging"
+        S->pclass = "diverging"
     }
     else if (smatch(pal, "twilight shifted")) { 
         twilight(RGB1)
         RGB1 = RGB1[|rows(RGB1)/2+1,1 \ .,.|] \ RGB1[|1,1 \ rows(RGB1)/2,.|]
         RGB1 = RGB1[rows(RGB1)::1,]
         ispu = `TRUE'
-        pclass = "diverging"
+        S->pclass = "diverging"
     }
     else if (smatch(pal, "autumn")) {
         R = (0, 1, 1) \ (1, 1, 1)
@@ -5639,7 +6167,7 @@ void `MAIN'::matplotlib(| `SS' pal0, `RS' n0, `RV' range)
         B = (0, 0, 0) \ (1, .4975, .4975)
     }
     else if (smatch(pal, "coolwarm")) {
-        pclass = "diverging"
+        S->pclass = "diverging"
         // Matplotlib source note:
         // # This bipolar color map was generated from CoolWarmFloat33.csv of
         // # "Diverging Color Maps for Scientific Visualization" by Kenneth Moreland.
@@ -5758,11 +6286,11 @@ void `MAIN'::matplotlib(| `SS' pal0, `RS' n0, `RV' range)
         display("{err}colormap '" + pal0 + "' not found")
         exit(3499)
     }
-    pname = "matplotlib " + pal
-    if (ispu) set(colipolate(RGB1, n, range), "RGB1")       // viridis and friends
-    else      set(matplotlib_ip(R, G, B, n, range), "RGB1") // other palettes
-    pinfo   = pal + " colormap from matplotlib.org"
-    psource = "matplotlib.org"
+    S->name = "matplotlib " + pal
+    if (ispu) _set(colipolate(RGB1, n, range), "RGB1")       // viridis and friends
+    else      _set(matplotlib_ip(R, G, B, n, range), "RGB1") // other palettes
+    S->note   = pal + " colormap from matplotlib.org"
+    S->source = "matplotlib.org"
 }
 
 `RM' `MAIN'::matplotlib_ip(`RM' R, `RM' G, `RM' B, `RS' n, | `RV' range0)

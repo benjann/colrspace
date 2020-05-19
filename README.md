@@ -23,6 +23,30 @@ Installation from GitHub:
 
 Main changes:
 
+    19may2020
+    - using new design for the add/added functions that no longer requires making a 
+      copy of S
+    - all functions setting or modifying colors now leave S unchanged if they fail
+    - S._[add_]colors() and S._[add_]Colors() added
+    - S.cvalid() is now returns the color name (or RGB code) instead of returning 
+      a 0/1 flag
+    - S.describe() and S.settings() added
+    - S.alpha() now documented
+    - S.colors() now gives colors defined in stylefiles - be they official Stata's
+      colors or user-added style files - precedence over webcolors as long as the
+      specified name is not an exact webcolor match (including case); in earlier
+      versions, only official Stata's colors took precedence over webcolors
+    - S.colors() only read a stylefile if the color name complied to Statas 
+      conventions for names; this was overly restrictive and has now been changed
+    - S.pexists() now returns (expanded) name of palette if palette is found and empty 
+      string else (instead of returning 0/1); S.pname() is no longer set
+    - "_added" functions did not work if no "add_" function has been applied yet; 
+      this is fixed (i.e., the original colors are treated as the first "added" 
+      colors, if "add_" has not been applied yet)
+    - add_colors_added() and add_Colors_added() were defined even though they
+      had no use; these definitions have been removed
+    - palettes now clickable in helpfile
+    
     15may2020
     - the p argument in S.gray() and S.dvd() can now be a vector; colors will be 
       recycled if p has more elements than there are colors (same behavior as in

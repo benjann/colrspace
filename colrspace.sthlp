@@ -1,5 +1,5 @@
 {smcl}
-{* 15may2020}{...}
+{* 19may2020}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 {hline}
@@ -51,7 +51,7 @@
         {help colrspace##intensify:Intensify, saturate, luminate}
         {help colrspace##gray:Grayscale conversion}
         {help colrspace##cvd:Color vision deficiency simulation}
-        {help colrspace##palettes:Color palettes}
+        {help colrspace##palette:Color palettes}
         {help colrspace##cgen:Color generators}
         {help colrspace##delta:Color differences and contrast ratios}
         {help colrspace##util:Some utilities}
@@ -338,6 +338,7 @@
 {p2col:{helpb colrspace##clip:{it:S}.clip()}}helper function for clipping{p_end}
 {p2col:{helpb colrspace##contrast:{it:S}.contrast()}}compute contrast ratios{p_end}
 {p2col:{helpb colrspace##delta:{it:S}.delta()}}compute color differences{p_end}
+{p2col:{helpb colrspace##describe:{it:S}.describe()}}displays contents of {it:S}{p_end}
 {p2col:{helpb colrspace##ipolate:{it:S}.colipolate()}}helper function for interpolating{p_end}
 {p2col:{helpb colrspace##string:{it:S}.colors()}}string input/output (scalar){p_end}
 {p2col:{helpb colrspace##string:{it:S}.Colors()}}string input/output (vector){p_end}
@@ -360,16 +361,15 @@
 {p2col:{helpb colrspace##matplotlib:{it:S}.matplotlib_ip()}}helper function to create colormaps{p_end}
 {p2col:{helpb colrspace##mix:{it:S}.mix()}}mix colors{p_end}
 {p2col:{helpb colrspace##util:{it:S}.N()}}retrieve number of colors{p_end}
+{p2col:{helpb colrspace##name:{it:S}.name()}}set/retrieve name of color collection{p_end}
 {p2col:{helpb colrspace##names:{it:S}.names()}}color names input/output (scalar){p_end}
 {p2col:{helpb colrspace##names:{it:S}.Names()}}color names input/output (vector){p_end}
+{p2col:{helpb colrspace##note:{it:S}.note()}}set/retrieve description of color collection{p_end}
 {p2col:{helpb colrspace##opint:{it:S}.opacity()}}set/retrieve opacity{p_end}
 {p2col:{helpb colrspace##select:{it:S}.order()}}order colors{p_end}
-{p2col:{helpb colrspace##palettes:{it:S}.palette()}}retrieve colors from named palette{p_end}
-{p2col:{helpb colrspace##pclass:{it:S}.pclass()}}set/retrieve palette class{p_end}
+{p2col:{helpb colrspace##palette:{it:S}.palette()}}retrieve colors from named palette{p_end}
+{p2col:{helpb colrspace##pclass:{it:S}.pclass()}}set/retrieve class of color collection{p_end}
 {p2col:{helpb colrspace##pexists:{it:S}.pexists()}}check whether named palette exists{p_end}
-{p2col:{helpb colrspace##pinfo:{it:S}.pinfo()}}set/retrieve palette description{p_end}
-{p2col:{helpb colrspace##pname:{it:S}.pname()}}set/retrieve palette name{p_end}
-{p2col:{helpb colrspace##psource:{it:S}.psource()}}set/retrieve palette source info{p_end}
 {p2col:{helpb colrspace##recycle:{it:S}.recycle()}}recycle colors{p_end}
 {p2col:{helpb colrspace##io:{it:S}.reset()}}reset colors in particular space{p_end}
 {p2col:{helpb colrspace##select:{it:S}.reverse()}}reverse order of colors{p_end}
@@ -382,6 +382,8 @@
 {p2col:{helpb colrspace##saturate:{it:S}.saturate()}}adjust saturation (chroma) of colors{p_end}
 {p2col:{helpb colrspace##select:{it:S}.select()}}select colors{p_end}
 {p2col:{helpb colrspace##io:{it:S}.set()}}set colors in particular space{p_end}
+{p2col:{helpb colrspace##settings:{it:S}.settings()}}display color space settings{p_end}
+{p2col:{helpb colrspace##source:{it:S}.source()}}set/retrieve source of color collection{p_end}
 {p2col:{helpb colrspace##chadapt:{it:S}.tmatrix()}}retrieve transformation matrices{p_end}
 {p2col:{helpb colrspace##ucscoefs:{it:S}.ucscoefs()}}set default J'M'h/J'a'b' coefficients{p_end}
 {p2col:{helpb colrspace##viewcond:{it:S}.viewcond()}}set/retrieve CIECAM02 viewing conditions{p_end}
@@ -417,6 +419,10 @@
         {it:S}{cmd:.viewcond(20, 64/(5*pi()), "average")}
         {it:S}{cmd:.ucscoefs("UCS")}
         {it:S}{cmd:.chadapt("Bfd")}
+
+{pstd}
+    Use {helpb colrspace##settings:{it:S}.settings()} to display the
+    current settings of object {it:S}.
 
 
 {marker rgbspace}{...}
@@ -508,7 +514,7 @@
     {help colrspace##xyzwhite:Setting the XYZ reference white}. If the
     reference white of the RGB working space differs from the XYZ reference
     white, {cmd:ColrSpace} applies {help colrspace##chadapt:chromatic adaption} when translating
-    between XYZ and lRGB. Furthermore, to set the working space primaries. type
+    between XYZ and lRGB. Furthermore, to set the working space primaries, type
 
         {it:S}{cmd:.rgb_xy(}{it:xy}{cmd:)}
 
@@ -734,18 +740,36 @@
         {it:S}{cmd:.}[{cmd:add_}]{cmd:colors(}{it:colors}[{cmd:,} {it:delimiter}]{cmd:)}
 
 {pstd}
-    where string scalar {it:delimiter} sets the character(s) delimiting the specifications;
-    the default is to assume a space-separated list, i.e. {it:delimiter} = {cmd:" "}. To
-    avoid breaking a specification that contains a delimiting character, enclose the
-    specification in double quotes. {it:S}{cmd:.colors()} will replace
-    preexisting colors in {it:S} by the new colors; alternatively, use
-    {it:S}{cmd:.add_colors()} to append the new colors to the existing colors.
+    or
+
+        {it:rc} = {it:S}{cmd:.}{cmd:_}[{cmd:add_}]{cmd:colors(}{it:colors}[{cmd:,} {it:delimiter}]{cmd:)}
+
+{pstd}
+    where string scalar {it:delimiter} sets the character(s) delimiting the
+    specifications; the default is to assume a space-separated list,
+    i.e. {it:delimiter} = {cmd:" "}. To avoid breaking a specification that
+    contains a delimiting character, enclose the specification in double
+    quotes. {it:S}{cmd:.colors()} will replace preexisting colors in {it:S} by
+    the new colors. Alternatively, use {it:S}{cmd:.add_colors()} to append the
+    new colors to the existing colors. {it:S}{cmd:._colors()} and
+    {it:S}{cmd:._add_colors()} perform the same action as {it:S}{cmd:.colors()}
+    and {it:S}{cmd:.add_colors()}, but they return {it:rc} instead of aborting,
+    if {it:colors} contains invalid color specifications. {it:rc} will be set
+    to the index of the first offending color specification, or to 0 if all
+    specifications are valid. Also see function
+    {help colrspace##cvalid:{it:S}{bf:.cvalid()}} for a way to check whether a
+    color specification is valid.
 
 {pstd}
     To import colors from a string vector {it:Colors} (each
     element containing a single color specification), type
 
         {it:S}{cmd:.}[{cmd:add_}]{cmd:Colors(}{it:Colors}{cmd:)}
+
+{pstd}
+    or
+
+        {it:rc} = {it:S}{cmd:.}{cmd:_}[{cmd:add_}]{cmd:Colors(}{it:Colors}{cmd:)}
 
 {pstd}
     The syntax for a single color specification is
@@ -760,8 +784,11 @@
 
 {marker strinput}{...}
 {p2colset 9 28 30 2}{...}
-{p2col:{help colorstyle##colorstyle:{it:name}}}official Stata color name as listed in {help colorstyle##colorstyle:{it:colorstyle}}{p_end}
-{p2col:{help colrspace##webcolors:{it:webname}}}web color name as listed {help colrspace##webcolors:below}{p_end}
+{p2col:{help colorstyle##colorstyle:{it:name}}}Stata color name; this includes
+    official Stata's color names as listed in
+    {help colorstyle##colorstyle:{it:colorstyle}}, as well as possible user additions
+    provided through style files{p_end}
+{p2col:{help colrspace##webcolors:{it:webname}}}HTML color name as listed {help colrspace##webcolors:below}{p_end}
 {p2col:{cmd:#}{it:rrggbb}}6-digit hex RGB value; white = {cmd:#FFFFFF} or {cmd:#ffffff}, navy = {cmd:#1A476F} or {cmd:#1a476f} {p_end}
 {p2col:{cmd:#}{it:rgb}}3-digit abbreviated hex RGB value; white = {cmd:#FFF} or {cmd:#fff}{p_end}
 {p2col:{it:# # #}}RGB value in 0-255 scaling; navy = {cmd:"26 71 111"}{p_end}
@@ -833,11 +860,12 @@
     {cmd:WhiteSmoke}, {cmd:Yellow}, {cmd:YellowGreen}
 
 {pmore}
-    The names can be abbreviated and typed in lowercase letters. If abbreviation is
-    ambiguous, the first matching name in the alphabetically ordered list will be used. In
-    case of name conflict, official Stata colors will take precedence over web colors; use
-    the uppercase names as shown above to prevent such conflict (for example, {cmd:pink} will refer
-    to official Stata pink, {cmd:Pink} will refer to web color pink).
+    The names can be abbreviated and typed in lowercase letters. If
+    abbreviation is ambiguous, the first matching name in the alphabetically
+    ordered list will be used. In case of name conflict with a Stata color,
+    the HTML color will take precedence only if the specified name is an exact match
+    including case. For example, {cmd:pink} will refer to official Stata's
+    pink, whereas {cmd:Pink} will refer to HTML color pink.
 
 {pstd}
     Example:
@@ -856,14 +884,13 @@
 {pstd}
     To check whether a color specification is valid you can type
 
-        {it:flag} = {it:S}{cmd:.cvalid(}{it:colorspec}{cmd:)}
+        {it:color} = {it:S}{cmd:.cvalid(}{it:colorspec}{cmd:)}
 
 {pstd}
-    where {it:colorspec} is a single color specification as described above. {it:flag}
-    will be 1 if the specification is valid, and 0 else. Note that
-    {it:S}{cmd:.cvalid()} will replace any existing colors in {it:S}. If the
-    color specification is valid, then {it:S} will contain the respective
-    color. If the color specification is invalid, {it:S} will contain no colors.
+    where {it:colorspec} is a single color specification as described above. If
+    {it:colorspec} is valid, {it:color} will be set to the (expanded) name of
+    the color, or the RGB code of the color if no color name is available. If
+    {it:colorspec} is invalid, {it:color} will be set to empty string.
 
 {dlgtab:Color output}
 
@@ -930,7 +957,7 @@
         . {stata "mata: S = ColrSpace()"}
         . {stata `"mata: S.colors("#337ab7 #5cb85c #5bc0de #f0ad4e #d9534f")"'}
         . {stata `"mata: S.names("primary success info warning danger")"'}
-        . {stata `"mata: S.pname("colors from Bootstrap 3.3")"'}
+        . {stata `"mata: S.name("colors from Bootstrap 3.3")"'}
         . {stata "colorpalette mata(S)"}
 
 {dlgtab:Names output}
@@ -993,7 +1020,7 @@
         . {stata "mata: S = ColrSpace()"}
         . {stata `"mata: S.colors("#337ab7 #5cb85c #5bc0de #f0ad4e #d9534f")"'}
         . {stata `"mata: S.info("primary success info warning danger")"'}
-        . {stata `"mata: S.pname("colors from Bootstrap 3.3")"'}
+        . {stata `"mata: S.name("colors from Bootstrap 3.3")"'}
         . {stata "colorpalette mata(S)"}
 
 {dlgtab:Description output}
@@ -1205,7 +1232,7 @@
     new opacity settings. Arguments are as follows.
 
 {phang}
-    {it:opacity} is a real vector of opacity values in [0,100]. A value of 0
+    {it:opacity} is a real vector of opacity values as percentages in [0,100]. A value of 0
     makes the color fully transparent, a value of 100 makes the color fully
     opaque. If the number of specified opacity values is smaller than the
     number of existing colors, the opacity values will be recycled;
@@ -1219,11 +1246,19 @@
     replaced. By default, {it:S}{cmd:.opacity()} resets opacity for all colors
     irrespective of whether they already have an opacity value or not.
 
+{pstd}
+    Alternatively, you may type
+
+        {it:S}{cmd:.}[{cmd:add_}]{cmd:alpha}[{cmd:_added}]{cmd:(}{it:alpha}[{cmd:,} {it:noreplace}]{cmd:)}
+
+{pstd}
+    where {it:alpha} contains opacity values specified as proportions in [0,1].
+
 {dlgtab:Retrieving opacity}
 
 {pstd}
-    To retrieve a real colvector containing the opacity values of the colors in
-    {it:S}, type
+    To retrieve a real colvector containing the opacity values (as percentages)
+    of the colors in {it:S}, type
 
         {it:opacity} = {it:S}{cmd:.opacity}[{cmd:_added}]{cmd:()}
 
@@ -1232,6 +1267,14 @@
     an opacity value. {it:S}{cmd:.opacity()} returns the opacity values of all
     colors; {it:S}{cmd:.opacity_added()} only returns the opacity values of the
     colors that have been added last.
+
+{pstd}
+    Alternatively, you may type
+
+        {it:alpha} = {it:S}{cmd:.alpha}[{cmd:_added}]{cmd:()}
+
+{pstd}
+    to retrieve opacity values as proportions.
 
 {marker intensity}{...}
 {dlgtab:Setting intensity}
@@ -1831,11 +1874,11 @@
         . {stata "mata: A = ColrSpace()"}
         . {stata `"mata: A.palette("s2", 5)"'}
         . {stata `"mata: d = D = p = P = T = J(1, 1, A)"'}  {it:(make copies)}
-        . {stata `"mata: d.cvd(.5);      d.pname("deuteranomaly")"'}
-        . {stata `"mata: D.cvd();        D.pname("deuteranopia")"'}
-        . {stata `"mata: p.cvd(.5, "p"); p.pname("protanomaly")"'}
-        . {stata `"mata: P.cvd(1, "p");  P.pname("protanopia")"'}
-        . {stata `"mata: T.cvd(1, "t");  T.pname("tritanopia")"'}
+        . {stata `"mata: d.cvd(.5);      d.name("deuteranomaly")"'}
+        . {stata `"mata: D.cvd();        D.name("deuteranopia")"'}
+        . {stata `"mata: p.cvd(.5, "p"); p.name("protanomaly")"'}
+        . {stata `"mata: P.cvd(1, "p");  P.name("protanopia")"'}
+        . {stata `"mata: T.cvd(1, "t");  T.name("tritanopia")"'}
         . {stata "colorpalette, lc(black): m(A) / m(d) / m(D) / m(p) / m(P) / m(T)"}
 
 {pstd}
@@ -1843,153 +1886,24 @@
     {help colrspace##convert:Convert colors without storing}.
 
 
-{marker palettes}{...}
+{marker palette}{...}
 {title:Color palettes}
 
 {dlgtab:Standard palettes}
 
 {pstd}
-    To import colors from a named color palette, type:
+    To import colors from a named color palette, type
 
-        {it:S}{cmd:.}[{cmd:add_}]{cmd:palette(}[{cmd:"}{it:name}{cmd:"}{cmd:,} {it:n}{cmd:,} {it:opt}]{cmd:)}
+        {it:S}{cmd:.}[{cmd:add_}]{cmd:palette(}[{cmd:"}{it:name}{cmd:"}{cmd:,} {it:n}{cmd:,} {it:nocrecycle}|{it:range}]{cmd:)}
 
 {pstd}
-    {it:S}{cmd:.palette()} replaces existing colors by the new colors; use
-    {it:S}{cmd:.add_palette()} if you want to append the new colors. Arguments are as follows.
+    where arguments are as follows:
 
 {phang}
-    {it:name} selects the palette and can be one of the following (also see
-    help {helpb colorpalette}, if installed, for more information on these palettes):
-
-{p2colset 13 38 40 2}{...}
-{p2col:{cmd:s2}}15 qualitative colors as in Stata's {helpb scheme s2:s2color} scheme{p_end}
-{p2col:{cmd:s1}}15 qualitative colors as in Stata's {helpb scheme s1:s1color} scheme{p_end}
-{p2col:{cmd:s1r}}15 qualitative colors as in Stata's {helpb scheme s1:s1rcolor} scheme{p_end}
-{p2col:{cmd:economist}}15 qualitative colors as in Stata's {helpb scheme economist:economist} scheme{p_end}
-{p2col:{cmd:mono}}15 gray scales (qualitative) as in Stata's monochrome schemes{p_end}
-{p2col:{cmd:cblind}}9 colorblind-friendly colors (qualitative) by {browse "http://jfly.iam.u-tokyo.ac.jp/color/":Okabe and Ito (2002)}{p_end}
-{p2col:{cmd:plottig}}15 qualitative colors as in {cmd:plottig} by {browse "http://www.stata-journal.com/article.html?article=gr0070":Bischof (2017b)}{p_end}
-{p2col:{cmd:538}}13 qualitative colors as in {cmd:538} by {browse "http://ideas.repec.org/c/boc/bocode/s458404.html":Bischof (2017a)}{p_end}
-{p2col:{cmd:mrc}}8 qualitative colors as in {cmd:tfl} by {browse "http://ideas.repec.org/c/boc/bocode/s458103.html":Morris (2015)}{p_end}
-{p2col:{cmd:tfl}}7 qualitative colors as in {cmd:mrc} by {browse "http://ideas.repec.org/c/boc/bocode/s457703.html":Morris (2013)}{p_end}
-{p2col:{cmd:burd}}13 qualitative colors as in {cmd:burd} by {browse "http://ideas.repec.org/c/boc/bocode/s457623.html":Briatte (2013)}{p_end}
-{p2col:{cmd:lean}}15 gray scales (qualitative) as in {cmd:lean} by {browse "http://www.stata-journal.com/article.html?article=gr0002":Juul (2003)}{p_end}
-{p2col:{cmd:tableau}}20 qualitative colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:Accent}}8 accented colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Dark2}}8 dark colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Paired}}12 paired colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Pastel1}}9 pastel colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Pastel2}}8 pastel colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Set1}}9 qualitative colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Set2}}8 qualitative colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Set3}}12 qualitative colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Blues}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:BuGn}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:BuPu}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:GnBu}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Greens}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Greys}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:OrRd}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Oranges}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:PuBu}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:PuBuGn}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:PuRd}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Purples}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:RdPu}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Reds}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:YlGn}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:YlGnBu}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:YlOrBr}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:YlOrRd}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:BrBG}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:PRGn}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:PiYG}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:PuOr}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:RdBu}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:RdGy}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:RdYlBu}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:RdYlGn}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:Spectral}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
-{p2col:{cmd:viridis}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:plasma}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:inferno}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:magma}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:cividis}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:twilight}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:twilight shifted}}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:matplotlib} [{it:name}]}redirection to {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
-{p2col:{cmd:ptol qualitative}}1-12 qualitative colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)}{p_end}
-{p2col:{cmd:ptol diverging}}3-11 diverging colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)}{p_end}
-{p2col:{cmd:ptol rainbow}}4-12 rainbow colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)} (sequential){p_end}
-{p2col:{cmd:d3 10}}10 qualitative colors from {browse "http://d3js.org/":D3.js}{p_end}
-{p2col:{cmd:d3 20}}20 qualitative colors in pairs from {browse "http://d3js.org/":D3.js}{p_end}
-{p2col:{cmd:d3 20b}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
-{p2col:{cmd:d3 20c}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
-{p2col:{cmd:lin carcolor}}6 car colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin carcolor algorithm}}6 algorithm-selected car colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin food}}7 food colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin food algorithm}}7 algorithm-selected food colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin features}}5 feature colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin features algorithm}}5 algorithm-selected feature colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin activities}}5 activity colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin activities algorithm}}5 algorithm-selected activity colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin fruits}}7 fruit colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin fruits algorithm}}7 algorithm-selected fruit colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin vegetables}}7 vegetable colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin vegetables algorithm}}7 algorithm-selected vegetable colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin drinks}}7 drinks colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin drinks algorithm}}7 algorithm-selected drinks colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin brands}}7 brands colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:lin brands algorithm}}7 algorithm-selected brands colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
-{p2col:{cmd:spmap blues}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:spmap greens}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:spmap greys}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:spmap reds}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:spmap rainbow}}2-99 rainbow colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:spmap heat}}2-16 heat colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:spmap terrain}}2-16 terrain colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:spmap topological}}2-16 topological colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
-{p2col:{cmd:sfso brown}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso orange}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso red}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso pink}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso purple}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso violet}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso blue}}7 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso ltblue}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso turquoise}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso green}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso olive}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso black}}6 sequential colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso parties}}11 qualitative colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso languages}}5 qualitative colors by SFSO (2017){p_end}
-{p2col:{cmd:sfso votes}}10 diverging colors by SFSO (2017){p_end}
-{p2col:{cmd:webcolors}}all 148 {help colrspace##webcolors:web colors}, alphabetically sorted{p_end}
-{p2col:{cmd:webcolors pink}}6 pink {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors purple}}19 purple {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors redorange}}14 red and orange {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors yellow}}11 yellow {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors green}}22 green {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors cyan}}8 cyan {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors blue}}16 blue {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors brown}}18 brown {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors white}}17 white {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors gray}}10 gray {help colrspace##webcolors:web colors}{p_end}
-{p2col:{cmd:webcolors grey}}10 grey {help colrspace##webcolors:web colors} (same color codes as {cmd:gray}){p_end}
-
-{pmore}
-    The palette names can be abbreviated and typed in lowercase letters (for example,
-    {cmd:"BuGn"} could be typed as {cmd:"bugn"}, {cmd:"lin carcolor algorithm"} could be
-    typed as {cmd:"lin car a"}). If abbreviation is ambiguous, the first matching name
-    in the above list will be used. Default is {cmd:"s2"}; this default
-    can also be selected by typing {cmd:""}.
-
-{pmore}
-    {browse "http://colorbrewer2.org/":ColorBrewer} is a set of color schemes developed by
-    {browse "http://doi.org/10.1559/152304003100010929":Brewer et al. (2003)}; also
-    see Brewer (2016). The colors are licensed under Apache License Version 2.0; see
-    the copyright notes at
-    {browse "http://www.personal.psu.edu/cab38/ColorBrewer/ColorBrewer_updates.html":ColorBrewer_updates.html}.
+    {it:name} selects the palette; see below for {help colrspace##palettes:available palettes}. {it:S}{cmd:.}{cmd:palette()}
+    and {it:S}{cmd:.}{cmd:add_palette()} abort with error if {it:name} does not match an existing
+    palette; see function {help colrspace##pexists:{it:S}{bf:.pexists()}} for a
+    way to check whether a palette exists or not.
 
 {phang}
     {it:n} is the number of colors to be retrieved from the palette. Many
@@ -2003,16 +1917,26 @@
     equal to {it:n}.
 
 {phang}
-    {it:opt} is interpreted as {it:range} when redirecting to
-    {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}. In all other cases,
-    {it:opt}!=0 prevents recycling or interpolating colors if {it:n}, the number of
+    {it:norecycle} is only relevant for palettes that are {it:not} from
+    {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}. {it:norecycle}!=0 prevents
+    recycling or interpolating colors if {it:n}, the number of
     requested colors, is larger (smaller) than the maximum (minimum) number of
-    colors defined by a palette. That is, if {it:opt}!=0 is specified, the
+    colors defined by a palette. That is, if {it:norecycle}!=0 is specified, the
     resulting number of colors in {it:S} may be different from the requested number
-    of colors. Exception: {it:opt}!=0 does not suppress "recycling" of
+    of colors. Exception: {it:norecycle}!=0 does not suppress "recycling" of
     qualitative palettes if {it:n} is smaller than the (minimum) number of colors
     defined by the palette. In this case, the first {it:n} colors of the palette
-    are retrieved irrespective of whether {it:opt}!=0 is specified or not.
+    are retrieved irrespective of whether {it:norecycle}!=0 is specified or
+    not.
+
+{phang}
+    {it:range} = {cmd:(}{it:lb}[{cmd:,} {it:ub}]{cmd:)} is only relevant for colormaps from
+    {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}. It specifies the range of
+    the colormap to be used, with {it:lb} and {it:ub} within [0,1] (values
+    smaller than 0 or larger than 1 will be interpreted as 0 or 1, respectively). The
+    default is {cmd:(0,1)}. This default can also be selected by typing
+    {cmd:.} (missing). If {it:lb} is larger then {it:ub}, the colors are
+    retrieved in reverse order.
 
 {pstd}
     Example:
@@ -2020,18 +1944,165 @@
         . {stata "mata: S = ColrSpace()"}
         . {stata `"mata: S.palette("lin fruits")"'}
         . {stata `"mata: S.add_palette("lin veg")"'}
-        . {stata `"mata: S.pname("fruits and vegetables")"'}
+        . {stata `"mata: S.name("fruits and vegetables")"'}
         . {stata "colorpalette mata(S)"}
+
+{marker palettes}{...}
+{pstd}
+    Currently available palettes are as follows (also see
+    help {helpb colorpalette}, if installed, for more information on these palettes; click on
+    a palette name to view the palette; requires the {helpb palettes} package to be
+    installed):
+
+{p2colset 9 34 36 2}{...}
+{p2col:{stata colorpalette s2:{bf:s2}}}15 qualitative colors as in Stata's {helpb scheme s2:s2color} scheme{p_end}
+{p2col:{stata colorpalette s1:{bf:s1}}}15 qualitative colors as in Stata's {helpb scheme s1:s1color} scheme{p_end}
+{p2col:{stata colorpalette s1r:{bf:s1r}}}15 qualitative colors as in Stata's {helpb scheme s1:s1rcolor} scheme{p_end}
+{p2col:{stata colorpalette economist:{bf:economist}}}15 qualitative colors as in Stata's {helpb scheme economist:economist} scheme{p_end}
+{p2col:{stata colorpalette mono:{bf:mono}}}15 gray scales (qualitative) as in Stata's monochrome schemes{p_end}
+{p2col:{stata colorpalette cblind:{bf:cblind}}}9 colorblind-friendly colors (qualitative) by {browse "http://jfly.iam.u-tokyo.ac.jp/color/":Okabe and Ito (2002)}{p_end}
+{p2col:{stata colorpalette plottig:{bf:plottig}}}15 qualitative colors as in {cmd:plottig} by {browse "http://www.stata-journal.com/article.html?article=gr0070":Bischof (2017b)}{p_end}
+{p2col:{stata colorpalette 538:{bf:538}}}13 qualitative colors as in {cmd:538} by {browse "http://ideas.repec.org/c/boc/bocode/s458404.html":Bischof (2017a)}{p_end}
+{p2col:{stata colorpalette mrc:{bf:mrc}}}8 qualitative colors as in {cmd:tfl} by {browse "http://ideas.repec.org/c/boc/bocode/s458103.html":Morris (2015)}{p_end}
+{p2col:{stata colorpalette tfl:{bf:tfl}}}7 qualitative colors as in {cmd:mrc} by {browse "http://ideas.repec.org/c/boc/bocode/s457703.html":Morris (2013)}{p_end}
+{p2col:{stata colorpalette burd:{bf:burd}}}13 qualitative colors as in {cmd:burd} by {browse "http://ideas.repec.org/c/boc/bocode/s457623.html":Briatte (2013)}{p_end}
+{p2col:{stata colorpalette lean:{bf:lean}}}15 gray scales (qualitative) as in {cmd:lean} by {browse "http://www.stata-journal.com/article.html?article=gr0002":Juul (2003)}{p_end}
+{p2col:{stata colorpalette tableau:{bf:tableau}}}20 qualitative colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette Accent:{bf:Accent}}}8 accented colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Dark2:{bf:Dark2}}}8 dark colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Paired:{bf:Paired}}}12 paired colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Pastel1:{bf:Pastel1}}}9 pastel colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Pastel2:{bf:Pastel2}}}8 pastel colors (qualitative) from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Set1:{bf:Set1}}}9 qualitative colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Set2:{bf:Set2}}}8 qualitative colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Set3:{bf:Set3}}}12 qualitative colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Blues:{bf:Blues}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette BuGn:{bf:BuGn}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette BuPu:{bf:BuPu}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette GnBu:{bf:GnBu}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Greens:{bf:Greens}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Greys:{bf:Greys}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette OrRd:{bf:OrRd}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Oranges:{bf:Oranges}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette PuBu:{bf:PuBu}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette PuBuGn:{bf:PuBuGn}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette PuRd:{bf:PuRd}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Purples:{bf:Purples}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette RdPu:{bf:RdPu}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Reds:{bf:Reds}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette YlGn:{bf:YlGn}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette YlGnBu:{bf:YlGnBu}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette YlOrBr:{bf:YlOrBr}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette YlOrRd:{bf:YlOrRd}}}3-9 sequential colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette BrBG:{bf:BrBG}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette PRGn:{bf:PRGn}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette PiYG:{bf:PiYG}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette PuOr:{bf:PuOr}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette RdBu:{bf:RdBu}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette RdGy:{bf:RdGy}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette RdYlBu:{bf:RdYlBu}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette RdYlGn:{bf:RdYlGn}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette Spectral:{bf:Spectral}}}3-11 diverging colors from {browse "http://colorbrewer2.org/":ColorBrewer}{p_end}
+{p2col:{stata colorpalette viridis:{bf:viridis}}}{cmd:viridis} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette plasma:{bf:plasma}}}{cmd:plasma} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette inferno:{bf:inferno}}}{cmd:inferno} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette magma:{bf:magma}}}{cmd:magma} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette cividis:{bf:cividis}}}{cmd:cividis} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette twilight:{bf:twilight}}}{cmd:twilight} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette twilight shifted:{bf:twilight shifted}}}{cmd:twilight shifted} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib autumn:{bf:matplotlib autumn}}}{cmd:autumn} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib spring:{bf:matplotlib spring}}}{cmd:spring} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib summer:{bf:matplotlib summer}}}{cmd:summer} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib winter:{bf:matplotlib winter}}}{cmd:winter} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib bone:{bf:matplotlib bone}}}{cmd:bone} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib cool:{bf:matplotlib cool}}}{cmd:cool} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib copper:{bf:matplotlib copper}}}{cmd:copper} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib coolwarm:{bf:matplotlib coolwarm}}}{cmd:coolwarm} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib jet:{bf:matplotlib jet}}}{cmd:jet} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette matplotlib hot:{bf:matplotlib hot}}}{cmd:hot} colormap from {help colrspace##matplotlib:{it:S}{bf:.matplotlib()}}{p_end}
+{p2col:{stata colorpalette ptol qualitative:{bf:ptol qualitative}}}1-12 qualitative colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)}{p_end}
+{p2col:{stata colorpalette ptol rainbow:{bf:ptol rainbow}}}4-12 rainbow colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)}{p_end}
+{p2col:{stata colorpalette ptol diverging:{bf:ptol diverging}}}3-11 diverging colors by {browse "http://personal.sron.nl/~pault/colourschemes.pdf":Tol (2012)}{p_end}
+{p2col:{stata colorpalette d3 10:{bf:d3 10}}}10 qualitative colors from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{stata colorpalette d3 20:{bf:d3 20}}}20 qualitative colors in pairs from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{stata colorpalette d3 20b:{bf:d3 20b}}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{stata colorpalette d3 20c:{bf:d3 20c}}}20 qualitative colors in groups of four from {browse "http://d3js.org/":D3.js}{p_end}
+{p2col:{stata colorpalette lin carcolor:{bf:lin carcolor}}}6 car colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin carcolor algorithm:{bf:lin carcolor algorithm}}}6 algorithm-selected car colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin food:{bf:lin food}}}7 food colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin food algorithm:{bf:lin food algorithm}}}7 algorithm-selected food colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin features:{bf:lin features}}}5 feature colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin features algorithm:{bf:lin features algorithm}}}5 algorithm-selected feature colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin activities:{bf:lin activities}}}5 activity colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin activities algorithm:{bf:lin activities algorithm}}}5 algorithm-selected activity colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin fruits:{bf:lin fruits}}}7 fruit colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin fruits algorithm:{bf:lin fruits algorithm}}}7 algorithm-selected fruit colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin vegetables:{bf:lin vegetables}}}7 vegetable colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin vegetables algorithm:{bf:lin vegetables algorithm}}}7 algorithm-selected vegetable colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin drinks:{bf:lin drinks}}}7 drinks colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin drinks algorithm:{bf:lin drinks algorithm}}}7 algorithm-selected drinks colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin brands:{bf:lin brands}}}7 brands colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette lin brands algorithm:{bf:lin brands algorithm}}}7 algorithm-selected brands colors by {browse "http://dx.doi.org/10.1111/cgf.12127":Lin et al. (2013)}{p_end}
+{p2col:{stata colorpalette spmap blues:{bf:spmap blues}}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette spmap greens:{bf:spmap greens}}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette spmap greys:{bf:spmap greys}}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette spmap reds:{bf:spmap reds}}}2-99 sequential colors by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette spmap rainbow:{bf:spmap rainbow}}}2-99 rainbow colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette spmap heat:{bf:spmap heat}}}2-16 heat colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette spmap terrain:{bf:spmap terrain}}}2-16 terrain colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette spmap topological:{bf:spmap topological}}}2-16 topological colors (sequential) by {browse "http://ideas.repec.org/c/boc/bocode/s456812.html":Pisati (2007)}{p_end}
+{p2col:{stata colorpalette sfso brown:{bf:sfso brown}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso orange:{bf:sfso orange}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso red:{bf:sfso red}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso pink:{bf:sfso pink}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso purple:{bf:sfso purple}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso violet:{bf:sfso violet}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso blue:{bf:sfso blue}}}7 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso ltblue:{bf:sfso ltblue}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso turquoise:{bf:sfso turquoise}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso green:{bf:sfso green}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso olive:{bf:sfso olive}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso black:{bf:sfso black}}}6 sequential colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso parties:{bf:sfso parties}}}11 qualitative colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso languages:{bf:sfso languages}}}5 qualitative colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette sfso votes:{bf:sfso votes}}}10 diverging colors by SFSO (2017){p_end}
+{p2col:{stata colorpalette webcolors:{bf:webcolors}}}all 148 {help colrspace##webcolors:HTML colors}, alphabetically sorted{p_end}
+{p2col:{stata colorpalette webcolors pink:{bf:webcolors pink}}}6 pink {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors purple:{bf:webcolors purple}}}19 purple {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors redorange:{bf:webcolors redorange}}}14 red and orange {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors yellow:{bf:webcolors yellow}}}11 yellow {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors green:{bf:webcolors green}}}22 green {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors cyan:{bf:webcolors cyan}}}8 cyan {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors blue:{bf:webcolors blue}}}16 blue {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors brown:{bf:webcolors brown}}}18 brown {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors white:{bf:webcolors white}}}17 white {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors gray:{bf:webcolors gray}}}10 gray {help colrspace##webcolors:HTML colors}{p_end}
+{p2col:{stata colorpalette webcolors grey:{bf:webcolors grey}}}10 grey {help colrspace##webcolors:HTML colors} (same color codes as {cmd:gray}){p_end}
+
+{pstd}
+    The palette names can be abbreviated and typed in lowercase letters (for example,
+    {cmd:"BuGn"} could be typed as {cmd:"bugn"}, {cmd:"lin carcolor algorithm"} could be
+    typed as {cmd:"lin car a"}). If abbreviation is ambiguous, the first matching name
+    in the above list will be used. Default is {cmd:"s2"}; this default
+    can also be selected by typing {cmd:""}.
+
+{pstd}
+    {browse "http://colorbrewer2.org/":ColorBrewer} is a set of color schemes developed by
+    {browse "http://doi.org/10.1559/152304003100010929":Brewer et al. (2003)}; also
+    see Brewer (2016). The colors are licensed under Apache License Version 2.0; see
+    the copyright notes at
+    {browse "http://www.personal.psu.edu/cab38/ColorBrewer/ColorBrewer_updates.html":ColorBrewer_updates.html}.
 
 {marker pexists}{...}
 {pstd}
     To check whether {cmd:"}{it:name}{cmd:"} matches an existing palette you can type
 
-        {it:flag} = {it:S}{cmd:.pexists(}{cmd:"}{it:name}{cmd:"}{cmd:)}
+        {it:name} = {it:S}{cmd:.pexists(}{cmd:"}{it:name}{cmd:"}{cmd:)}
 
 {pstd}
-    {it:flag} will be 1 if a matching palette was found, and 0 else. The
-    (expanded) palette name will be stored in {it:S}{cmd:.pname()}.
+    {it:name} will be set to the (expanded) name of the palette if a matching
+    palette was found. If no matching palette is found, {it:name} will be set to
+    empty string.
 
 {marker matplotlib}{...}
 {dlgtab:Matplotlib colormaps}
@@ -2405,6 +2476,36 @@
 {marker util}{...}
 {title:Some utilities}
 
+{marker describe}{...}
+{dlgtab:Overview of contents}
+
+{pstd}
+    To display an overview of the contents of {it:S}, type
+
+        {it:S}{cmd:.describe}{cmd:(}[{it:short}]{cmd:)}
+
+{pstd}
+    where {it:short}!=0 suppresses listing the individual colors. Examples:
+
+        . {stata "mata: S = ColrSpace()"}
+        . {stata `"mata: S.palette("webcolors pink")"'}
+        . {stata "mata: S.describe()"}
+        . {stata "mata: S.describe(1)"}
+
+{marker settings}{...}
+{dlgtab:Overview of color space settings}
+
+{pstd}
+    To display an overview of the color space settings of {it:S}, type
+
+        {it:S}{cmd:.settings}{cmd:()}
+
+{pstd}
+    Example:
+
+        . {stata "mata: S = ColrSpace()"}
+        . {stata "mata: S.settings()"}
+
 {dlgtab:Number of colors}
 
 {pstd}
@@ -2416,74 +2517,74 @@
     {it:S}{cmd:.N()} returns the total number of colors; {it:S}{cmd:.N_added()}
     returns the number of colors added last.
 
-{marker pclass}{...}
-{dlgtab:Palette class}
+{marker name}{...}
+{dlgtab:Collection name}
 
 {pstd}
-    To assign a palette class to the colors in {it:S}, type
+    To assign a name or title to the collection of colors in {it:S}, type
+
+        {it:S}{cmd:.name(}{it:name}{cmd:)}
+
+{pstd}
+    where {it:name} is a string scalar. To retrieve the name, type
+
+        {it:name} = {it:S}{cmd:.name()}
+
+{pstd}
+    Functions {it:S}{cmd:.palette()} and {it:S}{cmd:.matplotlib()} automatically
+    assign a name.
+
+{marker pclass}{...}
+{dlgtab:Class}
+
+{pstd}
+    To assign a class to the collection of colors in {it:S}, type
 
         {it:S}{cmd:.pclass(}{it:class}{cmd:)}
 
 {pstd}
-    where {it:class} is a string scalar such as, e.g., {cmd:"qualitative"} or
-    {cmd:"diverging"}. To retrieve the palette class, type
+    where {it:class} is a string scalar such as {cmd:"qualitative"}, {cmd:"sequential"}, or
+    {cmd:"diverging"}. To retrieve the class, type
 
         {it:class} = {it:S}{cmd:.pclass()}
 
 {pstd}
     Functions {it:S}{cmd:.palette()}, {it:S}{cmd:.matplotlib()}, and
-    {it:S}{cmd:.generate()} automatically assign a palette class.
+    {it:S}{cmd:.generate()} automatically assign a class.
 
-{marker pname}{...}
-{dlgtab:Palette name}
-
-{pstd}
-    To assign a palette name to the colors in {it:S}, type
-
-        {it:S}{cmd:.pname(}{it:name}{cmd:)}
+{marker note}{...}
+{dlgtab:Description}
 
 {pstd}
-    where {it:name} is a string scalar. To retrieve the palette name, type
+    To assign a description to the collection of colors in {it:S}, type
 
-        {it:name} = {it:S}{cmd:.pname()}
-
-{pstd}
-    Functions {it:S}{cmd:.palette()} and {it:S}{cmd:.matplotlib()} automatically
-    assign a palette name.
-
-{marker pinfo}{...}
-{dlgtab:Palette description}
+        {it:S}{cmd:.note(}{it:note}{cmd:)}
 
 {pstd}
-    To assign a palette description to the colors in {it:S}, type
+    where {it:note} is a string scalar. To retrieve the description, type
 
-        {it:S}{cmd:.pinfo(}{it:info}{cmd:)}
-
-{pstd}
-    where {it:info} is a string scalar. To retrieve the palette description, type
-
-        {it:info} = {it:S}{cmd:.pinfo()}
+        {it:note} = {it:S}{cmd:.note()}
 
 {pstd}
     Functions {it:S}{cmd:.palette()} and {it:S}{cmd:.matplotlib()} automatically
-    assign a palette description.
+    assign a description.
 
-{marker psource}{...}
-{dlgtab:Palette source}
+{marker source}{...}
+{dlgtab:Source}
 
 {pstd}
     To assign information on the source of the colors in {it:S}, type
 
-        {it:S}{cmd:.psource(}{it:source}{cmd:)}
+        {it:S}{cmd:.source(}{it:source}{cmd:)}
 
 {pstd}
-    where {it:source} is a string scalar. To retrieve the palette source, type
+    where {it:source} is a string scalar. To retrieve the source, type
 
-        {it:source} = {it:S}{cmd:.psource()}
+        {it:source} = {it:S}{cmd:.source()}
 
 {pstd}
     Functions {it:S}{cmd:.palette()} and {it:S}{cmd:.matplotlib()} automatically
-    assign a palette source.
+    assign a source.
 
 {marker isipolate}{...}
 {dlgtab:Interpolation status}
