@@ -23,6 +23,23 @@ Installation from GitHub:
 
 Main changes:
 
+    27may2020
+    - palette definitions, names colors, matplotlib colormap definitions, and color
+      generator parameters are now kept in external source files that are read on
+      the fly; system for handling palettes completely rewritten
+    - expanded set of names colors by various W3.CSS colors; the colors are also available
+      as palettes
+    - functions S.generate*() and S.matplotlib() no longer exist; their functionality
+      is now integrated in S.palette()
+    - S.matplotlib_ip() has been renamed to S.lsmap()
+    - S.palettes() now returns a list of the names of all available palettes
+    - S.namedcolors() now returns a list of all available named colors (apart from
+      Stata's system colors) including their hex code
+    - S.clear() clears all all colors
+    - S.clearsettings() resets color space settings to default
+    - S.clearindex() clears the internal indices of palettes names and of named colors
+    - reorganized help file
+    
     19may2020
     - using new design for the add/added functions that no longer requires making a 
       copy of S

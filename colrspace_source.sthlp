@@ -1,10 +1,10 @@
-*! version 1.0.6  19may2020  Ben Jann
+*! version 1.0.7  25may2020  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
 * {help colrspace_source##class:Class and struct definitions}
 * {help colrspace_source##new:Constructor}
-* {help colrspace_source##util:Some utilities}
+* {help colrspace_source##util:Utilities and common functions}
 * {help colrspace_source##illuminants:Illuminants}
 * {help colrspace_source##rgbspaces:RGB working spaces}
 * {help colrspace_source##viewcond:CIECAM02 viewing conditions}
@@ -12,18 +12,18 @@
 * {help colrspace_source##string:String input/output}
 * {help colrspace_source##set:Set or retrieve colors}
 * {help colrspace_source##opacity:Set or retrieve opacity and intensity}
-* {help colrspace_source##ipolate:Color interpolation and mixing}
-* {help colrspace_source##order:Recycle, select, and order colors}
-* {help colrspace_source##intens:Intensify, saturate, luminate}
-* {help colrspace_source##gray:Grayscale conversion}
-* {help colrspace_source##cvd:Color vision deficiency simulation}
+* {help colrspace_source##modify:Color modification}
+* {help colrspace_source##order:- recycle, select, order}
+* {help colrspace_source##ipolate:- interpolate, mix}
+* {help colrspace_source##intens:- intensify, saturate, luminate}
+* {help colrspace_source##gray:- grayscale conversion}
+* {help colrspace_source##cvd:- color vision deficiency simulation}
 * {help colrspace_source##diff:Color differences and contrast ratios}
-* {help colrspace_source##convert:Translation between color spaces}
+* {help colrspace_source##convert:Translate colors between spaces}
 * {help colrspace_source##translate:Elementary translators}
-* {help colrspace_source##gen:Color generators}
 * {help colrspace_source##web:Named web colors}
 * {help colrspace_source##palettes:Palettes}
-* {help colrspace_source##matplotlib:Matplotlib colormaps}
+* {help colrspace_source##gen:Color generators}
 * 
 * {bf:Setup (Stata locals)} {hline}
 * {asis}
@@ -111,9 +111,13 @@ struct `CAM02' {
 }
 
 class `MAIN' {
-    // initialize default whitepoint and working space
+    // initialization
+    public:
+        void    clear()         // remove data, set n of colors to 0
+        void    clearindex()    // clear palettes and namedcolors index
+        void    clearsettings() // set default color space settings
     private:
-        void    new()
+        void    new()         // initialize class with default settings
         `SC'    SPACES        // main list of supported color metrics
         `SC'    SPACES2       // additional color metrics
         `SM'    EDGELIST      // edge list for color conversions
@@ -131,7 +135,7 @@ class `MAIN' {
         void    copydata()    // copy data1 to data
         void    copyadded()   // copy last N1 colors from data to data1
     
-    // Some utilities
+    // Utilities
     public:
         void    describe()    // describe contents
         void    settings()    // describe settings
@@ -142,15 +146,25 @@ class `MAIN' {
         `T'     note()        // set or return palette description
         `T'     source()      // set or return palette source
         `Bool'  isipolate()   // 1 if interpolated; 0 else
+        `RM'    colipolate()  // interpolate columns
+        `TM'    colrecycle()  // recycle columns
+        `RM'    lsmap()       // create linear segmented colormap
         `RM'    clip()        // clip values
     private:
-        `RV'    _clip()       // clip vector
-        `RS'    __clip()      // clip value
         `SS'    gettok()      // split first token from rest
         `Bool'  smatch()      // check abbreviated string
         `SS'    findkey()     // find key in list (ignoring case; allowing abbreviation)
         void    assert_cols() // assert number of columns
         void    assert_size() // assert number of columns and rows
+        `RV'    _colipolate_setrange() // parse interpolation range argument
+        void    _colipolate_fromto()   // create from-to interpolation mapping
+        `RM'    _colipolate_pos()      // handle unordered from positions
+        void    _colipolate_collapse() // collapse input in case of ties
+        `RM'    _colipolate()          // apply interpolation
+        `RC'    _lsmap()      // function used by lsmap()
+        `RV'    _clip()       // clip vector
+        `RS'    __clip()      // clip value
+        `SR'    _tokens()     // modified version of tokens
 
     // XYZ reference white
     public:
@@ -221,9 +235,8 @@ class `MAIN' {
         void    Colors_set(), Names_set(), _Names_set(), Info_set(), _Info_set()
         `Int'   _colors_set(), _Colors_set()
         `Int'   parse_split(), _parse_split(), parse_convert(), _parse_convert()
-        `Bool'  parse_named(), iswebcolor()
-        `SS'    parse_stcolorstyle(), parse_webcolor()
-        `SR'    _tokens()     // modified version of tokens
+        `Bool'  parse_named(), isnamedcolor()
+        `SS'    parse_stcolorstyle(), parse_namedcolor()
 
     // Set or retrieve colors
     public:
@@ -248,28 +261,23 @@ class `MAIN' {
         void    opacity_set(), alpha_set(), intensity_set()
         void    _alpha(), _intensity()
 
-    // Color interpolation and mixing
-    public:
-        void    ipolate(), add_ipolate(), ipolate_added(), add_ipolate_added()
-        void    mix(), add_mix(), mix_added(), add_mix_added()
-        `RM'    colipolate()  // interpolate columns
-    private:
-        void    _ipolate(), _mix()
-        `RM'    _ipolate_get(), _mix_get()
-        `RM'    __ipolate(), _ipolate_pos()
-        `RC'    _ipolate_halign()
-        `RV'    _ipolate_setrange()
-        void    _ipolate_fromto(), _ipolate_collapse()
-
     // Recycle, select, and order
     public:
         void    recycle(), add_recycle(), recycle_added(), add_recycle_added()
         void    select(), add_select(), select_added(), add_select_added()
         void    order(), add_order(), order_added(), add_order_added()
         void    reverse(), add_reverse(), reverse_added(), add_reverse_added()
-        `TM'    colrecycle()  // recycle columns
     private:
         void    _recycle(), _select(), __select(), _order(), _reverse()
+
+    // Color interpolation and mixing
+    public:
+        void    ipolate(), add_ipolate(), ipolate_added(), add_ipolate_added()
+        void    mix(), add_mix(), mix_added(), add_mix_added()
+    private:
+        void    _ipolate(), _mix()
+        `RM'    _ipolate_get(), _mix_get()
+        `RC'    _ipolate_halign()
 
     // Intensify, saturate, luminate
     public:
@@ -351,48 +359,33 @@ class `MAIN' {
         `RM'    RGB1_to_HSL(),  HSL_to_RGB1()
         `RR'    _RGB1_to_HSL(), _HSL_to_RGB1()
     
-    // Color generators
+    // Named colors
     public:
-        void    generate(), add_generate()
+        `SM'    namedcolors()
     private:
-        void    _generate(), generate_HUE(), generate_OTH(), generate_setup()
-        `RM'    generate_qual(), generate_seq(), generate_div(),
-                generate_heat0(), generate_terrain0()
-    
-    // Web colors
-    private:
-        `AA'    webcolors
-        void    webcolors()
+        `AA'    namedcolors
+        void    namedcolorindex()
     
     // Palettes
     public:
         `SS'    pexists()
+        `SM'    palettes()
         void    palette(), add_palette()
     private:
+        `AA'    palettes
+        `Int'   parse_palette()
+        void    paletteindex()
         `Bool'  Palette()
-        void    P_pclass(), P_colors(), P_names(), P_info(), P_note(), P_source()
-        `Bool'  P_s1(), P_s1r(), P_s2(), P_economist(), P_mono(), P_cblind(),
-                P_plottig(), P_538(), P_mrc(), P_tfl(), P_burd(), P_lean(),
-                P_tableau(),
-                P_Accent(), P_Dark2(), P_Paired(), P_Pastel1(),
-                P_Pastel2(), P_Set1(), P_Set2(), P_Set3(), P_Blues(), P_BuGn(),
-                P_BuPu(), P_GnBu(), P_Greens(), P_Greys(), P_OrRd(),
-                P_Oranges(), P_PuBu(), P_PuBuGn(), P_PuRd(), P_Purples(),
-                P_RdPu(), P_Reds(), P_YlGn(), P_YlGnBu(), P_YlOrBr(),
-                P_YlOrRd(), P_BrBG(), P_PRGn(), P_PiYG(), P_PuOr(), P_RdBu(),
-                P_RdGy(), P_RdYlBu(), P_RdYlGn(), P_Spectral(),
-                P_viridis(), P_plasma(), P_inferno(), P_magma(), P_cividis(),
-                P_twilight(), P_matplotlib(),
-                P_ptol(), P_d3(), P_lin(), P_spmap(), P_sfso(), P_webcolors()
+        `SC'    Palette_read()
+        void    Palette_palettes(), Palette_namedcolors(), Palette_matplotlib(),
+                Palette_generators(), Palette_internal(), Palette_htmlcolors(),
+                Palette_spmap()
     
-    // matplotlib colormaps
-    public:
-        void    matplotlib(), add_matplotlib()
-        `RM'    matplotlib_ip()
+    // Color generators
     private:
-        void    _matplotlib()
-        `RC'    _matplotlib_ip()
-        void    inferno(), magma(), plasma(), viridis(), cividis(), twilight()
+        void    generate()
+        void    generate_HUE(), generate_qual(), generate_seq(), generate_div(),
+                generate_HSV_heat0(), generate_HSV_terrain0()
 }
 
 end
@@ -405,13 +398,9 @@ mata:
 
 void `MAIN'::new()
 {
-    S = &data
-    rgb_set(J(0, 3, .))
-    rgbspace("")
-    xyzwhite("")
-    viewcond(.)
-    ucscoefs("")
-    chadapt("")
+    clear()
+    clearindex()
+    clearsettings()
     SPACES   = ("CMYK1", "RGB1", "lRGB", "HSV", "HSL", "XYZ", "xyY", 
                 "Lab", "LCh", "Luv", "HCL", "CAM02", "JMh", "Jab")'
     SPACES2  = ("HEX", "CMYK", "RGB", "XYZ1", "xyY1")'
@@ -424,7 +413,31 @@ void `MAIN'::new()
                ("XYZ" , "Luv"  ) \ ("Luv"  , "HCL"  ) \
                ("XYZ" , "CAM02") \ ("CAM02", "JMh"  ) \ ("CAM02", "Jab"  )
     EDGELIST = EDGELIST \ EDGELIST[,(2,1)] \ ("RGB1", "GRAY") \ ("RGB1", "CVD")
+}
+
+void `MAIN'::clear()
+{
+    data = data1 = `DATA'()
+    S = &data
+    rgb_set(J(0, 3, .))
     N1 = 0
+}
+
+void `MAIN'::clearindex()
+{
+    palettes.clear()
+    palettes.notfound(0)
+    namedcolors.clear()
+    namedcolors.notfound("")
+}
+
+void `MAIN'::clearsettings()
+{
+    rgbspace("")
+    xyzwhite("")
+    viewcond(.)
+    ucscoefs("")
+    chadapt("")
 }
 
 void `MAIN'::replacedata()
@@ -538,7 +551,7 @@ void `MAIN'::describe(| `Bool' shrt)
     printf(`"{txt}  N_added()   = {res}%g\n"'  , N_added())
     if (n==0) return
     if (args()==1 & shrt) return
-    l = floor(log10(n))+1
+    l = trunc(log10(n))+1
     ifmt = "%"+strofreal(l)+"s"
     M = abbrev((Colors(1), Names(), Info()),23)
     display("")
@@ -633,29 +646,6 @@ void `MAIN'::settings()
 
 `Bool' `MAIN'::isipolate() return(data.isip)
 
-`RM' `MAIN'::clip(`RM' C0, `RS' a, `RS' b)
-{
-    `Int' i
-    `RM'  C
-
-    C = C0
-    for (i=cols(C); i; i--) C[,i] = _clip(C[,i], a, b)
-    return(C)
-}
-
-`RV' `MAIN'::_clip(`RV' C0, `RS' a, `RS' b)
-{
-    `Int' i
-    `RM'  C
-
-    C = C0
-    for (i=length(C); i; i--) C[i] = __clip(C[i], a, b)
-    return(C)
-}
-
-`RS' `MAIN'::__clip(`RS' c, `RS' a, `RS' b) 
-    return(c<a ? a : (c<=b ? c : (c>=. ? c : b)))
-
 `SS' `MAIN'::gettok(`SS' s0, | `SS' rest)
 {
     // gets the first word and returns remainder in -rest-; removes 
@@ -706,21 +696,21 @@ void `MAIN'::settings()
     return(`TRUE')
 }
 
-`SS' `MAIN'::findkey(`SS' s0, `SC' KEYS0, | `SS' def)
+`SS' `MAIN'::findkey(`SS' s0, `SC' KEYS/*0*/, | `SS' def)
 {   // gets matching key, ignoring case and allowing abbreviation; returns
     // alphabetically first match in case of multiple matches
     // returns def is s0 is empty
     // returns empty string if key not found
     `Int' i, r
     `SS'  s
-    `SC'  KEYS, keys
+    `SC'  /*KEYS,*/ keys
     `RC'  p
     
     s = strlower(s0)
     if (strtrim(s)=="") return(def)
-    r = rows(KEYS0)
+    r = rows(KEYS/*0*/)
     if (r==0) return("")
-    KEYS = KEYS0; keys = strlower(KEYS)
+    /*KEYS = KEYS0;*/ keys = strlower(KEYS)
     p = ::order(keys, 1)
     for (i=1; i<=r; i++) {
         if (smatch(s, keys[p[i]])) return(KEYS[p[i]])
@@ -742,6 +732,242 @@ void `MAIN'::assert_size(`T' M, `RS' r, `RS' c)
         printf("{err}input must be %g x %g\n", r, c)
         exit(3200)
     }
+}
+
+`RM' `MAIN'::colipolate(`RM' C, `Int' n0, | `RV' range0, `RS' power, `RV' pos, 
+    `Bool' pad)
+{
+    `Bool' haspos
+    `Int'  r, n
+    `RV'   range
+    `RC'   from, to
+    
+    n = (n0<0 ? 0 : trunc(n0))
+    if (args()<6) pad = `FALSE'
+    if (power<=0) {
+        printf("{err}power = %g not allowed; must be strictly positive\n", power)
+        exit(3498)
+    }
+    haspos = length(pos)>0 & any(pos:<.)
+    if (n>=.) return(C)                           // return unchanged C
+    if (n==0) return(J(0, cols(C), missingof(C))) // return void
+    r = rows(C)
+    if (r==0) return(J(n, cols(C), missingof(C))) // return missing
+    if (r==1) return(J(n, 1, C))                  // duplicate
+    range = _colipolate_setrange(range0)
+    if (r==n) {
+        if (range==(0,1) & haspos==`FALSE') return(C) // no interpolation needed
+        if (range==(1,0) & haspos==`FALSE') return(C[r::1,]) // reverse order
+    }
+    _colipolate_fromto(r, n, range, power, (haspos ? pos : .), pad, from=., to=.)
+    if (haspos) return(_colipolate_pos(C, from, to))
+    return(_colipolate(C, from, to))
+}
+
+`RV' `MAIN'::_colipolate_setrange(`RV' range0)
+{
+    `RV' range
+    
+    if      (length(range0)==0)   range = (0,1)
+    else if (length(range0)==1)   range = (range0, 1)
+    else                          range = (range0[1], range0[2])
+    if (range[1]>=.) range[1] = 0
+    if (range[2]>=.) range[1] = 1
+    return(range)
+}
+
+void `MAIN'::_colipolate_fromto(`Int' r, `Int' n, `RV' range, `RS' power, 
+    `RV' pos, `Bool' pad, `RC' from, `RC' to)
+{
+    `RS' i
+    
+    // from
+    from = rangen(0, 1, r)
+    if (pos!=.) {
+        // import values from pos
+        for (i=length(pos); i; i--) {
+            if (i>r) continue
+            if (pos[i]<.) from[i] = pos[i]
+        }
+    }
+    if (pad) from = from * ((r-1)/r) :+ (1/(2*r))
+    // to
+    if (pad) range = range * ((n-1)/n) :+ (1/(2*n))
+    if (n==1)      to = (range[1]+range[2])/2
+    else if (n==2) to = (range[1], range[2])'
+    else {
+        to = rangen(0, 1, n)
+        if (power<.) to = to:^power
+        to = to * (range[2]-range[1]) :+ range[1]
+    }
+}
+
+`RM' `MAIN'::_colipolate_pos(`RM' C0, `RC' from0, `RC' to) 
+{   // note: function will only be called if length(from0)>=2
+    `RC'  p, a, b, from
+    `RM'  C
+
+    a = from0[|1 \ rows(from0)-1|]; b = from0[|2 \ rows(from0)|]
+    if (all(a:<b)) return(_colipolate(C0, from0, to)) // strictly ascending
+    if (all(a:>b)) return(_colipolate(C0, from0, to)) // strictly descending
+    p = ::order(from0, 1)
+    from = from0[p]; C = C0[p,]
+    a = from[|1 \ rows(from)-1|]; b = from[|2 \ rows(from)|]
+    if (any(a:==b)==0) return(_colipolate(C, from, to)) // no doubles
+    _colipolate_collapse(C, from)
+    if (rows(C)==1) return(J(rows(to), 1, C))
+    return(_colipolate(C, from, to))
+}
+
+void `MAIN'::_colipolate_collapse(`RM' C, `RC' from)
+{
+    `Int' i, j, a, b
+    
+    i = j = b = rows(from)
+    for (--i; i; i--) {
+        if (from[i]!=from[b]) {
+            from[j] = from[b]
+            a = i+1
+            if (a==b) C[j,] = C[b,]
+            else      C[j,] = mean(C[|a,1 \ b,.|])
+            j--; b = i
+        }
+    }
+    from[j] = from[b]
+    if (b==1) C[j,] = C[b,]
+    else      C[j,] = mean(C[|1,1 \ b,.|])
+    C = C[|j,1 \ .,.|]; from = from[|j \ .|]
+}
+
+`RM' `MAIN'::_colipolate(`RM' y0, `RC' x0, `RC' x1)
+{
+    `Int' i, j, k, l, n0, n1, c, reverse
+    `RM'  y1
+    
+    n0 = rows(y0); c = cols(y0); n1 = rows(x1); reverse = 0
+    if (x1[1]>x1[n1]) {
+        reverse = 1
+        x1 = x1[n1::1]
+    }
+    y1 = J(n1, c, .)
+    i = 1
+    for (j=1; j<=n1; j++) {
+        while (x0[i]<x1[j]) {
+            i++
+            if (i>=n0) {
+                i = n0
+                break
+            }
+        }
+        l = (i==1 ? 2 : i)
+        for (k=c; k; k--) y1[j,k] = y0[l-1,k] + 
+            (y0[l,k] - y0[l-1,k]) * (x1[j] - x0[l-1])/(x0[l] - x0[l-1])
+    }
+    if (reverse) {
+        x1 = x1[n1::1]
+        return(y1[n1::1,])
+    }
+    return(y1)
+}
+
+`TM' `MAIN'::colrecycle(`TM' M0, `Int' n0)
+{
+    `Int' i, r, n
+    `TM'  M
+    
+    n = (n0<0 ? 0 : trunc(n0))
+    if (n>=.) return(M0)
+    if (n==0) return(J(0, cols(M0), missingof(M0)))
+    r = rows(M0)
+    if (r==0 | n==r) return(M0)
+    if (n<r) return(M0[|1,1 \ n,cols(M0)|])
+    M = M0 \ J(n-r, cols(M0), missingof(M0))
+    for (i=(r+1); i<=n; i++) M[i,] = M[mod(i-1, r) + 1,]
+    return(M)
+}
+
+`RM' `MAIN'::lsmap(`RM' R, `RM' G, `RM' B, `RS' n, | `RV' range0)
+{                  // (consistency of input is not checked)
+    `RV' range
+    
+    assert_cols(R, 3); assert_cols(G, 3); assert_cols(B, 3)
+    range = clip(_colipolate_setrange(range0), 0, 1) // restrict range to [0,1]
+    return((_lsmap(R, n, range[1], range[2]),
+            _lsmap(G, n, range[1], range[2]),
+            _lsmap(B, n, range[1], range[2])))
+}
+
+`RC' `MAIN'::_lsmap(`RM' xy, `RS' n, `RS' from, `RS' to)
+{
+    `Int' i, j, reverse
+    `RC'  x, y
+
+    if (n==0) return(J(0, 1, .))
+    reverse = 0
+    if (from>to) {
+        reverse = 1
+        x = rangen(to, from, n)
+    }
+    else x = rangen(from, to, n)
+    y = J(n, 1, .)
+    j = 1
+    for (i=1; i<=n; i++) {
+        while (xy[j+1,1]<x[i]) j++
+        if (x[i]==xy[j,1]) y[i] = xy[j,3]
+        else y[i] = xy[j,3] + (xy[j+1,2] - xy[j,3]) * (x[i] - xy[j,1]) / 
+                                                      (xy[j+1,1] - xy[j,1])
+    }
+    if (reverse) return(y[n::1])
+    return(y)
+}
+
+`RM' `MAIN'::clip(`RM' C0, `RS' a, `RS' b)
+{
+    `Int' i
+    `RM'  C
+
+    C = C0
+    for (i=cols(C); i; i--) C[,i] = _clip(C[,i], a, b)
+    return(C)
+}
+
+`RV' `MAIN'::_clip(`RV' C0, `RS' a, `RS' b)
+{
+    `Int' i
+    `RM'  C
+
+    C = C0
+    for (i=length(C); i; i--) C[i] = __clip(C[i], a, b)
+    return(C)
+}
+
+`RS' `MAIN'::__clip(`RS' c, `RS' a, `RS' b) 
+    return(c<a ? a : (c<=b ? c : (c>=. ? c : b)))
+
+`SR' `MAIN'::_tokens(`SS' c, `SS' wchar)
+{   // modified version of tokens; omits delimiters and inserts empty elements 
+    // between delimiters (as well as at the start if the string begins with a
+    // delimiter); for example, _tokens(";a;;;b;c", ";") will result in
+    // ("", "a", "", "", "b", "c")
+    `Int'  i, j
+    `Bool' gap
+    `SR'   C
+
+    if (strtrim(wchar)=="") return(tokens(c))
+    C = tokens(c, wchar)
+    gap = `TRUE'
+    j = 0
+    for (i=1; i<=length(C); i++) {
+        if (strpos(wchar, C[i])) {
+            if (gap) C[++j] = ""
+            else     gap = `TRUE'
+            continue
+        }
+        gap = `FALSE'
+        C[++j] = C[i] 
+    }
+    if (j) C = C[|1 \ j|]
+    return(C)
 }
 
 end
@@ -1615,7 +1841,7 @@ void `MAIN'::Colors_set(`SV' C)
     `RR' RGB1
     
     // get color from color-<name>.style; this includes Stata's official colors
-    if (!iswebcolor(s)) { // only if no exact match in webcolors
+    if (!isnamedcolor(s)) { // only if no exact match in namedcolors
         c = parse_stcolorstyle(s)
         if (c!="") {
             RGB1 = strtoreal(tokens(c))/255
@@ -1627,7 +1853,7 @@ void `MAIN'::Colors_set(`SV' C)
         }
     }
     // get web color
-    c = parse_webcolor(s)
+    c = parse_namedcolor(s)
     if (c!="") {
         RGB1 = _HEX_to_RGB(c)/255
         if (missing(RGB1)) return(1) // invalid HEX code
@@ -1672,23 +1898,23 @@ void `MAIN'::Colors_set(`SV' C)
     return("") // no valid color definition found
 }
 
-`Bool' `MAIN'::iswebcolor(`SS' s) // check for exact match, including case
+`Bool' `MAIN'::isnamedcolor(`SS' s) // check for exact match, including case
 {
-    if (webcolors.N()==0) webcolors()
-    return(webcolors.exists(s))
+    if (namedcolors.N()==0) namedcolorindex()
+    return(namedcolors.exists(s))
 }
 
-`SS' `MAIN'::parse_webcolor(`SS' s0)
+`SS' `MAIN'::parse_namedcolor(`SS' s0)
 {
     `SS'  s, c
     
-    // webcolors already filled-in because iswebcolors() has been called
-    c = webcolors.get(s0) // only finds exact match, including case
+    // namedcolors already filled-in because isnamedcolor() has been called
+    c = namedcolors.get(s0) // only finds exact match, including case
     if (c=="") {
-        s = findkey(s0, webcolors.keys()) // ignore case and allow abbreviation
+        s = findkey(s0, namedcolors.keys()) // ignore case and allow abbreviation
         if (s!="") {
             s0 = s
-            c = webcolors.get(s0)
+            c = namedcolors.get(s0)
         }
     }
     return(c)
@@ -1864,33 +2090,6 @@ void `MAIN'::_Info_set(`SV' C, `Int' n, `SC' info)
     for (i = min((length(C), n)); i; i--) info[i] = C[i]
 }
 
-// modified version of tokens; omits delimiters and inserts empty elements 
-// between delimiters (as well as at the start if the string begins with a
-// delimiter); for example, _tokens(";a;;;b;c", ";") will result in
-// ("", "a", "", "", "b", "c")
-`SR' `MAIN'::_tokens(`SS' c, `SS' wchar)
-{
-    `Int'  i, j
-    `Bool' gap
-    `SR'   C
-    
-    if (strtrim(wchar)=="") return(tokens(c))
-    C = tokens(c, wchar)
-    gap = `TRUE'
-    j = 0
-    for (i=1; i<=length(C); i++) {
-        if (strpos(wchar, C[i])) {
-            if (gap) C[++j] = ""
-            else     gap = `TRUE'
-            continue
-        }
-        gap = `FALSE'
-        C[++j] = C[i] 
-    }
-    if (j) C = C[|1 \ j|]
-    return(C)
-}
-
 end
 
 * {smcl}
@@ -1987,6 +2186,7 @@ void `MAIN'::__set(`T' C, `SS' space, `Bool' reset, | `IntV' p0)
     if (reset) rgb_reset(convert(C, space, "RGB1"), p)
     else       rgb_set(convert(C, space, "RGB1"))
     // generate info
+    if (rows(C)==0) return
     (void) convert_parse(s, space, 0) // will replace s
     if      (s[1]=="RGB")   return
     if      (s[1]=="RGB1")  return
@@ -2122,10 +2322,7 @@ foreach f in opacity alpha intensity {
 }
 mata:
 
-`RC' `MAIN'::opacity_get()
-{
-    return(S->alpha * 100)
-}
+`RC' `MAIN'::opacity_get() return(S->alpha * 100)
 
 void `MAIN'::opacity_set(`RV' O, `RS' noreplace)
 {
@@ -2137,10 +2334,7 @@ void `MAIN'::opacity_set(`RV' O, `RS' noreplace)
     _alpha(O/100, noreplace, S->n, S->alpha)
 }
 
-`RC' `MAIN'::alpha_get()
-{
-    return(S->alpha)
-}
+`RC' `MAIN'::alpha_get() return(S->alpha)
 
 void `MAIN'::alpha_set(`RV' O, `RS' noreplace)
 {
@@ -2169,10 +2363,7 @@ void `MAIN'::_alpha(`RV' A0, `RS' noreplace, `RS' n, `RC' alpha)
     alpha = A
 }
 
-`RC' `MAIN'::intensity_get()
-{
-    return(S->intensity)
-}
+`RC' `MAIN'::intensity_get() return(S->intensity)
 
 void `MAIN'::intensity_set(| `RV' O, `RS' noreplace)
 {
@@ -2204,7 +2395,7 @@ void `MAIN'::_intensity(`RV' I0, `RS' noreplace, `RS' n, `RC' intensity)
 end
 
 * {smcl}
-* {marker ipolate}{bf:Color interpolation and mixing} {hline}
+* {marker modify}{bf:Color modification} {hline}
 * {asis}
 
 foreach f in recycle select order reverse ipolate mix intensify saturate ///
@@ -2262,321 +2453,33 @@ foreach f in recycle select order reverse ipolate mix intensify saturate ///
         appenddata()
     }
 }
-mata:
-
-`RM' `MAIN'::colipolate(`RM' C, `Int' n, | `RV' range0, `RS' power, `RV' pos, 
-    `Bool' pad)
-{
-    `Bool' haspos
-    `Int'  r
-    `RV'   range
-    `RC'   from, to
-    
-    if (args()<6) pad = `FALSE'
-    if (power<=0) {
-        printf("{err}power = %g not allowed; must be strictly positive\n", power)
-        exit(3498)
-    }
-    haspos = length(pos)>0 & any(pos:<.)
-    if (n>=.) return(C)                           // return unchanged C
-    if (n<1)  return(J(0, cols(C), missingof(C))) // return void
-    r = rows(C)
-    if (r==0) return(J(n, cols(C), missingof(C))) // return missing
-    if (r==1) return(J(n, 1, C))                  // duplicate
-    range = _ipolate_setrange(range0)
-    if (r==n) {
-        if (range==(0,1) & haspos==`FALSE') return(C) // no interpolation needed
-        if (range==(1,0) & haspos==`FALSE') return(C[r::1,]) // reverse order
-    }
-    _ipolate_fromto(r, n, range, power, (haspos ? pos : .), pad, from=., to=.)
-    if (haspos) return(_ipolate_pos(C, from, to))
-    return(__ipolate(C, from, to))
-}
-
-void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos, 
-    `Bool' pad)
-{
-    `Int'  jh
-    `SS'   space, mask
-    `RC'   A, I
-    `RM'   C
-
-    if (args()<6) pad = `FALSE'
-    // skip interpolation if n is missing
-    if (n>=.) return
-    // parse space
-    space = findkey(gettok(space0, mask=""), SPACES, "Jab")
-    if (space=="") {
-        display("{err}space '" + space0 + "' not allowed")
-        exit(3498)
-    }
-    // convert RGB1 to interpolation space
-    C = _ipolate_get(space, mask, jh=0)
-    if (mask!="") space = space + " " + mask
-    // get opacity and intensity
-    if (any(S->alpha:<.))     A = editmissing(S->alpha, 1)
-    else                      A = J(S->n, 0, .)
-    if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
-    else                      I = J(S->n, 0, .)
-    // interpolate
-    C = colipolate((C,A,I), n, range, power, pos, pad)
-    if (length(I)) {; I = C[,cols(C)]; C = C[|1,1 \ n,cols(C)-1|]; }
-    if (length(A)) {; A = C[,cols(C)]; C = C[|1,1 \ n,cols(C)-1|]; }
-    // convert back to RGB1
-    if (jh) C[,jh] = mod(C[,jh] :+ .5, 360) :- .5
-    _set(C, space)
-    S->isip = `TRUE'
-    // reset opacity and intensity if necessary
-    if (length(A)) {
-        if (pad) S->alpha = clip(A, 0, 1)
-        else     S->alpha = A
-    }
-    if (length(I)) {
-        if (pad) S->intensity = clip(I, 0, 255)
-        else     S->intensity = I
-    }
-}
-
-`RM' `MAIN'::_ipolate_get(`SS' space, `SS' mask, `Int' j)
-{
-    `RM'   C
-    
-    C = _get(space + (mask!="" ? " " + mask : ""))
-    if (space=="CAM02") {
-        if (mask=="") j = 3 // default mask is JCh
-        else          j = strpos(mask, "h")
-    }
-    else j = strpos(strlower(space), "h")
-    if (j) C[,j] = _ipolate_halign(C[,j])
-    return(C)
-}
-
-`RC' `MAIN'::_ipolate_halign(`RC' C)
-{
-    `Int' i, j
-    `RS'  a, b, c
-
-    for(i=(rows(C)-1); i; i--) {
-        c = C[i+1]
-        if (c>=.) continue
-        j = trunc(c/360)
-        b = mod(C[i], 360)
-        if (b<mod(C[i+1], 360)) {
-            a = j*360 + b
-            b = (j+1)*360 + b
-        }
-        else {
-            a = (j-1)*360 + b
-            b = j*360 + b
-        }
-        if (abs(a-c)<=abs(b-c)) C[i] = a
-        else                    C[i] = b
-    }
-    return(C)
-}
-
-`RV' `MAIN'::_ipolate_setrange(`RV' range0)
-{
-    `RV' range
-    
-    if      (length(range0)==0)   range = (0,1)
-    else if (length(range0)==1)   range = (range0, 1)
-    else                          range = (range0[1], range0[2])
-    if (range[1]>=.) range[1] = 0
-    if (range[2]>=.) range[1] = 1
-    return(range)
-}
-
-void `MAIN'::_ipolate_fromto(`Int' r, `Int' n, `RV' range, `RS' power, 
-    `RV' pos, `Bool' pad, `RC' from, `RC' to)
-{
-    `RS' i
-    
-    // from
-    from = rangen(0, 1, r)
-    if (pos!=.) {
-        // import values from pos
-        for (i=length(pos); i; i--) {
-            if (i>r) continue
-            if (pos[i]<.) from[i] = pos[i]
-        }
-    }
-    if (pad) from = from * ((r-1)/r) :+ (1/(2*r))
-    // to
-    if (pad) range = range * ((n-1)/n) :+ (1/(2*n))
-    if (n==1)      to = (range[1]+range[2])/2
-    else if (n==2) to = (range[1], range[2])'
-    else {
-        to = rangen(0, 1, n)
-        if (power<.) to = to:^power
-        to = to * (range[2]-range[1]) :+ range[1]
-    }
-}
-
-`RM' `MAIN'::_ipolate_pos(`RM' C0, `RC' from0, `RC' to) 
-{   // note: function will only be called if length(from0)>=2
-    `RC'  p, a, b, from
-    `RM'  C
-
-    a = from0[|1 \ rows(from0)-1|]; b = from0[|2 \ rows(from0)|]
-    if (all(a:<b)) return(__ipolate(C0, from0, to)) // strictly ascending
-    if (all(a:>b)) return(__ipolate(C0, from0, to)) // strictly descending
-    p = ::order(from0, 1)
-    from = from0[p]; C = C0[p,]
-    a = from[|1 \ rows(from)-1|]; b = from[|2 \ rows(from)|]
-    if (any(a:==b)==0) return(__ipolate(C, from, to)) // no doubles
-    _ipolate_collapse(C, from)
-    if (rows(C)==1) return(J(rows(to), 1, C))
-    return(__ipolate(C, from, to))
-}
-
-void `MAIN'::_ipolate_collapse(`RM' C, `RC' from)
-{
-    `Int' i, j, a, b
-    
-    i = j = b = rows(from)
-    for (--i; i; i--) {
-        if (from[i]!=from[b]) {
-            from[j] = from[b]
-            a = i+1
-            if (a==b) C[j,] = C[b,]
-            else      C[j,] = mean(C[|a,1 \ b,.|])
-            j--; b = i
-        }
-    }
-    from[j] = from[b]
-    if (b==1) C[j,] = C[b,]
-    else      C[j,] = mean(C[|1,1 \ b,.|])
-    C = C[|j,1 \ .,.|]; from = from[|j \ .|]
-}
-
-`RM' `MAIN'::__ipolate(`RM' y0, `RC' x0, `RC' x1)
-{
-    `Int' i, j, k, l, n0, n1, c, reverse
-    `RM'  y1
-    
-    n0 = rows(y0); c = cols(y0); n1 = rows(x1); reverse = 0
-    if (x1[1]>x1[n1]) {
-        reverse = 1
-        x1 = x1[n1::1]
-    }
-    y1 = J(n1, c, .)
-    i = 1
-    for (j=1; j<=n1; j++) {
-        while (x0[i]<x1[j]) {
-            i++
-            if (i>=n0) {
-                i = n0
-                break
-            }
-        }
-        l = (i==1 ? 2 : i)
-        for (k=c; k; k--) y1[j,k] = y0[l-1,k] + 
-            (y0[l,k] - y0[l-1,k]) * (x1[j] - x0[l-1])/(x0[l] - x0[l-1])
-    }
-    if (reverse) {
-        x1 = x1[n1::1]
-        return(y1[n1::1,])
-    }
-    return(y1)
-}
-
-void `MAIN'::_mix(| `SS' space0, `RV' w0)
-{
-    `Int'  jh
-    `SS'   space, mask
-    `RC'   w, A, I
-    `RM'   C
-
-    // parse space
-    space = findkey(gettok(space0, mask=""), SPACES, "Jab")
-    if (space=="") {
-        display("{err}space '" + space0 + "' not allowed")
-        exit(3498)
-    }
-    // convert RGB1 to interpolation space
-    C = _mix_get(space, mask, jh=0)
-    if (mask!="") space = space + " " + mask
-    // weights
-    if (length(w0)==0) w = 1
-    else if (w0==.)    w = 1
-    else {
-        if (cols(w0)>1) w = w0'
-        else            w = w0
-        if      (rows(w)<(S->n)) w = colrecycle(w, S->n)
-        else if (rows(w)>(S->n)) w = w[|1 \ S->n|]
-    }
-    // get opacity and intensity
-    if (any(S->alpha:<.))     A = editmissing(S->alpha, 1)
-    else                      A = J(S->n, 0, .)
-    if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
-    else                      I = J(S->n, 0, .)
-    // average
-    C = mean((C,A,I), w)
-    if (length(I)) {; I = C[cols(C)]; C = C[|1 \ cols(C)-1|]; }
-    if (length(A)) {; A = C[cols(C)]; C = C[|1 \ cols(C)-1|]; }
-    // convert back to RGB1
-    if (jh) {
-        C[jh] = mod(atan2(C[jh], C[cols(C)])*180/pi() + .5, 360) - .5
-        C = C[|1 \ cols(C)-1|]
-    }
-    _set(C, space)
-    // reset opacity if necessary
-    if (length(A)) S->alpha     = A
-    if (length(I)) S->intensity = I
-}
-
-`RM' `MAIN'::_mix_get(`SS' space, `SS' mask, `Int' j)
-{
-    `RM'   C
-    
-    C = _get(space + (mask!="" ? " " + mask : ""))
-    if (space=="CAM02") {
-        if (mask=="") j = 3 // default mask is JCh
-        else          j = strpos(mask, "h")
-    }
-    else j = strpos(strlower(space), "h")
-    if (j) {
-        C[,j] = C[,j] * (pi() / 180)
-        C     = C, sin(C[,j])
-        C[,j] = cos(C[,j])
-    }
-    return(C)
-}
-
-end
 
 * {smcl}
-* {marker order}{bf:Recycle, select, and order} {hline}
+* {marker order}{bf:- recycle, select, order} {hline}
 * {asis}
 
 mata:
 
-`TM' `MAIN'::colrecycle(`TM' M0, `Int' n)
-{
-    `Int' i, r
-    `TM'  M
-    
-    if (n==0) return(J(0, cols(M0), missingof(M0)))
-    r = rows(M0)
-    if (r==0 | n==r) return(M0)
-    if (n<r) return(M0[|1,1 \ n,cols(M0)|])
-    M = M0 \ J(n-r, cols(M0), missingof(M0))
-    for (i=(r+1); i<=n; i++) M[i,] = M[mod(i-1, r) + 1,]
-    return(M)
-}
-
 void `MAIN'::_recycle(`Int' n)
 {
-    if (n>=. | n<0) return
-    if (n==(S->n))  return
-    S->n         = n
+    // skip recycle if n is missing, number of existing colors is zero, or n is
+    // equal to number of existing colors 
+    if (n>=.) return
+    if (S->n==0) return
+    if (trunc(n)==(S->n)) return
+    // remove colors if n<1
+    if (n<1) {
+        rgb_set(J(0, 3, .))
+        return
+    }
+    // recycle
     S->RGB       = colrecycle(S->RGB, n)
     S->alpha     = colrecycle(S->alpha, n)
     S->intensity = colrecycle(S->intensity, n)
     S->names     = colrecycle(S->names, n)
     S->info      = colrecycle(S->info, n)
     S->stok      = colrecycle(S->stok, n)
+    S->n         = rows(S->RGB)
 }
 
 void `MAIN'::_select(`IntV' p0)
@@ -2588,11 +2491,11 @@ void `MAIN'::_select(`IntV' p0)
     p = p0
     if (cols(p)!=1) _transpose(p)
     p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(n:+1:+p)
-    p = ::select(p, p:>=1 :& p:<=n)
+    p = ::select(p, p:>=1 :& p:<=n) // may return 0x0
     __select(p)
 }
 
-void `MAIN'::__select(`IntC' p)
+void `MAIN'::__select(`IntM' p)
 {
     `Int' n
     
@@ -2640,14 +2543,175 @@ void `MAIN'::_reverse()
 end
 
 * {smcl}
-* {marker intens}{bf:Intensify, saturate, luminate} {hline}
+* {marker ipolate}{bf:- interpolate, mix} {hline}
 * {asis}
 
 mata:
 
-// Change color intensity
-// equivalent to intensity adjustment as implemented in official Stata
-// (increase/decrease R, G, and B such that their ratio is maintained)
+void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos, 
+    `Bool' pad)
+{
+    `Int'  jh
+    `SS'   space, mask
+    `RC'   A, I
+    `RM'   C
+
+    if (args()<6) pad = `FALSE'
+    // parse space
+    space = findkey(gettok(space0, mask=""), SPACES, "Jab")
+    if (space=="") {
+        display("{err}space '" + space0 + "' not allowed")
+        exit(3498)
+    }
+    // skip interpolation if n is missing or if number of colors is zero
+    if (n>=.) return
+    if (S->n==0) return
+    // remove colors if n<1
+    if (n<1) {
+        rgb_set(J(0, 3, .))
+        return
+    }
+    // convert RGB1 to interpolation space
+    C = _ipolate_get(space, mask, jh=0)
+    if (mask!="") space = space + " " + mask
+    // get opacity and intensity
+    if (any(S->alpha:<.))     A = editmissing(S->alpha, 1)
+    else                      A = J(S->n, 0, .)
+    if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
+    else                      I = J(S->n, 0, .)
+    // interpolate
+    C = colipolate((C,A,I), n, range, power, pos, pad)
+    if (length(I)) {; I = C[,cols(C)]; C = C[,1..cols(C)-1]; }
+    if (length(A)) {; A = C[,cols(C)]; C = C[,1..cols(C)-1]; }
+    // convert back to RGB1
+    if (jh) C[,jh] = mod(C[,jh] :+ .5, 360) :- .5
+    _set(C, space)
+    S->isip = `TRUE'
+    // reset opacity and intensity if necessary
+    if (length(A)) {
+        if (pad) S->alpha = clip(A, 0, 1)
+        else     S->alpha = A
+    }
+    if (length(I)) {
+        if (pad) S->intensity = clip(I, 0, 255)
+        else     S->intensity = I
+    }
+}
+
+`RM' `MAIN'::_ipolate_get(`SS' space, `SS' mask, `Int' j)
+{
+    `RM'   C
+    
+    C = _get(space + (mask!="" ? " " + mask : ""))
+    if (space=="CAM02") {
+        if (mask=="") j = 3 // default mask is JCh
+        else          j = strpos(mask, "h")
+    }
+    else j = strpos(strlower(space), "h")
+    if (j) C[,j] = _ipolate_halign(C[,j])
+    return(C)
+}
+
+`RC' `MAIN'::_ipolate_halign(`RC' C)
+{   // realigns hues such that for each consecutive pair of colors the
+    // shorter distance on the color wheel is used
+    `Int' i, j
+    `RS'  a, b, c
+    
+    for(i=(rows(C)-1); i; i--) {
+        c = C[i+1]
+        if (c>=.) continue
+        j = trunc(c/360)
+        b = mod(C[i], 360)
+        if (b<mod(C[i+1], 360)) {
+            a = j*360 + b
+            b = (j+1)*360 + b
+        }
+        else {
+            a = (j-1)*360 + b
+            b = j*360 + b
+        }
+        if (abs(a-c)<=abs(b-c)) C[i] = a
+        else                    C[i] = b
+    }
+    return(C)
+}
+
+void `MAIN'::_mix(| `SS' space0, `RV' w0)
+{
+    `Int'  jh
+    `SS'   space, mask
+    `RC'   w, A, I
+    `RM'   C
+
+    // parse space
+    space = findkey(gettok(space0, mask=""), SPACES, "Jab")
+    if (space=="") {
+        display("{err}space '" + space0 + "' not allowed")
+        exit(3498)
+    }
+    // skip mixing if number of colors is zero
+    if (S->n==0) return
+    // convert RGB1 to interpolation space
+    C = _mix_get(space, mask, jh=0)
+    if (mask!="") space = space + " " + mask
+    // weights
+    if (length(w0)==0) w = 1
+    else if (w0==.)    w = 1
+    else {
+        if (cols(w0)>1) w = w0'
+        else            w = w0
+        if      (rows(w)<(S->n)) w = colrecycle(w, S->n)
+        else if (rows(w)>(S->n)) w = w[|1 \ S->n|]
+    }
+    // get opacity and intensity
+    if (any(S->alpha:<.))     A = editmissing(S->alpha, 1)
+    else                      A = J(S->n, 0, .)
+    if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
+    else                      I = J(S->n, 0, .)
+    // average
+    C = mean((C,A,I), w)
+    if (length(I)) {; I = C[cols(C)]; C = C[,1..cols(C)-1]; }
+    if (length(A)) {; A = C[cols(C)]; C = C[,1..cols(C)-1]; }
+    // convert back to RGB1
+    if (jh) {
+        C[jh] = mod(atan2(C[jh], C[cols(C)])*180/pi() + .5, 360) - .5
+        C = C[|1 \ cols(C)-1|]
+    }
+    _set(C, space)
+    // reset opacity if necessary
+    if (length(A)) S->alpha     = A
+    if (length(I)) S->intensity = I
+}
+
+`RM' `MAIN'::_mix_get(`SS' space, `SS' mask, `Int' j)
+{
+    `RM'   C
+    
+    C = _get(space + (mask!="" ? " " + mask : ""))
+    if (space=="CAM02") {
+        if (mask=="") j = 3 // default mask is JCh
+        else          j = strpos(mask, "h")
+    }
+    else j = strpos(strlower(space), "h")
+    if (j) {
+        C[,j] = C[,j] * (pi() / 180)
+        C     = C, sin(C[,j])
+        C[,j] = cos(C[,j])
+    }
+    return(C)
+}
+
+end
+
+* {smcl}
+* {marker intens}{bf:- intensify, saturate, luminate} {hline}
+* {asis}
+
+mata:
+
+// intensify(): equivalent to intensity adjustment as implemented in official
+// Stata (increase/decrease R, G, and B such that their ratio is maintained)
 // 0 <= p < 1 makes color lighter
 // 1 <  p <= 255 makes color darker
 // output is always within [0,255] and rounded
@@ -2694,7 +2758,7 @@ void `MAIN'::_intensify(`RV' p0)
     return(C)
 }
 
-// Change saturation/chroma
+// saturate(): change saturation/chroma
 // similar to color.saturate()/color.desaturate() in chroma.js
 // source: https://gka.github.io/chroma.js/
 
@@ -2733,7 +2797,7 @@ void `MAIN'::_saturate(`RV' p0, | `SS' method0, `Bool' level)
     _reset(C, method, id)
 }
 
-// Change luminance/brightness
+// luminate(): change luminance/brightness
 // similar to color.brighten()/color.darken() in chroma.js
 // source: https://gka.github.io/chroma.js/
 
@@ -2778,17 +2842,18 @@ void `MAIN'::_luminate(`RV' p0, | `SS' method0, `Bool' level)
 end
 
 * {smcl}
-* {marker gray}{bf:Gray scale conversion} {hline}
-* reduce luminance towards zero
+* {marker gray}{bf:- grayscale conversion} {hline}
 * {asis}
 
 mata:
 
+// gray(): reduce luminance towards zero
+// note: the method proposed at https://en.wikipedia.org/wiki/Grayscale
+// (set all RGB channels to Y of XYZ; and apply gamma) is equivalent to
+// method "HCL" or "LCh" with p = 1
+
 void `MAIN'::_gray(| `RV' p0, `SS' method0)
 {
-    // note: the method proposed at https://en.wikipedia.org/wiki/Grayscale
-    // (set all RGB channels to Y of XYZ; and apply gamma) is equivalent to
-    // method "HCL" or "LCh" with p = 1
     `IntC' id
     `RC'   p
     `SS'   method
@@ -2824,9 +2889,6 @@ void `MAIN'::_gray(| `RV' p0, `SS' method0)
 
 `RM' `MAIN'::GRAY(`RM' C, `SS' space, `RS' p0, `SS' method0)
 {
-    // note: the method proposed at https://en.wikipedia.org/wiki/Grayscale
-    // (set all RGB channels to Y of XYZ; and apply gamma) is equivalent to
-    // method "HCL" or "LCh" with p = 1
     `RS' p
     `SS' method
     `RM' G
@@ -2853,16 +2915,18 @@ end
 
 * {smcl}
 * {marker cvd}{bf:Color vision deficiency simulation} {hline}
-* Source:
-*   Machado, G.M., M.M. Oliveira, L.A.F. Fernandes (2009). A
-*   Physiologically-based Model for Simulation of Color Vision Deficiency. IEEE
-*   Transactions on Visualization and Computer Graphics 15(6): 1291-1298. 
-*   {browse "https://doi.org/10.1109/TVCG.2009.113"}
-* Transformation matrices:
-*   {browse "http://www.inf.ufrgs.br/~oliveira/pubs_files/CVD_Simulation/CVD_Simulation.html"}
 * {asis}
 
 mata:
+
+// cvd(): simulate color vision deficiency 
+// Source:
+//   Machado, G.M., M.M. Oliveira, L.A.F. Fernandes (2009). A
+//   Physiologically-based Model for Simulation of Color Vision Deficiency. IEEE
+//   Transactions on Visualization and Computer Graphics 15(6): 1291-1298. 
+//   {browse "https://doi.org/10.1109/TVCG.2009.113"}
+// Transformation matrices:
+//   {browse "http://www.inf.ufrgs.br/~oliveira/pubs_files/CVD_Simulation/CVD_Simulation.html"}
 
 void `MAIN'::_cvd(| `RV' p0, `SS' method0)
 {
@@ -3081,8 +3145,9 @@ end
 
 mata:
 
-// Contrast Ratio according to Web Content Accessibility Guidelines (WCAG) 2.0 
-// source https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
+// contrast(): compute color contrast
+// Contrast Ratio according to Web Content Accessibility Guidelines (WCAG) 2.0
+// source: https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
 
 `RC' `MAIN'::contrast(| `IntM' P)
 {
@@ -3127,7 +3192,7 @@ mata:
     return(C)
 }
 
-// Color differences
+// delta(): compute color differences
 // sources:
 // - https://en.wikipedia.org/wiki/Color_difference
 // - Luo, M.R., C. Li (2013). CIECAM02 and its recent developments. P 19-58 in: 
@@ -3243,7 +3308,7 @@ mata:
 end
 
 * {smcl}
-* {marker convert}{bf:Translation between color spaces (without storing colors)} {hline}
+* {marker convert}{bf:Translate colors between spaces (without storing colors)} {hline}
 * {asis}
 
 mata:
@@ -4377,50 +4442,652 @@ void `MAIN'::CAM02_setup()
 end
 
 * {smcl}
+* {marker web}{bf:Named web colors} {hline}
+* {asis}
+
+mata:
+
+`SM' `MAIN'::namedcolors(| `SS' pattern, `Bool' strict)
+{
+    `Int' i
+    `SC'  keys, hex
+    
+    if (namedcolors.N()==0) namedcolorindex()
+    keys = namedcolors.keys()
+    if (pattern!="") {
+        if (args()<2) strict = 0
+        if (strict) keys = ::select(keys, strmatch(keys, pattern))
+        else keys = ::select(keys, strmatch(strlower(keys), strlower(pattern)))
+    }
+    _sort(keys, 1)
+    i = rows(keys)
+    hex = J(i,1,"")
+    for (i=rows(keys); i; i--) hex[i] = namedcolors.get(keys[i])
+    return((keys,hex))
+}
+
+void `MAIN'::namedcolorindex()
+{
+    `Int' l
+    `SS'  fn, line, c, nm, hex
+    `RS'  fh
+    `SM'  EOF
+    
+    fn = findfile("colrspace_library_namedcolors.sthlp")
+    if (fn=="") {
+        display("{err}colrspace_library_namedcolors.sthlp not found")
+        exit(error(601))
+    }
+    hex = "#"
+    fh  = fopen(fn, "r")
+    EOF = J(0, 0, "")
+    while ((line=strltrim(fget(fh)))!=EOF) {
+        if (substr(line,1,1)!=hex) continue // not a color definition
+        l = strpos(line," ")
+        if (l==0) continue // color name is missing
+        c = substr(line,1,l-1)
+        nm = strtrim(substr(line,l,.))
+        if (nm=="") continue // color name is missing
+        namedcolors.put(nm, c)
+    }
+    fclose(fh)
+}
+
+end
+
+* {smcl}
+* {marker palettes}{bf:Palettes} {hline}
+* {asis}
+
+mata:
+
+`SS' `MAIN'::pexists(| `SS' pal0)
+{
+    `Int' t
+    `SS'  pal
+    
+    if (palettes.N()==0) paletteindex()
+    pal = pal0
+    t = parse_palette(pal)
+    if (t) return(pal)
+    return("")
+}
+
+`SM' `MAIN'::palettes(| `SS' pattern, `Bool' strict)
+{
+    `Int' i
+    `SC'  keys
+    `SC'  src
+    `SR'  SRC
+    `TV'  t
+    
+    if (palettes.N()==0) paletteindex()
+    keys = palettes.keys()
+    if (pattern!="") {
+        if (args()<2) strict = 0
+        if (strict) keys = ::select(keys, strmatch(keys, pattern))
+        else keys = ::select(keys, strmatch(strlower(keys), strlower(pattern)))
+    }
+    i = rows(keys)
+    if (i==0) return(J(0,2,""))
+    _sort(keys, 1)
+    src = J(i, 1, "")
+    SRC = ("palettes","namedcolors","matplotlib","generators","internal/alias")
+    for (;i;i--) {
+        t = palettes.get(keys[i])
+        if (isstring(t)) continue
+        src[i] = SRC[t]
+    }
+    keys = ::select(keys, src:!="")
+    src  = ::select(src, src:!="")
+    return((keys,src))
+}
+
+`Int' `MAIN'::parse_palette(`SS' p0) // p0 may be replaced
+{
+    `SS' p
+    `TV' t
+    
+    t = palettes.get(p0) // only finds exact match, including case
+    if (isstring(t)) {
+        p0 = t
+        t = palettes.get(p0)
+    }
+    if (t==0) {
+        p = findkey(p0, palettes.keys(), "s2") // ignore case and allow abbreviation
+        if (p!="") {
+            p0 = p
+            t = palettes.get(p0)
+            if (isstring(t)) {
+                p0 = t
+                t = palettes.get(p0)
+            }
+        }
+    }
+    return(t)
+}
+
+void `MAIN'::paletteindex() // create palette index
+{
+    `SS'  lib, fn, line, nm, tn
+    `SR'  libraries
+    `RS'  fh
+    `SM'  EOF
+    `TS'  t
+    //   t = 1         palette from palette library
+    //   t = 2         color group from namedcolors library
+    //   t = 3         colormap from matplotlib library
+    //   t = 4         color generator from generators library
+    //   t = 5         internal palette/alias
+    //   t = <string>  pure alias
+    
+    EOF = J(0, 0, "")
+    tn = "n:"
+    libraries = ("palettes", "namedcolors", "matplotlib", "generators")
+    for (t=1; t<=4; t++) {
+        lib = "colrspace_library_" + libraries[t] + ".sthlp"
+        fn = findfile(lib)
+        if (fn=="") {
+            display("{err}"+lib+" not found")
+            exit(error(601))
+        }
+        fh = fopen(fn, "r")
+        while ((line=strltrim(fget(fh)))!=EOF) {
+            if (substr(line,1,2)!=tn) continue // not a palette name
+            nm = strtrim(substr(line,3,.))
+            if (nm=="") continue // color name is empty
+            if (t==3) nm = libraries[3] + " " + nm
+            palettes.put(nm, t)
+            if (t==2) {
+                if (substr(nm,1,4)=="HTML") { // create alias
+                    nm = "webcolors" + substr(nm,5,.)
+                    palettes.put(nm, t)
+                }
+            }
+        }
+        fclose(fh)
+    }
+    t = 5
+    palettes.put("HTML"                       , t)
+    palettes.put("HTML redorange"             , t)
+    palettes.put("webcolors"                  , t)
+    palettes.put("webcolors redorange"        , t)
+    palettes.put("viridis"                    , t)
+    palettes.put("magma"                      , t)
+    palettes.put("inferno"                    , t)
+    palettes.put("plasma"                     , t)
+    palettes.put("cividis"                    , t)
+    palettes.put("twilight"                   , t)
+    palettes.put("twilight shifted"           , t)
+    palettes.put("matplotlib twilight shifted", t)
+    palettes.put("spmap blues"                , t)
+    palettes.put("spmap greens"               , t)
+    palettes.put("spmap greys"                , t)
+    palettes.put("spmap reds"                 , t)
+    palettes.put("spmap rainbow"              , t)
+    palettes.put("HCL"       , "HCL qualitative")
+    palettes.put("LCh"       , "LCh qualitative")
+    palettes.put("JMh"       , "JMh qualitative")
+    palettes.put("HSV"       , "HSV qualitative")
+    palettes.put("HSL"       , "HSL qualitative")
+    palettes.put("w3"        , "w3 default")
+    palettes.put("ptol"      , "ptol qualitative")
+    palettes.put("lin"       , "lin carcolor")
+    palettes.put("sfso"      , "sfso blue")
+    palettes.put("sfso cmyk" , "sfso blue cmyk")
+    palettes.put("matplotlib", "matplotlib jet")
+}
+
+void `MAIN'::palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
+{
+    `Int' rc
+    
+    S = &data1
+    if      (args()<=2) rc = Palette(pal, n)
+    else if (args()==3) rc = Palette(pal, n, o1)
+    else if (args()==4) rc = Palette(pal, n, o1, o2)
+    else if (args()==5) rc = Palette(pal, n, o1, o2, o3)
+    else                rc = Palette(pal, n, o1, o2, o3, o4)
+    if (rc==0) {
+        display("{err}palette '" + pal + "' not found")
+        exit(3499)
+    }
+    replacedata()
+}
+
+void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
+{
+    `Int' rc
+    
+    S = &data1
+    if      (args()<=2) rc = Palette(pal, n)
+    else if (args()==3) rc = Palette(pal, n, o1)
+    else if (args()==4) rc = Palette(pal, n, o1, o2)
+    else if (args()==5) rc = Palette(pal, n, o1, o2, o3)
+    else                rc = Palette(pal, n, o1, o2, o3, o4)
+    if (rc==0) {
+        display("{err}palette '" + pal + "' not found")
+        exit(3499)
+    }
+    appenddata()
+}
+
+`Bool' `MAIN'::Palette(`SS' pal0, `RS' n0, | `RV' o1, `RV' o2, `RV' o3, `RV' o4)
+{
+    `Int' t, n
+    `SS'  pal
+    
+    // find palette
+    if (palettes.N()==0) paletteindex()
+    pal = pal0
+    t = parse_palette(pal)
+    if (t==0) return(0)
+    
+    // read colors
+    n = (n0<. ? (n0<0 ? 0 : trunc(n0)) : 15)
+    if      (t==1) Palette_palettes(pal, n)
+    else if (t==2) Palette_namedcolors(pal)
+    else if (t==3) Palette_matplotlib(pal, n, o1) // o1: range
+    else if (t==4) Palette_generators(pal, n, o1, o2, o3, o4) // o#; h, c, l, p
+    else if (t==5) Palette_internal(pal, n, o1)   // o1: range
+    else return(0)
+    S->name = pal
+    
+    // interpolation/recycling
+    if (n0<.) { // only if n has been specified by user
+        if (n!=(S->n)) { // only if number of returned colors is unequal
+            // the number of requested colors; this is only possible for 
+            // palettes that have the -noexpand- (o1) argument
+            if ((S->pclass)=="qualitative") {
+                if (n<(S->n)) _recycle(n) // select first n colors
+                else if (length(o1)) { // noexpand argument specified
+                    if (o1==0) _recycle(n)
+                }
+                else _recycle(n)
+            }
+            else if (length(o1)) { // noexpand argument specified
+                if (o1==0) _ipolate(n)
+            }
+            else _ipolate(n)
+        }
+    }
+    
+    // done
+    return(t)
+}
+
+`SC' `MAIN'::Palette_read(`SS' pal, `SS' lib)
+{
+    `Int' pos, r, i
+    `SS'  fn, line, tn
+    `RS'  fh
+    `SM'  EOF
+    `SC'  f
+    
+    fn = findfile("colrspace_library_"+lib+".sthlp")
+    if (fn=="") {
+        display("{err}colrspace_library_"+lib+".sthlp not found")
+        exit(error(601))
+    }
+    EOF = J(0, 0, "")
+    tn = "n:"
+    fh = fopen(fn, "r")
+    while ((line=strltrim(fget(fh)))!=EOF) {
+        if (substr(line,1,2)!=tn) continue // not a palette name
+        if (strtrim(substr(line,3,.))!=pal) continue // different palette
+        // read palette
+        pos = ftell(fh)
+        r = 0
+        while ((line=strltrim(fget(fh)))!=EOF) {
+            if (substr(line,1,2)==tn) break // next palette
+            r++
+        }
+        fseek(fh, pos, -1)
+        f = J(r,1,"")
+        for (i=1;i<=r;i++) f[i] = strltrim(fget(fh))
+        break
+    }
+    fclose(fh)
+    return(f)
+}
+
+void `MAIN'::Palette_palettes(`SS' pal, `RS' n)
+{   // get palette from palettes library
+    `Int'  i, j, r, l
+    `SS'   s, t, tc, td, ts, tP, tPn, tN, tI
+    `SS'   N, I
+    `SC'   f, P
+    `IntC' nc, p
+    
+    // read palette from library
+    f = Palette_read(pal, "palettes")
+    r = rows(f)
+    
+    // collect palette information 
+    // - count number of color sets
+    tP = "P:"; tPn = "P"
+    j = 0
+    for (i=1;i<=r;i++) {
+        s = f[i]
+        if      (substr(s,1,2)==tP) j++
+        else if (substr(s,1,1)==tPn) j++
+    }
+    P = J(j,1,""); nc = J(j,1,.)
+    // - parse palette
+    tc = "c:"; td = "d:"; ts = "s:"; tN = "N:"; tI = "I:"
+    j = 0
+    for (i=1;i<=r;i++) {
+        s = f[i]
+        t = substr(s,1,2)
+        if      (t==tc) S->pclass = strtrim(substr(s,3,.))
+        else if (t==td) S->note   = strtrim(substr(s,3,.))
+        else if (t==ts) S->source = strtrim(substr(s,3,.))
+        else if (t==tN) N         = strtrim(substr(s,3,.))
+        else if (t==tI) I         = strtrim(substr(s,3,.))
+        else if (t==tP) P[++j]    = strtrim(substr(s,3,.))
+        else if (substr(s,1,1)==tPn) {
+            l = strpos(s,":")
+            if (l==0) continue // invalid P#:
+            l = strtoreal(substr(s,2,l-2))
+            if (l>=.) continue // invalid P#:
+            nc[++j] = l
+            P[j]  = strtrim(substr(s,strpos(s,":")+1,.))
+        }
+    }
+    if (j==0) { // no color set found
+        P = J(0,1,""); nc = J(0,1,.)
+    } 
+    else if (j<rows(nc)) {
+        P = P[|1 \ j|]; nc = nc[|1 \ j|]
+    }
+    
+    // process colors
+    if      (j==0) colors_set("", ",")  // no colors in palette
+    else if (j==1) colors_set(P, ",")   // single color set
+    else {
+        p = ::order(nc,1)
+        for (i=1;i<=j;i++) {
+            if (n<nc[p[i]]) {
+                colors_set(P[p[i]], ",")
+                break
+            }
+            if (n==nc[p[i]]) {
+                colors_set(P[p[i]], ",")
+                break
+            }
+            if (i==j) {
+                colors_set(P[p[i]], ",")
+            }
+        }
+    }
+    if (N!="") names_set(N, ",")
+    if (I!="") info_set(I, ",")
+}
+
+void `MAIN'::Palette_namedcolors(`SS' pal0)
+{   // get palette from namedcolors library
+    `Int'  l, i, j, r
+    `SS'   pal, t, tc, td, ts, hex
+    `SC'   f
+    `SM'   P
+    
+    // read palette from library
+    if (substr(pal0,1,9)=="webcolors") pal = "HTML" + substr(pal0,10,.)
+    else                               pal = pal0
+    f = Palette_read(pal, "namedcolors")
+    r = rows(f)
+    
+    // process palette
+    tc = "c:"; td = "d:"; ts = "s:"; hex = "#"
+    P = J(r, 2, "")
+    j = 0
+    for (i=1;i<=r;i++) {
+        t = substr(f[i],1,1)
+        if (t==hex) {
+            l = strpos(f[i]," ")
+            if (l==0) continue // color name is missing
+            t = strtrim(substr(f[i],l,.))
+            if (t=="") continue // color name is missing
+            P[++j,] = (substr(f[i],1,l-1), t)
+            continue
+        }
+        t = substr(f[i],1,2)
+        if      (t==tc) S->pclass = strtrim(substr(f[i],3,.))
+        else if (t==td) S->note   = strtrim(substr(f[i],3,.))
+        else if (t==ts) S->source = strtrim(substr(f[i],3,.))
+    }
+    if (j==0) P = J(0, 2, "") // no colors found
+    else      P = P[|1,1 \ j,.|]
+    _set(P[,1], "hex")
+    Names_set(P[,2])
+}
+
+void `MAIN'::Palette_matplotlib(`SS' pal, `RS' n, `RV' range, | `Bool' shift)
+{   // get palette from matplotlib library
+    `Int'  i, j, r
+    `SS'   t, tc, td, ts, tr
+    `SC'   f, R, G, B
+    `SM'   RGB
+    `IntR' rr
+    
+    // read palette from library
+    f = Palette_read(substr(pal,strpos(pal, " ")+1, .), "matplotlib")
+    r = rows(f)
+    
+    // process palette
+    tc = "c:"; td = "d:"; ts = "s:"; tr = "r:"
+    for (i=1;i<=r;i++) {
+        t = substr(f[i],1,2)
+        if      (t==tc) S->pclass = strtrim(substr(f[i],3,.))
+        else if (t==td) S->note   = strtrim(substr(f[i],3,.))
+        else if (t==ts) S->source = strtrim(substr(f[i],3,.))
+        else if (t==tr) {
+            rr = strtoreal(tokens(substr(f[i],3,.)))
+            if (length(rr)==1) {
+                RGB = J(rr,3,"")
+                for (j=1;j<=rr;j++) RGB[j,] = tokens(f[++i])
+            }
+            else if (length(rr)==3) {
+                R = J(rr[1],3,"")
+                for (j=1;j<=rr[1];j++) R[j,] = tokens(f[++i])
+                G = J(rr[2],3,"")
+                for (j=1;j<=rr[2];j++) G[j,] = tokens(f[++i])
+                B = J(rr[3],3,"")
+                for (j=1;j<=rr[3];j++) B[j,] = tokens(f[++i])
+            }
+            else {
+                display("{err}invalid colormap definition")
+                exit(error(499))
+            }
+            break
+        }
+    }
+    if (length(rr)==1) { // listed colormaps
+        if (args()<4) shift = 0
+        if (shift) {
+            RGB = RGB[|rows(RGB)/2+1,1 \ .,.|] \ RGB[|1,1 \ rows(RGB)/2,.|]
+            RGB = RGB[rows(RGB)::1,]
+        }
+        rgb_set(colipolate(strtoreal(RGB), n, range))
+    }
+    else { // segmented colormaps
+        rgb_set(lsmap(strtoreal(R), strtoreal(G), strtoreal(B), n, range))
+    }
+}
+
+void `MAIN'::Palette_generators(`SS' pal, `RS' n, | `RV' h, `RV' c, `RV' l, `RV' p)
+{   // get palette from color generator
+    `Int'  r, i
+    `SS'   t, tc, td, ts, tP
+    `SC'   f
+    `RR'   P
+    
+    // read palette from library
+    f = Palette_read(pal, "generators")
+    r = rows(f)
+    
+    // process palette
+    tc = "c:"; td = "d:"; ts = "s:"; tP = "P:"
+    for (i=1;i<=r;i++) {
+        t = substr(f[i],1,2)
+        if      (t==tc) S->pclass = strtrim(substr(f[i],3,.))
+        else if (t==td) S->note   = strtrim(substr(f[i],3,.))
+        else if (t==ts) S->source = strtrim(substr(f[i],3,.))
+        else if (t==tP) P = strtoreal(tokens(substr(f[i],3,.)))
+    }
+    
+    // overwrite defaults by user-specified parameters
+    if (cols(P)<8) P = P, J(1,8-cols(P),.)
+    if (length(h)) {
+        if (h[1]<.) P[1] = h[1]
+        if (length(h)>1) {
+            if (h[2]<.) P[2] = h[2]
+        }
+    }
+    if (length(c)) {
+        if (c[1]<.) P[3] = c[1]
+        if (length(c)>1) {
+            if (c[2]<.) P[4] = c[2]
+        }
+    }
+    if (length(l)) {
+        if (l[1]<.) P[5] = l[1]
+        if (length(l)>1) {
+            if (l[2]<.) P[6] = l[2]
+        }
+    }
+    if (length(p)) {
+        if (p[1]<.) P[7] = p[1]
+        if (length(p)>1) {
+            if (p[2]<.) P[8] = p[2]
+        }
+    }
+    
+    // apply generator
+    generate(pal, n, P[(1,2)], P[(3,4)], P[(5,6)], P[(7,8)])
+}
+
+void `MAIN'::Palette_internal(`SS' pal, `RS' n, | `RV' range)
+{   // get internal palette or alias
+    if      (pal=="HTML")                Palette_htmlcolors()
+    else if (pal=="HTML redorange")      Palette_htmlcolors(("red", "orange"))
+    else if (pal=="webcolors")           Palette_htmlcolors()
+    else if (pal=="webcolors redorange") Palette_htmlcolors(("red", "orange"))
+    else if (pal=="viridis")             Palette_matplotlib("matplotlib viridis", n, range)
+    else if (pal=="magma")               Palette_matplotlib("matplotlib magma", n, range)
+    else if (pal=="inferno")             Palette_matplotlib("matplotlib inferno", n, range)
+    else if (pal=="plasma")              Palette_matplotlib("matplotlib plasma", n, range)
+    else if (pal=="cividis")             Palette_matplotlib("matplotlib cividis", n, range)
+    else if (pal=="twilight")            Palette_matplotlib("matplotlib twilight", n, range)
+    else if (pal=="twilight shifted")    Palette_matplotlib("matplotlib twilight", n, range, 1)
+    else if (pal=="matplotlib twilight shifted") Palette_matplotlib("matplotlib twilight", n, range, 1)
+    else if (pal=="spmap blues")         Palette_spmap("blues", n)
+    else if (pal=="spmap greens")        Palette_spmap("greens", n)
+    else if (pal=="spmap greys")         Palette_spmap("greys", n)
+    else if (pal=="spmap reds")          Palette_spmap("reds", n)
+    else if (pal=="spmap rainbow")       Palette_spmap("rainbow", n)
+}
+
+void `MAIN'::Palette_htmlcolors(| `SV' keys)
+{   // get all HTML colors
+    `Int'  i, k
+    `IntC' p
+    `RM'   C
+    `SC'   N, I
+    
+    C = J(0,3,.); N = J(0,1,""); I = J(0,1,"")
+    if (args()) {
+        k = length(keys)
+        for (i=1;i<=k;i++) {
+            Palette_namedcolors("HTML " + keys[i])
+            C = C \ S->RGB
+            N = N \ S->names
+            I = I \ S->info
+        }
+    }
+    else {
+        keys = palettes.keys()
+        keys = ::select(keys, substr(keys,1,4):=="HTML")
+        k = length(keys)
+        for (i=1;i<=k;i++) {
+            if (palettes.get(keys[i])!=2) continue // palette is not from namedcolors library
+            Palette_namedcolors(keys[i])
+            C = C \ S->RGB
+            N = N \ S->names
+            I = I \ S->info
+        }
+        p = ::order(N,1)  // sort colors by name
+        C = C[p,]; N = N[p]; I = I[p]
+    }
+    rgb_set(C)
+    S->names = N
+    S->info  = I
+    S->pclass = "qualitative"
+    S->note   = "HTML Colors from from www.w3schools.com"
+    S->source = "https://www.w3schools.com/colors/colors_names.asp"
+}
+
+void `MAIN'::Palette_spmap(`SS' pal,`RS' n0)
+{
+    `Int' n
+    `RM'  C
+    `RC'  p
+    
+    S->pclass = "sequential"
+    S->source = "spmap_color.ado from https://ideas.repec.org/c/boc/bocode/s456812.html"
+    n = __clip(n0, 2, 99)
+    if (pal=="blues") {
+        S->note = "light blue to blue color scheme from the spmap package by Pisati (2007)"
+        p = ((1::n):-1) / (n-1)
+        C = J(n,1,208), (.2 :+ .8*p), (1 :- .6*p)
+        _set(C, "HSV")
+    }
+    else if (pal=="greens") {
+        S->note = "light green to green color scheme from the spmap package by Pisati (2007)"
+        p = ((1::n):-1) / (n-1)
+        C = (122 :+ 20*p), (.2 :+ .8*p), (1 :- .7*p)
+        _set(C, "HSV")
+    }
+    else if (pal=="greys") {
+        S->note = "light gray to black color scheme from the spmap package by Pisati (2007)"
+        C = J(n,2,0), (.88 :- .88*((1::n):-1)/(n-1))
+        _set(C, "HSV")
+    }
+    else if (pal=="reds") {
+        S->note = "light red to red color scheme from the spmap package by Pisati (2007)"
+        p = ((1::n):-1) / (n-1)
+        C = (20 :- 20*p), (.2 :+ .8*p), (1 :- rowmax((J(n, 1, 0), 1.2*(p:-.5))))
+        _set(C, "HSV")
+    }
+    else if (pal=="rainbow") {
+        S->note = "rainbow color scheme from the spmap package by Pisati (2007)"
+        C = (240 :- 240*((1::n):-1)/(n-1)), J(n,2,1)
+        _set(C, "HSV")
+    }
+    else C = J(0,3,.)
+    _set(C, "HSV")
+}
+
+end
+
+* {smcl}
 * {marker gen}{bf:Color generators} {hline}
 * {asis}
 
 mata:
 
-void `MAIN'::generate(| `SS' space, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+void `MAIN'::generate(`SS' pal, `Int' n, `RV' h, `RV' c, `RV' l, `RV' p)
 {
-    S = &data1
-    if      (args()==0) _generate()
-    else if (args()==1) _generate(space)
-    else if (args()==2) _generate(space, o2)
-    else if (args()==3) _generate(space, o2, o3)
-    else if (args()==4) _generate(space, o2, o3, o4)
-    else if (args()==5) _generate(space, o2, o3, o4, o5)
-    else                _generate(space, o2, o3, o4, o5, o6)
-    replacedata()
-}
-
-void `MAIN'::add_generate(| `SS' space, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
-{
-    S = &data1
-    if      (args()==0) _generate()
-    else if (args()==1) _generate(space)
-    else if (args()==2) _generate(space, o2)
-    else if (args()==3) _generate(space, o2, o3)
-    else if (args()==4) _generate(space, o2, o3, o4)
-    else if (args()==5) _generate(space, o2, o3, o4, o5)
-    else                _generate(space, o2, o3, o4, o5, o6)
-    appenddata()
-}
-
-void `MAIN'::_generate(| `SS' space, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
-{
-    if (args()<5) o5 = .       // l
-    if (args()<4) o4 = .       // c
-    if (args()<3) o3 = .       // h
-    if (args()<2) o2 = .       // n
-    if (smatch(strlower(space), "HUE")) {
-        if (args()<6) o6 = `FALSE' // reverse
-        generate_HUE(o2, o3, o4, o5, o6)
-        return
-    }
-    if (args()<6) o6 = .       // p
-    generate_OTH(space, o2, o3, o4, o5, o6)
+    `SS'  space
+    
+    space = findkey(strlower(gettok(pal)), ("HUE", "HCL", "LCh", "JMh", "HSV", "HSL")')
+    if      (space=="HUE")              generate_HUE(n, h, c[1], l[1], p[1])
+    else if (S->pclass=="qualitative")  generate_qual(space, n, h, c[1], l[1])
+    else if (S->pclass=="sequential")   generate_seq(space, n, h, c, l, p)
+    else if (S->pclass=="diverging")    generate_div(space, n, h, c[1], l, p)
+    else if (space=="HSV" & S->pclass=="heat0")    generate_HSV_heat0(n, h, c, l[1])
+    else if (space=="HSV" & S->pclass=="terrain0") generate_HSV_terrain0(n, h, c, l)
+    else rgb_set(J(0,3,.)) // unknown generator class; do not create any colors
 }
 
 void `MAIN'::generate_HUE(`Int' n, `RV' h, `RS' c, `RS' l, `Bool' reverse)
@@ -4430,3743 +5097,120 @@ void `MAIN'::generate_HUE(`Int' n, `RV' h, `RS' c, `RS' l, `Bool' reverse)
     `Int' i
     `RS'  h1, h2, dir
     `RM'  C
-
-    if (n>=.)               n = 15
-    if (length(h)>0)        h1 = h[1]
-    if (length(h)>1)        h2 = h[2]
-    if (h1>=.)              h1 = 0 + 15
-    if (h2>=.)              h2 = 360 + 15
+    
+    h1 = h[1]; h2 = h[2]
     if (mod(h2-h1,360) < 1) h2 = h2 - 360/n
-    dir = (reverse ? -1 : 1)
-    C = J(n, 1, (., (c>=. ? 100 : c), (l>=. ? 65 : l)))
+    dir = (reverse & reverse<. ? -1 : 1)
+    C = J(n, 1, (., c, l))
     for (i=1; i<=n; i++) {
          C[i,1] = mod((h1 + (n<=1 ? 0 : (i-1) * (h2-h1) / (n-1))) * dir, 360) 
     }
     _set(C, "HCL")
-    S->pclass = "qualitative"
 }
 
-void `MAIN'::generate_OTH(`SS' space0, `Int' n0, `RV' h0, `RV' c0, 
-    `RV' l0, `RV' p0)
+void `MAIN'::generate_qual(`SS' space, `Int' n, `RV' h, `RS' c, `RS' l)
 {
-    `SS'  space, pclass
-    `RS'  n, h, c, l, p
+    `Int' i
     `RM'  C
-    pragma unset pclass
+    `RS'  h1, h2
     
-    space = findkey(gettok(space0, pclass), ("HCL", "LCh", "JMh", "HSV", "HSL")')
-    if (space=="") {
-        display("{err}space '" + space0 + "' not allowed")
-        exit(3498)
+    h1 = h[1]; h2 = h[2]
+    if (h2>=.) h2 = h1 + 360*(n-1)/n
+    C = J(n, 3, .)
+    for (i=1; i<=n; i++) {
+        C[i,] = (mod(n==1 ? h1 : h1 + (i-1)*(h2-h1)/(n-1), 360), c, l)
     }
-    n = n0; h = h0; c = c0; l = l0; p = p0
-    if (space=="LCh" | space=="JMh") swap(h, l)
-    generate_setup(space, n, pclass, h, c, l, p)
-    S->pclass = pclass
-    if      (pclass=="qualitative")  C = generate_qual(n, h, c, l)
-    else if (pclass=="sequential")   C = generate_seq(n, h, c, l, p)
-    else if (pclass=="diverging")    C = generate_div(n, h, c, l, p)
-    else if (pclass=="heat0")        C = generate_heat0(n, h, c, l)
-    else if (pclass=="terrain0")     C = generate_terrain0(n, h, c, l)
     if (space=="LCh" | space=="JMh") C = C[,(3,2,1)]
     _set(C, space)
 }
 
-void `MAIN'::generate_setup(`SS' space, `Int' n, `SS' pclass0, `RV' h, `RV' c, 
-    `RV' l, `RV' p)
-{
-    `SS'  pclass
-    `RV'  d
-    
-    if (n>=.)        n = 15
-    if (length(h)<2) h = h, J(1, 2-length(h), .)
-    if (length(c)<2) c = c, J(1, 2-length(c), .)
-    if (length(l)<2) l = l, J(1, 2-length(l), .)
-    if (length(p)<2) p = p, J(1, 2-length(p), .)
-    pclass = strlower(pclass0)
-    if (smatch(pclass, "qualitative")) {
-        if      (space=="HCL") d = (15, .,100, ., 65 , ., ., .)
-        else if (space=="LCh") d = (30, ., 70, ., 65 , ., ., .)
-        else if (space=="JMh") d = (25, ., 35, ., 67 , ., ., .)
-        else if (space=="HSV") d = ( 0, ., .6, ., .9, ., ., .)
-        else if (space=="HSL") d = ( 0, ., .7, ., .6, ., ., .)
-    }
-    else if (smatch(pclass, "sequential")) {
-        if      (space=="HCL") d = (260, ., 80, 10 , 25, 95 ,  1  , .)
-        else if (space=="LCh") d = (290, ., 72,  6 , 25, 95 ,  1  , .)
-        else if (space=="JMh") d = (260, ., 32,  7 , 25, 96 ,  1  , .)
-        else if (space=="HSV") d = (240, ., .8, .05, .6,  1 ,  1.2, .)
-        else if (space=="HSL") d = (240, .,.65, .65,.35,.975,  1.2, .)
-    }
-    else if (smatch(pclass, "diverging")) {
-        if      (space=="HCL") d = (260,  0, 80, ., 30, 95 , 1  , .)
-        else if (space=="LCh") d = (290, 10, 60, ., 30, 95 , 1  , .)
-        else if (space=="JMh") d = (260,  8, 30, ., 30, 96 , 1  , .)
-        else if (space=="HSV") d = (220,350, .8, ., .6, .95, 1.2, .)
-        else if (space=="HSL") d = (220,350,.65, .,.35, .95, 1.2, .)
-    }
-    else if (space=="HSV" & smatch(pclass, "heat0")) {      // undocumented
-        d = (0, 60, 1, 0, 1, ., ., .)
-    }
-    else if (space=="HSV" & smatch(pclass, "terrain0")) {   // undocumented
-        d = (120, 0, 1, 0, .65, .9, ., .)
-    }
-    else {
-        display("{err}class '" + pclass0 + "' not allowed")
-        exit(3498)
-    }
-    if (h[1]>=.) h[1] = d[1]
-    if (h[2]>=.) h[2] = (d[2]<. ? d[2] : 
-                        (pclass=="qualitative" ? h[1] + 360*(n-1)/n : h[1]))
-    if (c[1]>=.) c[1] = d[3]
-    if (c[2]>=.) c[2] = (d[4]<. ? d[4] : c[1])
-    if (l[1]>=.) l[1] = d[5]
-    if (l[2]>=.) l[2] = (d[6]<. ? d[6] : l[1])
-    if (p[1]>=.) p[1] = d[7]
-    if (p[2]>=.) p[2] = (d[8]<. ? d[8] : p[1])
-    pclass0 = pclass
-}
-
-`RM' `MAIN'::generate_qual(`Int' n, `RV' h, `RV' c, `RV' l)
-{
-    `Int' i
-    `RM'  C
-        
-    C = J(n, 3, .)
-    for (i=1; i<=n; i++) {
-        C[i,] = (mod(n==1 ? h[1] : h[1] + (i-1)*(h[2]-h[1])/(n-1), 360), 
-                 c[1], l[1])
-    }
-    return(C)
-}
-
-`RM' `MAIN'::generate_seq(`Int' n, `RV' h, `RV' c, `RV' l, `RV' p)
+void `MAIN'::generate_seq(`SS' space, `Int' n, `RV' h, `RV' c, `RV' l, `RV' p)
 {
     `Int' i, j
     `RM'  C
-        
+    `RS'  h1, h2, c1, c2, l1, l2, p1, p2
+    
+    h1 = h[1]; h2 = h[2]
+    if (h2>=.) h2 = h1
+    c1 = c[1]; c2 = c[2]
+    if (c2>=.) c2 = c1
+    l1 = l[1]; l2 = l[2]
+    if (l2>=.) l2 = l1
+    p1 = p[1]; p2 = p[2]
+    if (p2>=.) p2 = p1
     C = J(n, 3, .)
     for (i=1; i<=n; i++) {
         j = (n==1 ? 1 : (n-i)/(n-1))
-        C[i,] = (mod(h[2] - j*(h[2]-h[1]), 360), c[2] - j^p[1]*(c[2]-c[1]), 
-                 l[2] - j^p[2]*(l[2]-l[1]))
+        C[i,] = (mod(h2 - j*(h2-h1), 360), c2 - j^p1*(c2-c1), l2 - j^p2*(l2-l1))
     }
-    return(C)
+    if (space=="LCh" | space=="JMh") C = C[,(3,2,1)]
+    _set(C, space)
 }
 
-`RM' `MAIN'::generate_div(`Int' n, `RV' h, `RV' c, `RV' l, `RV' p)
+void `MAIN'::generate_div(`SS' space, `Int' n, `RV' h, `RS' c, `RV' l, `RV' p)
 {
     `Int' i, j
     `RM'  C
-        
+    `RS'  h1, h2, l1, l2, p1, p2
+    
+    h1 = h[1]; h2 = h[2]
+    if (h2>=.) h2 = h1
+    l1 = l[1]; l2 = l[2]
+    if (l2>=.) l2 = l1
+    p1 = p[1]; p2 = p[2]
+    if (p2>=.) p2 = p1
     C = J(n, 3, .)
     for (i=1; i<=n; i++) {
         j = (n==1 ? 1 : (n - 2*i + 1)/(n-1))
-        C[i,] = (mod(j>0 ? h[1] : h[2], 360), c[1] * abs(j)^p[1], 
-                 l[2] - abs(j)^p[2]*(l[2]-l[1]))
+        C[i,] = (mod(j>0 ? h1 : h2, 360), c * abs(j)^p1, l2 - abs(j)^p2*(l2-l1))
     }
-    return(C)
+    if (space=="LCh" | space=="JMh") C = C[,(3,2,1)]
+    _set(C, space)
 }
 
-`RM' `MAIN'::generate_heat0(`Int' n, `RV' h, `RV' s, `RV' v)
+void `MAIN'::generate_HSV_heat0(`Int' n, `RV' h, `RV' s, `RS' v)
 {
     `Int' i, n1, n2
+    `RS'  h1, h2, s1, s2
     `RM'  C
-
+    
     n2 = trunc(n/4)
     n1 = n - n2
+    h1 = h[1]; h2 = h[2]; s1 = s[1]; s2 = s[2]
     C = J(n, 3, .)
     for (i=1; i<=n1; i++) {
-        C[i,] = (mod(h[1] + (n1==1 ? 0 : (i-1)*(h[2]-h[1])/(n1-1)), 360), 
-                 s[1], v[1])
+        C[i,] = (mod(h1 + (n1==1 ? 0 : (i-1)*(h2-h1)/(n1-1)), 360), s1, v)
     }
     for (; i<=n; i++) {
-        C[i,] = (mod(h[2], 360), s[1] - (s[1]-s[2])/(2*n2) + 
-        (n2==1 ? 0 : (i-n1-1) * (s[2] - s[1] + (s[1]-s[2])/n2) / (n2-1)), v[1])
+        C[i,] = (mod(h2, 360), s1 - (s1-s2)/(2*n2) + 
+        (n2==1 ? 0 : (i-n1-1) * (s2 - s1 + (s1-s2)/n2) / (n2-1)), v)
     }
-    S->pclass = "sequential"
-    return(C)
+    _set(C, "HSV")
 }
 
-`RM' `MAIN'::generate_terrain0(`Int' n, `RV' h, `RV' s, `RV' v)
+void `MAIN'::generate_HSV_terrain0(`Int' n, `RV' h, `RV' s, `RV' v)
 {
-    `Int' i, n1, n2, h3, v3
+    `Int' i, n1, n2, h1, h2, h3, s1, s2, v1, v2, v3
     `RM'  C
-    
-    h3   = h[2]
-    h[2] = (h[1] + h3) / 2        // 60
-    v3   = v[2] + (1 - v[2]) / 2  // .95
+
     n1   = trunc(n / 2)
     n2   = n - n1 + 1
+    h1 = h[1]; h3 = h[2]; h2 = (h1 + h3) / 2
+    s1 = s[1]; s2 = s[2]
+    v1 = v[1]; v2 = v[2]; v3 = v2 + (1 - v2) / 2
     C = J(n, 3, .)
     for (i=1; i<=n1; i++) {
-        C[i,] = (mod(h[1] + (n1==1 ? 0 : (i-1)*(h[2]-h[1])/(n1-1)), 360), 
-                 s[1], v[1] + (n1==1 ? 0 : (i-1)*(v[2]-v[1])/(n1-1)))
+        C[i,] = (mod(h1 + (n1==1 ? 0 : (i-1)*(h2-h1)/(n1-1)), 360), 
+                 s1, v1 + (n1==1 ? 0 : (i-1)*(v2-v1)/(n1-1)))
     }
     for (; i<=n; i++) {
-        C[i,] = (mod(h[2] + (i-n1)*(h3-h[2])/(n2-1), 360),
-                 s[1] + (i-n1)*(s[2]-s[1])/(n2-1), 
-                 v[2] + (i-n1)*(v3-v[2])/(n2-1))
+        C[i,] = (mod(h2 + (i-n1)*(h3-h2)/(n2-1), 360),
+                 s1 + (i-n1)*(s2-s1)/(n2-1), 
+                 v2 + (i-n1)*(v3-v2)/(n2-1))
     }
-    S->pclass = "sequential"
-    return(C)
-}
-
-end
-
-* {smcl}
-* {marker web}{bf:Named web colors} {hline}
-* Source: {browse "https://www.w3schools.com/colors/colors_names.asp"}
-* {asis}
-
-mata:
-
-void `MAIN'::webcolors()
-{
-    webcolors.notfound("")
-    webcolors.put("AliceBlue"           , "#F0F8FF")
-    webcolors.put("AntiqueWhite"        , "#FAEBD7")
-    webcolors.put("Aqua"                , "#00FFFF")
-    webcolors.put("Aquamarine"          , "#7FFFD4")
-    webcolors.put("Azure"               , "#F0FFFF")
-    webcolors.put("Beige"               , "#F5F5DC")
-    webcolors.put("Bisque"              , "#FFE4C4")
-    webcolors.put("Black"               , "#000000")
-    webcolors.put("BlanchedAlmond"      , "#FFEBCD")
-    webcolors.put("Blue"                , "#0000FF")
-    webcolors.put("BlueViolet"          , "#8A2BE2")
-    webcolors.put("Brown"               , "#A52A2A")
-    webcolors.put("BurlyWood"           , "#DEB887")
-    webcolors.put("CadetBlue"           , "#5F9EA0")
-    webcolors.put("Chartreuse"          , "#7FFF00")
-    webcolors.put("Chocolate"           , "#D2691E")
-    webcolors.put("Coral"               , "#FF7F50")
-    webcolors.put("CornflowerBlue"      , "#6495ED")
-    webcolors.put("Cornsilk"            , "#FFF8DC")
-    webcolors.put("Crimson"             , "#DC143C")
-    webcolors.put("Cyan"                , "#00FFFF")
-    webcolors.put("DarkBlue"            , "#00008B")
-    webcolors.put("DarkCyan"            , "#008B8B")
-    webcolors.put("DarkGoldenRod"       , "#B8860B")
-    webcolors.put("DarkGray"            , "#A9A9A9")
-    webcolors.put("DarkGrey"            , "#A9A9A9")
-    webcolors.put("DarkGreen"           , "#006400")
-    webcolors.put("DarkKhaki"           , "#BDB76B")
-    webcolors.put("DarkMagenta"         , "#8B008B")
-    webcolors.put("DarkOliveGreen"      , "#556B2F")
-    webcolors.put("DarkOrange"          , "#FF8C00")
-    webcolors.put("DarkOrchid"          , "#9932CC")
-    webcolors.put("DarkRed"             , "#8B0000")
-    webcolors.put("DarkSalmon"          , "#E9967A")
-    webcolors.put("DarkSeaGreen"        , "#8FBC8F")
-    webcolors.put("DarkSlateBlue"       , "#483D8B")
-    webcolors.put("DarkSlateGray"       , "#2F4F4F")
-    webcolors.put("DarkSlateGrey"       , "#2F4F4F")
-    webcolors.put("DarkTurquoise"       , "#00CED1")
-    webcolors.put("DarkViolet"          , "#9400D3")
-    webcolors.put("DeepPink"            , "#FF1493")
-    webcolors.put("DeepSkyBlue"         , "#00BFFF")
-    webcolors.put("DimGray"             , "#696969")
-    webcolors.put("DimGrey"             , "#696969")
-    webcolors.put("DodgerBlue"          , "#1E90FF")
-    webcolors.put("FireBrick"           , "#B22222")
-    webcolors.put("FloralWhite"         , "#FFFAF0")
-    webcolors.put("ForestGreen"         , "#228B22")
-    webcolors.put("Fuchsia"             , "#FF00FF")
-    webcolors.put("Gainsboro"           , "#DCDCDC")
-    webcolors.put("GhostWhite"          , "#F8F8FF")
-    webcolors.put("Gold"                , "#FFD700")
-    webcolors.put("GoldenRod"           , "#DAA520")
-    webcolors.put("Gray"                , "#808080")
-    webcolors.put("Grey"                , "#808080")
-    webcolors.put("Green"               , "#008000")
-    webcolors.put("GreenYellow"         , "#ADFF2F")
-    webcolors.put("HoneyDew"            , "#F0FFF0")
-    webcolors.put("HotPink"             , "#FF69B4")
-    webcolors.put("IndianRed"           , "#CD5C5C")
-    webcolors.put("Indigo"              , "#4B0082")
-    webcolors.put("Ivory"               , "#FFFFF0")
-    webcolors.put("Khaki"               , "#F0E68C")
-    webcolors.put("Lavender"            , "#E6E6FA")
-    webcolors.put("LavenderBlush"       , "#FFF0F5")
-    webcolors.put("LawnGreen"           , "#7CFC00")
-    webcolors.put("LemonChiffon"        , "#FFFACD")
-    webcolors.put("LightBlue"           , "#ADD8E6")
-    webcolors.put("LightCoral"          , "#F08080")
-    webcolors.put("LightCyan"           , "#E0FFFF")
-    webcolors.put("LightGoldenRodYellow", "#FAFAD2")
-    webcolors.put("LightGray"           , "#D3D3D3")
-    webcolors.put("LightGrey"           , "#D3D3D3")
-    webcolors.put("LightGreen"          , "#90EE90")
-    webcolors.put("LightPink"           , "#FFB6C1")
-    webcolors.put("LightSalmon"         , "#FFA07A")
-    webcolors.put("LightSeaGreen"       , "#20B2AA")
-    webcolors.put("LightSkyBlue"        , "#87CEFA")
-    webcolors.put("LightSlateGray"      , "#778899")
-    webcolors.put("LightSlateGrey"      , "#778899")
-    webcolors.put("LightSteelBlue"      , "#B0C4DE")
-    webcolors.put("LightYellow"         , "#FFFFE0")
-    webcolors.put("Lime"                , "#00FF00")
-    webcolors.put("LimeGreen"           , "#32CD32")
-    webcolors.put("Linen"               , "#FAF0E6")
-    webcolors.put("Magenta"             , "#FF00FF")
-    webcolors.put("Maroon"              , "#800000")
-    webcolors.put("MediumAquaMarine"    , "#66CDAA")
-    webcolors.put("MediumBlue"          , "#0000CD")
-    webcolors.put("MediumOrchid"        , "#BA55D3")
-    webcolors.put("MediumPurple"        , "#9370DB")
-    webcolors.put("MediumSeaGreen"      , "#3CB371")
-    webcolors.put("MediumSlateBlue"     , "#7B68EE")
-    webcolors.put("MediumSpringGreen"   , "#00FA9A")
-    webcolors.put("MediumTurquoise"     , "#48D1CC")
-    webcolors.put("MediumVioletRed"     , "#C71585")
-    webcolors.put("MidnightBlue"        , "#191970")
-    webcolors.put("MintCream"           , "#F5FFFA")
-    webcolors.put("MistyRose"           , "#FFE4E1")
-    webcolors.put("Moccasin"            , "#FFE4B5")
-    webcolors.put("NavajoWhite"         , "#FFDEAD")
-    webcolors.put("Navy"                , "#000080")
-    webcolors.put("OldLace"             , "#FDF5E6")
-    webcolors.put("Olive"               , "#808000")
-    webcolors.put("OliveDrab"           , "#6B8E23")
-    webcolors.put("Orange"              , "#FFA500")
-    webcolors.put("OrangeRed"           , "#FF4500")
-    webcolors.put("Orchid"              , "#DA70D6")
-    webcolors.put("PaleGoldenRod"       , "#EEE8AA")
-    webcolors.put("PaleGreen"           , "#98FB98")
-    webcolors.put("PaleTurquoise"       , "#AFEEEE")
-    webcolors.put("PaleVioletRed"       , "#DB7093")
-    webcolors.put("PapayaWhip"          , "#FFEFD5")
-    webcolors.put("PeachPuff"           , "#FFDAB9")
-    webcolors.put("Peru"                , "#CD853F")
-    webcolors.put("Pink"                , "#FFC0CB")
-    webcolors.put("Plum"                , "#DDA0DD")
-    webcolors.put("PowderBlue"          , "#B0E0E6")
-    webcolors.put("Purple"              , "#800080")
-    webcolors.put("RebeccaPurple"       , "#663399")
-    webcolors.put("Red"                 , "#FF0000")
-    webcolors.put("RosyBrown"           , "#BC8F8F")
-    webcolors.put("RoyalBlue"           , "#4169E1")
-    webcolors.put("SaddleBrown"         , "#8B4513")
-    webcolors.put("Salmon"              , "#FA8072")
-    webcolors.put("SandyBrown"          , "#F4A460")
-    webcolors.put("SeaGreen"            , "#2E8B57")
-    webcolors.put("SeaShell"            , "#FFF5EE")
-    webcolors.put("Sienna"              , "#A0522D")
-    webcolors.put("Silver"              , "#C0C0C0")
-    webcolors.put("SkyBlue"             , "#87CEEB")
-    webcolors.put("SlateBlue"           , "#6A5ACD")
-    webcolors.put("SlateGray"           , "#708090")
-    webcolors.put("SlateGrey"           , "#708090")
-    webcolors.put("Snow"                , "#FFFAFA")
-    webcolors.put("SpringGreen"         , "#00FF7F")
-    webcolors.put("SteelBlue"           , "#4682B4")
-    webcolors.put("Tan"                 , "#D2B48C")
-    webcolors.put("Teal"                , "#008080")
-    webcolors.put("Thistle"             , "#D8BFD8")
-    webcolors.put("Tomato"              , "#FF6347")
-    webcolors.put("Turquoise"           , "#40E0D0")
-    webcolors.put("Violet"              , "#EE82EE")
-    webcolors.put("Wheat"               , "#F5DEB3")
-    webcolors.put("White"               , "#FFFFFF")
-    webcolors.put("WhiteSmoke"          , "#F5F5F5")
-    webcolors.put("Yellow"              , "#FFFF00")
-    webcolors.put("YellowGreen"         , "#9ACD32")
-}
-
-end
-
-* {smcl}
-* {marker palettes}{bf:Palettes} {hline}
-* Sources: see documentation
-* {asis}
-
-mata:
-
-`SS' `MAIN'::pexists(| `SS' pal)
-{
-    `SS' PAL
-    pragma unset PAL
-    
-    if (Palette(0, PAL, pal)) return(PAL)
-    return("")
-}
-
-void `MAIN'::palette(| `SS' pal, `RS' n, `RV' opt)
-{
-    `Int' rc
-    `SS' PAL
-    pragma unset PAL
-    
-    S = &data1
-    if      (args()<2)  rc = Palette(1, PAL, pal)
-    else if (args()==2) rc = Palette(1, PAL, pal, n)
-    else                rc = Palette(1, PAL, pal, n, opt)
-    if (rc==0) {
-        display("{err}palette '" + pal + "' not found")
-        exit(3499)
-    }
-    S->name = PAL
-    replacedata()
-}
-
-void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' opt)
-{
-    `Int' rc
-    `SS' PAL
-    pragma unset PAL
-    
-    S = &data1
-    if      (args()<2)  rc = Palette(1, PAL, pal)
-    else if (args()==2) rc = Palette(1, PAL, pal, n)
-    else                rc = Palette(1, PAL, pal, n, opt)
-    if (rc==0) {
-        display("{err}palette '" + pal + "' not found")
-        exit(3499)
-    }
-    S->name = PAL
-    appenddata()
-}
-
-`Bool' `MAIN'::Palette(`Bool' r, `SS' p, `SS' pal, | `RS' n0, `RV' opt)
-{   // palette will only be read if r!=0; returns 1 if palette is found and 0 else
-    `Int'  n
-    
-    // prepare
-    n = (n0<. ? n0 : 15)
-    p = strtrim(strlower(pal))
-    
-    // read palette if r; else only check existence and exit
-    if      (P_s2(r, p))                  {; if (!r) return(1); }
-    else if (P_s1(r, p))                  {; if (!r) return(1); }
-    else if (P_s1r(r, p))                 {; if (!r) return(1); }
-    else if (P_economist(r, p))           {; if (!r) return(1); }
-    else if (P_mono(r, p))                {; if (!r) return(1); }
-    else if (P_cblind(r, p))              {; if (!r) return(1); }
-    else if (P_plottig(r, p))             {; if (!r) return(1); }
-    else if (P_538(r, p))                 {; if (!r) return(1); }
-    else if (P_mrc(r, p))                 {; if (!r) return(1); }
-    else if (P_tfl(r, p))                 {; if (!r) return(1); }
-    else if (P_burd(r, p))                {; if (!r) return(1); }
-    else if (P_lean(r, p))                {; if (!r) return(1); }
-    else if (P_tableau(r, p))             {; if (!r) return(1); }
-    else if (P_webcolors(r, p))           {; if (!r) return(1); }
-    else if (P_d3(r, p))                  {; if (!r) return(1); }
-    else if (P_Accent(r, p))              {; if (!r) return(1); }
-    else if (P_Dark2(r, p))               {; if (!r) return(1); }
-    else if (P_Paired(r, p))              {; if (!r) return(1); }
-    else if (P_Pastel1(r, p))             {; if (!r) return(1); }
-    else if (P_Pastel2(r, p))             {; if (!r) return(1); }
-    else if (P_Set1(r, p))                {; if (!r) return(1); }
-    else if (P_Set2(r, p))                {; if (!r) return(1); }
-    else if (P_Set3(r, p))                {; if (!r) return(1); }
-    else if (P_Blues(r, p, n))            {; if (!r) return(1); }
-    else if (P_BuGn(r, p, n))             {; if (!r) return(1); }
-    else if (P_BuPu(r, p, n))             {; if (!r) return(1); }
-    else if (P_GnBu(r, p, n))             {; if (!r) return(1); }
-    else if (P_Greens(r, p, n))           {; if (!r) return(1); }
-    else if (P_Greys(r, p, n))            {; if (!r) return(1); }
-    else if (P_OrRd(r, p, n))             {; if (!r) return(1); }
-    else if (P_Oranges(r, p, n))          {; if (!r) return(1); }
-    else if (P_PuBu(r, p, n))             {; if (!r) return(1); }
-    else if (P_PuBuGn(r, p, n))           {; if (!r) return(1); }
-    else if (P_PuRd(r, p, n))             {; if (!r) return(1); }
-    else if (P_Purples(r, p, n))          {; if (!r) return(1); }
-    else if (P_RdPu(r, p, n))             {; if (!r) return(1); }
-    else if (P_Reds(r, p, n))             {; if (!r) return(1); }
-    else if (P_YlGn(r, p, n))             {; if (!r) return(1); }
-    else if (P_YlGnBu(r, p, n))           {; if (!r) return(1); }
-    else if (P_YlOrBr(r, p, n))           {; if (!r) return(1); }
-    else if (P_YlOrRd(r, p, n))           {; if (!r) return(1); }
-    else if (P_BrBG(r, p, n))             {; if (!r) return(1); }
-    else if (P_PRGn(r, p, n))             {; if (!r) return(1); }
-    else if (P_PiYG(r, p, n))             {; if (!r) return(1); }
-    else if (P_PuOr(r, p, n))             {; if (!r) return(1); }
-    else if (P_RdBu(r, p, n))             {; if (!r) return(1); }
-    else if (P_RdGy(r, p, n))             {; if (!r) return(1); }
-    else if (P_RdYlBu(r, p, n))           {; if (!r) return(1); }
-    else if (P_RdYlGn(r, p, n))           {; if (!r) return(1); }
-    else if (P_Spectral(r, p, n))         {; if (!r) return(1); }
-    else if (P_ptol(r, p, n))             {; if (!r) return(1); }
-    else if (P_lin(r, p))                 {; if (!r) return(1); }
-    else if (P_spmap(r, p, n))            {; if (!r) return(1); }
-    else if (P_sfso(r, p))                {; if (!r) return(1); }
-    else if (P_viridis(r, p, n, opt))     return(1)
-    else if (P_magma(r, p, n, opt))       return(1)
-    else if (P_inferno(r, p, n, opt))     return(1)
-    else if (P_plasma(r, p, n, opt))      return(1)
-    else if (P_cividis(r, p, n, opt))     return(1)
-    else if (P_twilight(r, p, n, opt))    return(1)
-    else if (P_matplotlib(r, p, n, opt))  return(1)
-    else return(0)
-    
-    // interpolation/recycling
-    if (n0<. & n0!=(S->n)) {
-        if (n<(S->n) & (S->pclass)=="qualitative") _recycle(n0) // select first n colors
-        else if (!length(opt) | opt==0) { // ok to recycle or interpolate
-            if ((S->pclass)=="qualitative") _recycle(n0)
-            else                            _ipolate(n0)
-        }
-    }
-    return(1)
-}
-void `MAIN'::P_pclass(`RC' i)
-{
-    S->pclass = ("qualitative","sequential","diverging")[i]
-}
-void `MAIN'::P_colors(`SS' s) colors_set(s, ",")
-void `MAIN'::P_names(`SS' s)  names_set(s, ",")
-void `MAIN'::P_info(`SS' s)   info_set(s, ",")
-void `MAIN'::P_note(`SS' s)   S->note = s
-void `MAIN'::P_source(`SS' s) S->source = s
-`Bool' `MAIN'::P_s2(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "s2")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("navy,maroon,forest_green,dkorange,teal,cranberry,lavender,khaki,sienna,emidblue,emerald,brown,erose,gold,bluishgray")
-    P_note("colors used for p1 to p15 in Stata's s2color scheme")
-    return(1)
-}
-`Bool' `MAIN'::P_s1(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "s1")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("dkgreen,orange_red,navy,maroon,teal,sienna,orange,magenta,cyan,red,lime,brown,purple,olive_teal,ltblue")
-    P_note("colors used for p1 to p15 in Stata's s1color scheme")
-    return(1)
-}
-`Bool' `MAIN'::P_s1r(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "s1r")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("yellow,lime,midblue,magenta,orange,red,ltblue,sandb,mint,olive_teal,orange_red,blue,pink,teal,sienna")
-    P_note("colors used for p1 to p15 in Stata's s1rcolor scheme")
-    return(1)
-}
-`Bool' `MAIN'::P_economist(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "economist")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("edkblue,emidblue,eltblue,emerald,erose,ebblue,eltgreen,stone,navy,maroon,brown,lavender,teal,cranberry,khaki")
-    P_note("colors used for p1 to p15 in Stata's economist scheme")
-    return(1)
-}
-
-`Bool' `MAIN'::P_mono(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "mono")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("gs6,gs10,gs8,gs4,black,gs12,gs2,gs7,gs9,gs11,gs13,gs5,gs3,gs14,gs15")
-    P_note("gray scales used for p1 to p15 in Stata's monochrome schemes")
-    return(1)
-}
-`Bool' `MAIN'::P_cblind(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "cblind")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("#000000,#999999,#E69F00,#56B4E9,#009E73,#F0E442,#0072B2,#D55E00,#CC79A7")
-    P_names("Black,Gray,Orange,Sky Blue,bluish Green,Yellow,Blue,Vermillion,reddish Purple")
-    P_note("colorblind-friendly colors suggested by Okabe and Ito (2002), including gray as suggested at www.cookbook-r.com")
-    P_source("Okabe and Ito (2002)")
-    return(1)
-}
-`Bool' `MAIN'::P_plottig(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "plottig")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("black,97 156 255,0 192 175,201 152 0,185 56 255,248 118 109,0 176 246,0 186 56,163 165 0,231 107 243,255 103 164,0 188 216,107 177 0,229 135 0,253 97 209")
-    P_names("black,plb1,plg1,ply1,pll1,plr1,plb2,plg2,ply2,pll2,plr2,plb3,plg3,ply3,pll3")
-    P_info(",blue,lght greenish,yellow/brownish,purple,red,bluish,greenish,yellow/brownish,purple,red,blue,green,orange,purple")
-    P_note("colors used for p1 to p15 in the plottig scheme by Bischof (2017)")
-    P_source("Bischof (2017)")
-    return(1)
-}
-`Bool' `MAIN'::P_538(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "538")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("3 144 214,254 48 11,120 172 68,247 187 5,229 138 233,254 133 3,242 242 242,205 205 206,155 155 155,162 204 246,254 181 167,42 161 237,255 244 241")
-    P_names("538b,538r,538g,538y,538m,538o,538background,538axis,538label,538bs6,538rs6,538bs1,538rs11")
-    P_info(",,,,,,,,,used for ci,used for ci2,used for contour_begin,used for contour_end")
-    P_note("colors used for p1 to p6, background, labels, axes etc. in the 538 scheme by Bischof (2017)")
-    P_source("Bischof (2017)")
-    return(1)
-}
-`Bool' `MAIN'::P_mrc(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "mrc")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("33 103 126,106 59 119,130 47 90,208 114 50,255 219 0,181 211 52,138 121 103")
-    P_names("mrcblue,mrcpurple,mrcred,mrcorange,mrcyellow,mrcgreen,mrcgrey")
-    P_note("colors used for p1 to p7 in the mrc scheme by Morris (2013)")
-    P_source("Morris (2013)")
-    return(1)
-}
-`Bool' `MAIN'::P_tfl(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "tfl")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("220 36 31, 0 25 168, 0 114 41, 232 106 16, 137 78 36, 117 16 86, 255 206 0, 65 75 86")
-    P_names("tflred,tflblue,tflgreen,tflorange,tflbrown,tflpurple,tflyellow,tflgrey")
-    P_note("colors used for p1 to p8 in the tfl scheme by Morris (2015)")
-    P_source("Morris (2015)")
-    return(1)
-}
-`Bool' `MAIN'::P_burd(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "burd")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("33 102 172,178 24 43,27 120 55,230 97 1,1 102 94,197 27 125,118 42 131,140 81 10,77 77 77,103 169 207,209 229 240,239 138 98,253 219 199")
-    P_names("Bu,Rd,Gn,Or,BG,Pi,Pu,Br,Gy")
-    P_info("Bu from RdBu-7,Rd from RdBu-7,Gn from PRGn-7,Or from PuOr-7,BG from BrBG-7,Pi from PiYG-7,Pu from PuOr-7,Br from BrBG-7,Gy from RdGy-7,used for ci_arealine,used for ci_area,used for ci2_arealine,used for ci2_area")
-    P_note("colors used for p1 to p9 and for CIs in the burd scheme by Briatte (2013)")
-    P_source("Briatte (2013)")
-    return(1)
-}
-`Bool' `MAIN'::P_lean(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "lean")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("gs14,gs10,gs12,gs8,gs16,gs13,gs10,gs7,gs4,gs0,gs14,gs10,gs12,gs0,gs16")
-    P_note("gray scales used for p1area to p15area in schemes lean1 and lean2 by Juul (2003)")
-    P_source("Juul (2003)")
-    return(1)
-}
-`Bool' `MAIN'::P_tableau(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "tableau")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf,#aec7e8,#ffbb78,#98df8a,#ff9896,#c5b0d5,#c49c94,#f7b6d2,#c7c7c7,#dbdb8d,#9edae5")
-    P_note("categorical colors provided by Lin et al. (2013)")
-    P_source("Lin et al. (2013)")
-    return(1)
-}
-`Bool' `MAIN'::P_Accent(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Accent")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("127 201 127,190 174 212,253 192 134,255 255 153,56 108 176,240 2 127,191 91 23,102 102 102")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Dark2(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Dark2")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("27 158 119,217 95 2,117 112 179,231 41 138,102 166 30,230 171 2,166 118 29,102 102 102")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Paired(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Paired")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("166 206 227,31 120 180,178 223 138,51 160 44,251 154 153,227 26 28,253 191 111,255 127 0,202 178 214,106 61 154,255 255 153,177 89 40")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Pastel1(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Pastel1")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("251 180 174,179 205 227,204 235 197,222 203 228,254 217 166,255 255 204,229 216 189,253 218 236,242 242 242")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Pastel2(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Pastel2")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("179 226 205,253 205 172,203 213 232,244 202 228,230 245 201,255 242 174,241 226 204,204 204 204")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Set1(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Set1")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("228 26 28,55 126 184,77 175 74,152 78 163,255 127 0,255 255 51,166 86 40,247 129 191,153 153 153")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Set2(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Set2")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("102 194 165,252 141 98,141 160 203,231 138 195,166 216 84,255 217 47,229 196 148,179 179 179")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Set3(`Bool' r, `SS' p)
-{
-    if (!smatch(p, "Set3")) return(0)
-    if (!r) return(1)
-    P_pclass(1)
-    P_colors("141 211 199,255 255 179,190 186 218,251 128 114,128 177 211,253 180 98,179 222 105,252 205 229,217 217 217,188 128 189,204 235 197,255 237 111")
-    P_note("categorical colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Blues(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "Blues")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("222 235 247,158 202 225,49 130 189")
-    else if (n==4)  P_colors("239 243 255,189 215 231,107 174 214,33 113 181")
-    else if (n==5)  P_colors("239 243 255,189 215 231,107 174 214,49 130 189,8 81 156")
-    else if (n==6)  P_colors("239 243 255,198 219 239,158 202 225,107 174 214,49 130 189,8 81 156")
-    else if (n==7)  P_colors("239 243 255,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
-    else if (n==8)  P_colors("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 69 148")
-    else if (n>=9)  P_colors("247 251 255,222 235 247,198 219 239,158 202 225,107 174 214,66 146 198,33 113 181,8 81 156,8 48 107")
-    P_note("sequential colors (single hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_BuGn(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "BuGn")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("229 245 249,153 216 201,44 162 95")
-    else if (n==4)  P_colors("237 248 251,178 226 226,102 194 164,35 139 69")
-    else if (n==5)  P_colors("237 248 251,178 226 226,102 194 164,44 162 95,0 109 44")
-    else if (n==6)  P_colors("237 248 251,204 236 230,153 216 201,102 194 164,44 162 95,0 109 44")
-    else if (n==7)  P_colors("237 248 251,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
-    else if (n==8)  P_colors("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 88 36")
-    else if (n>=9)  P_colors("247 252 253,229 245 249,204 236 230,153 216 201,102 194 164,65 174 118,35 139 69,0 109 44,0 68 27")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_BuPu(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "BuPu")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("224 236 244,158 188 218,136 86 167")
-    else if (n==4)  P_colors("237 248 251,179 205 227,140 150 198,136 65 157")
-    else if (n==5)  P_colors("237 248 251,179 205 227,140 150 198,136 86 167,129 15 124")
-    else if (n==6)  P_colors("237 248 251,191 211 230,158 188 218,140 150 198,136 86 167,129 15 124")
-    else if (n==7)  P_colors("237 248 251,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
-    else if (n==8)  P_colors("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,110 1 107")
-    else if (n>=9)  P_colors("247 252 253,224 236 244,191 211 230,158 188 218,140 150 198,140 107 177,136 65 157,129 15 124,77 0 75")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_GnBu(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "GnBu")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("224 243 219,168 221 181,67 162 202")
-    else if (n==4)  P_colors("240 249 232,186 228 188,123 204 196,43 140 190")
-    else if (n==5)  P_colors("240 249 232,186 228 188,123 204 196,67 162 202,8 104 172")
-    else if (n==6)  P_colors("240 249 232,204 235 197,168 221 181,123 204 196,67 162 202,8 104 172")
-    else if (n==7)  P_colors("240 249 232,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
-    else if (n==8)  P_colors("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 88 158")
-    else if (n>=9)  P_colors("247 252 240,224 243 219,204 235 197,168 221 181,123 204 196,78 179 211,43 140 190,8 104 172,8 64 129")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Greens(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "Greens")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("229 245 224,161 217 155,49 163 84")
-    else if (n==4)  P_colors("237 248 233,186 228 179,116 196 118,35 139 69")
-    else if (n==5)  P_colors("237 248 233,186 228 179,116 196 118,49 163 84,0 109 44")
-    else if (n==6)  P_colors("237 248 233,199 233 192,161 217 155,116 196 118,49 163 84,0 109 44")
-    else if (n==7)  P_colors("237 248 233,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
-    else if (n==8)  P_colors("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 90 50")
-    else if (n>=9)  P_colors("247 252 245,229 245 224,199 233 192,161 217 155,116 196 118,65 171 93,35 139 69,0 109 44,0 68 27")
-    P_note("sequential colors (single hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Greys(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "Greys")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("240 240 240,189 189 189,99 99 99")
-    else if (n==4)  P_colors("247 247 247,204 204 204,150 150 150,82 82 82")
-    else if (n==5)  P_colors("247 247 247,204 204 204,150 150 150,99 99 99,37 37 37")
-    else if (n==6)  P_colors("247 247 247,217 217 217,189 189 189,150 150 150,99 99 99,37 37 37")
-    else if (n==7)  P_colors("247 247 247,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
-    else if (n==8)  P_colors("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37")
-    else if (n>=9)  P_colors("255 255 255,240 240 240,217 217 217,189 189 189,150 150 150,115 115 115,82 82 82,37 37 37,0 0 0")
-    P_note("sequential colors (single hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_OrRd(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "OrRd")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("254 232 200,253 187 132,227 74 51")
-    else if (n==4)  P_colors("254 240 217,253 204 138,252 141 89,215 48 31")
-    else if (n==5)  P_colors("254 240 217,253 204 138,252 141 89,227 74 51,179 0 0")
-    else if (n==6)  P_colors("254 240 217,253 212 158,253 187 132,252 141 89,227 74 51,179 0 0")
-    else if (n==7)  P_colors("254 240 217,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
-    else if (n==8)  P_colors("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,153 0 0")
-    else if (n>=9)  P_colors("255 247 236,254 232 200,253 212 158,253 187 132,252 141 89,239 101 72,215 48 31,179 0 0,127 0 0")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Oranges(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "Oranges")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("254 230 206,253 174 107,230 85 13")
-    else if (n==4)  P_colors("254 237 222,253 190 133,253 141 60,217 71 1")
-    else if (n==5)  P_colors("254 237 222,253 190 133,253 141 60,230 85 13,166 54 3")
-    else if (n==6)  P_colors("254 237 222,253 208 162,253 174 107,253 141 60,230 85 13,166 54 3")
-    else if (n==7)  P_colors("254 237 222,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
-    else if (n==8)  P_colors("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,140 45 4")
-    else if (n>=9)  P_colors("255 245 235,254 230 206,253 208 162,253 174 107,253 141 60,241 105 19,217 72 1,166 54 3,127 39 4")
-    P_note("sequential colors (single hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_PuBu(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "PuBu")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("236 231 242,166 189 219,43 140 190")
-    else if (n==4)  P_colors("241 238 246,189 201 225,116 169 207,5 112 176")
-    else if (n==5)  P_colors("241 238 246,189 201 225,116 169 207,43 140 190,4 90 141")
-    else if (n==6)  P_colors("241 238 246,208 209 230,166 189 219,116 169 207,43 140 190,4 90 141")
-    else if (n==7)  P_colors("241 238 246,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
-    else if (n==8)  P_colors("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,3 78 123")
-    else if (n>=9)  P_colors("255 247 251,236 231 242,208 209 230,166 189 219,116 169 207,54 144 192,5 112 176,4 90 141,2 56 88")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_PuBuGn(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "PuBuGn")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("236 226 240,166 189 219,28 144 153")
-    else if (n==4)  P_colors("246 239 247,189 201 225,103 169 207,2 129 138")
-    else if (n==5)  P_colors("246 239 247,189 201 225,103 169 207,28 144 153,1 108 89")
-    else if (n==6)  P_colors("246 239 247,208 209 230,166 189 219,103 169 207,28 144 153,1 108 89")
-    else if (n==7)  P_colors("246 239 247,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
-    else if (n==8)  P_colors("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 100 80")
-    else if (n>=9)  P_colors("255 247 251,236 226 240,208 209 230,166 189 219,103 169 207,54 144 192,2 129 138,1 108 89,1 70 54")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_PuRd(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "PuRd")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("231 225 239,201 148 199,221 28 119")
-    else if (n==4)  P_colors("241 238 246,215 181 216,223 101 176,206 18 86")
-    else if (n==5)  P_colors("241 238 246,215 181 216,223 101 176,221 28 119,152 0 67")
-    else if (n==6)  P_colors("241 238 246,212 185 218,201 148 199,223 101 176,221 28 119,152 0 67")
-    else if (n==7)  P_colors("241 238 246,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
-    else if (n==8)  P_colors("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,145 0 63")
-    else if (n>=9)  P_colors("247 244 249,231 225 239,212 185 218,201 148 199,223 101 176,231 41 138,206 18 86,152 0 67,103 0 31")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Purples(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "Purples")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("239 237 245,188 189 220,117 107 177")
-    else if (n==4)  P_colors("242 240 247,203 201 226,158 154 200,106 81 163")
-    else if (n==5)  P_colors("242 240 247,203 201 226,158 154 200,117 107 177,84 39 143")
-    else if (n==6)  P_colors("242 240 247,218 218 235,188 189 220,158 154 200,117 107 177,84 39 143")
-    else if (n==7)  P_colors("242 240 247,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
-    else if (n==8)  P_colors("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,74 20 134")
-    else if (n>=9)  P_colors("252 251 253,239 237 245,218 218 235,188 189 220,158 154 200,128 125 186,106 81 163,84 39 143,63 0 125")
-    P_note("sequential colors (single hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_RdPu(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "RdPu")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("253 224 221,250 159 181,197 27 138")
-    else if (n==4)  P_colors("254 235 226,251 180 185,247 104 161,174 1 126")
-    else if (n==5)  P_colors("254 235 226,251 180 185,247 104 161,197 27 138,122 1 119")
-    else if (n==6)  P_colors("254 235 226,252 197 192,250 159 181,247 104 161,197 27 138,122 1 119")
-    else if (n==7)  P_colors("254 235 226,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
-    else if (n==8)  P_colors("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119")
-    else if (n>=9)  P_colors("255 247 243,253 224 221,252 197 192,250 159 181,247 104 161,221 52 151,174 1 126,122 1 119,73 0 106")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Reds(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "Reds")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("254 224 210,252 146 114,222 45 38")
-    else if (n==4)  P_colors("254 229 217,252 174 145,251 106 74,203 24 29")
-    else if (n==5)  P_colors("254 229 217,252 174 145,251 106 74,222 45 38,165 15 21")
-    else if (n==6)  P_colors("254 229 217,252 187 161,252 146 114,251 106 74,222 45 38,165 15 21")
-    else if (n==7)  P_colors("254 229 217,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
-    else if (n==8)  P_colors("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,153 0 13")
-    else if (n>=9)  P_colors("255 245 240,254 224 210,252 187 161,252 146 114,251 106 74,239 59 44,203 24 29,165 15 21,103 0 13")
-    P_note("sequential colors (single hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_YlGn(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "YlGn")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("247 252 185,173 221 142,49 163 84")
-    else if (n==4)  P_colors("255 255 204,194 230 153,120 198 121,35 132 67")
-    else if (n==5)  P_colors("255 255 204,194 230 153,120 198 121,49 163 84,0 104 55")
-    else if (n==6)  P_colors("255 255 204,217 240 163,173 221 142,120 198 121,49 163 84,0 104 55")
-    else if (n==7)  P_colors("255 255 204,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
-    else if (n==8)  P_colors("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 90 50")
-    else if (n>=9)  P_colors("255 255 229,247 252 185,217 240 163,173 221 142,120 198 121,65 171 93,35 132 67,0 104 55,0 69 41")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_YlGnBu(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "YlGnBu")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("237 248 177,127 205 187,44 127 184")
-    else if (n==4)  P_colors("255 255 204,161 218 180,65 182 196,34 94 168")
-    else if (n==5)  P_colors("255 255 204,161 218 180,65 182 196,44 127 184,37 52 148")
-    else if (n==6)  P_colors("255 255 204,199 233 180,127 205 187,65 182 196,44 127 184,37 52 148")
-    else if (n==7)  P_colors("255 255 204,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
-    else if (n==8)  P_colors("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,12 44 132")
-    else if (n>=9)  P_colors("255 255 217,237 248 177,199 233 180,127 205 187,65 182 196,29 145 192,34 94 168,37 52 148,8 29 88")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_YlOrBr(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "YlOrBr")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("255 247 188,254 196 79,217 95 14")
-    else if (n==4)  P_colors("255 255 212,254 217 142,254 153 41,204 76 2")
-    else if (n==5)  P_colors("255 255 212,254 217 142,254 153 41,217 95 14,153 52 4")
-    else if (n==6)  P_colors("255 255 212,254 227 145,254 196 79,254 153 41,217 95 14,153 52 4")
-    else if (n==7)  P_colors("255 255 212,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
-    else if (n==8)  P_colors("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,140 45 4")
-    else if (n>=9)  P_colors("255 255 229,255 247 188,254 227 145,254 196 79,254 153 41,236 112 20,204 76 2,153 52 4,102 37 6")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_YlOrRd(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "YlOrRd")) return(0)
-    if (!r) return(1)
-    P_pclass(2)
-    if      (n<=3)  P_colors("255 237 160,254 178 76,240 59 32")
-    else if (n==4)  P_colors("255 255 178,254 204 92,253 141 60,227 26 28")
-    else if (n==5)  P_colors("255 255 178,254 204 92,253 141 60,240 59 32,189 0 38")
-    else if (n==6)  P_colors("255 255 178,254 217 118,254 178 76,253 141 60,240 59 32,189 0 38")
-    else if (n==7)  P_colors("255 255 178,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
-    else if (n==8)  P_colors("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,177 0 38")
-    else if (n>=9)  P_colors("255 255 204,255 237 160,254 217 118,254 178 76,253 141 60,252 78 42,227 26 28,189 0 38,128 0 38")
-    P_note("sequential colors (multi-hue) by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_BrBG(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "BrBG")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("216 179 101,245 245 245,90 180 172")
-    else if (n==4)  P_colors("166 97 26,223 194 125,128 205 193,1 133 113")
-    else if (n==5)  P_colors("166 97 26,223 194 125,245 245 245,128 205 193,1 133 113")
-    else if (n==6)  P_colors("140 81 10,216 179 101,246 232 195,199 234 229,90 180 172,1 102 94")
-    else if (n==7)  P_colors("140 81 10,216 179 101,246 232 195,245 245 245,199 234 229,90 180 172,1 102 94")
-    else if (n==8)  P_colors("140 81 10,191 129 45,223 194 125,246 232 195,199 234 229,128 205 193,53 151 143,1 102 94")
-    else if (n==9)  P_colors("140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94")
-    else if (n==10) P_colors("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
-    else if (n>=11) P_colors("84 48 5,140 81 10,191 129 45,223 194 125,246 232 195,245 245 245,199 234 229,128 205 193,53 151 143,1 102 94,0 60 48")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_PRGn(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "PRGn")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("175 141 195,247 247 247,127 191 123")
-    else if (n==4)  P_colors("123 50 148,194 165 207,166 219 160,0 136 55")
-    else if (n==5)  P_colors("123 50 148,194 165 207,247 247 247,166 219 160,0 136 55")
-    else if (n==6)  P_colors("118 42 131,175 141 195,231 212 232,217 240 211,127 191 123,27 120 55")
-    else if (n==7)  P_colors("118 42 131,175 141 195,231 212 232,247 247 247,217 240 211,127 191 123,27 120 55")
-    else if (n==8)  P_colors("118 42 131,153 112 171,194 165 207,231 212 232,217 240 211,166 219 160,90 174 97,27 120 55")
-    else if (n==9)  P_colors("118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55")
-    else if (n==10) P_colors("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
-    else if (n>=11) P_colors("64 0 75,118 42 131,153 112 171,194 165 207,231 212 232,247 247 247,217 240 211,166 219 160,90 174 97,27 120 55,0 68 27")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_PiYG(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "PiYG")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("233 163 201,247 247 247,161 215 106")
-    else if (n==4)  P_colors("208 28 139,241 182 218,184 225 134,77 172 38")
-    else if (n==5)  P_colors("208 28 139,241 182 218,247 247 247,184 225 134,77 172 38")
-    else if (n==6)  P_colors("197 27 125,233 163 201,253 224 239,230 245 208,161 215 106,77 146 33")
-    else if (n==7)  P_colors("197 27 125,233 163 201,253 224 239,247 247 247,230 245 208,161 215 106,77 146 33")
-    else if (n==8)  P_colors("197 27 125,222 119 174,241 182 218,253 224 239,230 245 208,184 225 134,127 188 65,77 146 33")
-    else if (n==9)  P_colors("197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33")
-    else if (n==10) P_colors("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
-    else if (n>=11) P_colors("142 1 82,197 27 125,222 119 174,241 182 218,253 224 239,247 247 247,230 245 208,184 225 134,127 188 65,77 146 33,39 100 25")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_PuOr(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "PuOr")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("241 163 64,247 247 247,153 142 195")
-    else if (n==4)  P_colors("230 97 1,253 184 99,178 171 210,94 60 153")
-    else if (n==5)  P_colors("230 97 1,253 184 99,247 247 247,178 171 210,94 60 153")
-    else if (n==6)  P_colors("179 88 6,241 163 64,254 224 182,216 218 235,153 142 195,84 39 136")
-    else if (n==7)  P_colors("179 88 6,241 163 64,254 224 182,247 247 247,216 218 235,153 142 195,84 39 136")
-    else if (n==8)  P_colors("179 88 6,224 130 20,253 184 99,254 224 182,216 218 235,178 171 210,128 115 172,84 39 136")
-    else if (n==9)  P_colors("179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136")
-    else if (n==10) P_colors("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
-    else if (n>=11) P_colors("127 59 8,179 88 6,224 130 20,253 184 99,254 224 182,247 247 247,216 218 235,178 171 210,128 115 172,84 39 136,45 0 75")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_RdBu(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "RdBu")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("239 138 98,247 247 247,103 169 207")
-    else if (n==4)  P_colors("202 0 32,244 165 130,146 197 222,5 113 176")
-    else if (n==5)  P_colors("202 0 32,244 165 130,247 247 247,146 197 222,5 113 176")
-    else if (n==6)  P_colors("178 24 43,239 138 98,253 219 199,209 229 240,103 169 207,33 102 172")
-    else if (n==7)  P_colors("178 24 43,239 138 98,253 219 199,247 247 247,209 229 240,103 169 207,33 102 172")
-    else if (n==8)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,209 229 240,146 197 222,67 147 195,33 102 172")
-    else if (n==9)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172")
-    else if (n==10) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
-    else if (n>=11) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,247 247 247,209 229 240,146 197 222,67 147 195,33 102 172,5 48 97")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_RdGy(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "RdGy")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("239 138 98,255 255 255,153 153 153")
-    else if (n==4)  P_colors("202 0 32,244 165 130,186 186 186,64 64 64")
-    else if (n==5)  P_colors("202 0 32,244 165 130,255 255 255,186 186 186,64 64 64")
-    else if (n==6)  P_colors("178 24 43,239 138 98,253 219 199,224 224 224,153 153 153,77 77 77")
-    else if (n==7)  P_colors("178 24 43,239 138 98,253 219 199,255 255 255,224 224 224,153 153 153,77 77 77")
-    else if (n==8)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,224 224 224,186 186 186,135 135 135,77 77 77")
-    else if (n==9)  P_colors("178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77")
-    else if (n==10) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
-    else if (n>=11) P_colors("103 0 31,178 24 43,214 96 77,244 165 130,253 219 199,255 255 255,224 224 224,186 186 186,135 135 135,77 77 77,26 26 26")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_RdYlBu(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "RdYlBu")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("252 141 89,255 255 191,145 191 219")
-    else if (n==4)  P_colors("215 25 28,253 174 97,171 217 233,44 123 182")
-    else if (n==5)  P_colors("215 25 28,253 174 97,255 255 191,171 217 233,44 123 182")
-    else if (n==6)  P_colors("215 48 39,252 141 89,254 224 144,224 243 248,145 191 219,69 117 180")
-    else if (n==7)  P_colors("215 48 39,252 141 89,254 224 144,255 255 191,224 243 248,145 191 219,69 117 180")
-    else if (n==8)  P_colors("215 48 39,244 109 67,253 174 97,254 224 144,224 243 248,171 217 233,116 173 209,69 117 180")
-    else if (n==9)  P_colors("215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180")
-    else if (n==10) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
-    else if (n>=11) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 144,255 255 191,224 243 248,171 217 233,116 173 209,69 117 180,49 54 149")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_RdYlGn(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "RdYlGn")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("252 141 89,255 255 191,145 207 96")
-    else if (n==4)  P_colors("215 25 28,253 174 97,166 217 106,26 150 65")
-    else if (n==5)  P_colors("215 25 28,253 174 97,255 255 191,166 217 106,26 150 65")
-    else if (n==6)  P_colors("215 48 39,252 141 89,254 224 139,217 239 139,145 207 96,26 152 80")
-    else if (n==7)  P_colors("215 48 39,252 141 89,254 224 139,255 255 191,217 239 139,145 207 96,26 152 80")
-    else if (n==8)  P_colors("215 48 39,244 109 67,253 174 97,254 224 139,217 239 139,166 217 106,102 189 99,26 152 80")
-    else if (n==9)  P_colors("215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80")
-    else if (n==10) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
-    else if (n>=11) P_colors("165 0 38,215 48 39,244 109 67,253 174 97,254 224 139,255 255 191,217 239 139,166 217 106,102 189 99,26 152 80,0 104 55")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_Spectral(`Bool' r, `SS' p, `RS' n)
-{
-    if (!smatch(p, "Spectral")) return(0)
-    if (!r) return(1)
-    P_pclass(3)
-    if      (n<=3)  P_colors("252 141 89,255 255 191,153 213 148")
-    else if (n==4)  P_colors("215 25 28,253 174 97,171 221 164,43 131 186")
-    else if (n==5)  P_colors("215 25 28,253 174 97,255 255 191,171 221 164,43 131 186")
-    else if (n==6)  P_colors("213 62 79,252 141 89,254 224 139,230 245 152,153 213 148,50 136 189")
-    else if (n==7)  P_colors("213 62 79,252 141 89,254 224 139,255 255 191,230 245 152,153 213 148,50 136 189")
-    else if (n==8)  P_colors("213 62 79,244 109 67,253 174 97,254 224 139,230 245 152,171 221 164,102 194 165,50 136 189")
-    else if (n==9)  P_colors("213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189")
-    else if (n==10) P_colors("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
-    else if (n>=11) P_colors("158 1 66,213 62 79,244 109 67,253 174 97,254 224 139,255 255 191,230 245 152,171 221 164,102 194 165,50 136 189,94 79 162")
-    P_note("diverging colors by Brewer et al. (2003)")
-    P_source("colorbrewer2.org")
-    return(1)
-}
-`Bool' `MAIN'::P_viridis(`Bool' r, `SS' p, `RS' n, `RV' range)
-{
-    if (!smatch(p, "viridis")) return(0)
-    if (!r) return(1)
-    _matplotlib(p, n, range)
-    return(1)
-}
-`Bool' `MAIN'::P_magma(`Bool' r, `SS' p, `RS' n, `RV' range)
-{
-    if (!smatch(p, "magma")) return(0)
-    if (!r) return(1)
-    _matplotlib(p, n, range)
-    return(1)
-}
-`Bool' `MAIN'::P_inferno(`Bool' r, `SS' p, `RS' n, `RV' range)
-{
-    if (!smatch(p, "inferno")) return(0)
-    if (!r) return(1)
-    _matplotlib(p, n, range)
-    return(1)
-}
-`Bool' `MAIN'::P_plasma(`Bool' r, `SS' p, `RS' n, `RV' range)
-{
-    if (!smatch(p, "plasma")) return(0)
-    if (!r) return(1)
-    _matplotlib(p, n, range)
-    return(1)
-}
-`Bool' `MAIN'::P_cividis(`Bool' r, `SS' p, `RS' n, `RV' range)
-{
-    if (!smatch(p, "cividis")) return(0)
-    if (!r) return(1)
-    _matplotlib(p, n, range)
-    return(1)
-}
-`Bool' `MAIN'::P_twilight(`Bool' r, `SS' p, `RS' n, `RV' range)
-{
-    if      (!smatch(gettok(p), "twilight")) return(0)
-    if      (smatch(p, "twilight"))          {; if (!r) return(1); }
-    else if (smatch(p, "twilight shifted"))  {; if (!r) return(1); }
-    else return(0)
-    _matplotlib(p, n, range)
-    return(1)
-}
-`Bool' `MAIN'::P_matplotlib(`Bool' r, `SS' p, `RS' n, `RV' range)
-{
-    `SS' rest
-    pragma unset rest
-    
-    if      (!smatch(gettok(p, rest), "matplotlib"))    return(0)
-    if      (smatch(p, "matplotlib viridis"))           {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib magma"))             {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib inferno"))           {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib plasma"))            {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib cividis"))           {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib twilight"))          {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib twilight shifted"))  {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib autumn"))            {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib spring"))            {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib summer"))            {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib winter"))            {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib bone"))              {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib cool"))              {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib copper"))            {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib coolwarm"))          {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib jet"))               {; if (!r) return(1); }
-    else if (smatch(p, "matplotlib hot"))               {; if (!r) return(1); }
-    else return(0)
-    _matplotlib(rest, n, range)
-    return(1)
-}
-`Bool' `MAIN'::P_ptol(`Bool' r, `SS' p,`RS' n)
-{
-    `Int' i
-
-    if      (!smatch(gettok(p), "ptol"))     return(0)
-    if      (smatch(p, "ptol qualitative"))  {; if (!r) return(1); i=1; }
-    else if (smatch(p, "ptol rainbow"))      {; if (!r) return(1); i=2; }
-    else if (smatch(p, "ptol diverging"))    {; if (!r) return(1); i=3; }
-    else return(0)
-    P_pclass(i)
-    if (i==1) {
-        if      (n<=1)  P_colors("68 119 170")
-        else if (n==2)  P_colors("68 119 170,204 102 119")
-        else if (n==3)  P_colors("68 119 170,221 204 119,204 102 119")
-        else if (n==4)  P_colors("68 119 170,17 119 51,221 204 119,204 102 119")
-        else if (n==5)  P_colors("51 34 136,136 204 238,17 119 51,221 204 119,204 102 119")
-        else if (n==6)  P_colors("51 34 136,136 204 238,17 119 51,221 204 119,204 102 119,170 68 153")
-        else if (n==7)  P_colors("51 34 136,136 204 238,68 170 153,17 119 51,221 204 119,204 102 119,170 68 153")
-        else if (n==8)  P_colors("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,204 102 119,170 68 153")
-        else if (n==9)  P_colors("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,204 102 119,136 34 85,170 68 153")
-        else if (n==10) P_colors("51 34 136,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
-        else if (n==11) P_colors("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,136 34 85,170 68 153")
-        else if (n>=12) P_colors("51 34 136,102 153 204,136 204 238,68 170 153,17 119 51,153 153 51,221 204 119,102 17 0,204 102 119,170 68 102,136 34 85,170 68 153")
-        P_note("qualitative colors by Tol (2012)")
-    }
-    else if (i==2) {
-        if      (n<=4)  P_colors("64 64 150,87 163 173,222 167 58,217 33 32")
-        else if (n==5)  P_colors("64 64 150,82 157 183,125 184 116,227 156 55,217 33 32")
-        else if (n==6)  P_colors("64 64 150,73 140 194,99 173 153,190 188 72,230 139 51,217 33 32")
-        else if (n==7)  P_colors("120 28 129,63 96 174,83 158 182,109 179 136,202 184 67,231 133 50,217 33 32")
-        else if (n==8)  P_colors("120 28 129,63 86 167,75 145 192,95 170 159,145 189 97,216 175 61,231 124 48,217 33 32")
-        else if (n==9)  P_colors("120 28 129,63 78 161,70 131 193,87 163 173,109 179 136,177 190 78,223 165 58,231 116 47,217 33 32")
-        else if (n==10) P_colors("120 28 129,63 71 155,66 119 189,82 157 183,98 172 155,134 187 106,199 185 68,227 156 55,231 109 46,217 33 32")
-        else if (n==11) P_colors("120 28 129,64 64 150,65 108 183,77 149 190,91 167 167,110 179 135,161 190 86,211 179 63,229 148 53,230 104 45,217 33 32")
-        else if (n>=12) P_colors("120 28 129,65 59 147,64 101 177,72 139 194,85 161 177,99 173 153,127 185 114,181 189 76,217 173 60,230 142 52,230 100 44,217 33 32")
-        P_note("rainbow colors by Tol (2012)")
-    }
-    else {
-        if      (n<=3)  P_colors("153 199 236,255 250 210,245 162 117")
-        else if (n==4)  P_colors("0 139 206,180 221 247,249 189 126,208 50 50")
-        else if (n==5)  P_colors("0 139 206,180 221 247,255 250 210,249 189 126,208 50 50")
-        else if (n==6)  P_colors("58 137 201,153 199 236,230 245 254,255 227 170,245 162 117,210 77 62")
-        else if (n==7)  P_colors("58 137 201,153 199 236,230 245 254,255 250 210,255 227 170,245 162 117,210 77 62")
-        else if (n==8)  P_colors("58 137 201,119 183 229,180 221 247,230 245 254,255 227 170,249 189 126,237 135 94,210 77 62")
-        else if (n==9)  P_colors("58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62")
-        else if (n==10) P_colors("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
-        else if (n>=11) P_colors("61 82 161,58 137 201,119 183 229,180 221 247,230 245 254,255 250 210,255 227 170,249 189 126,237 135 94,210 77 62,174 28 62")
-        P_note("diverging colors by Tol (2012)")
-    }
-    P_source("Tol (2012)")
-    return(1)
-}
-`Bool' `MAIN'::P_d3(`Bool' r, `SS' p)
-{
-    `Int' i
-    
-    if      (smatch(p, "d3 10"))  {; if (!r) return(1); i=1; }
-    else if (smatch(p, "d3 20"))  {; if (!r) return(1); i=2; }
-    else if (smatch(p, "d3 20b")) {; if (!r) return(1); i=3; }
-    else if (smatch(p, "d3 20c")) {; if (!r) return(1); i=4; }
-    else return(0)
-    P_pclass(1)
-    if      (i==1)  P_colors("#1f77b4,#ff7f0e,#2ca02c,#d62728,#9467bd,#8c564b,#e377c2,#7f7f7f,#bcbd22,#17becf")
-    else if (i==2)  P_colors("#1f77b4,#aec7e8,#ff7f0e,#ffbb78,#2ca02c,#98df8a,#d62728,#ff9896,#9467bd,#c5b0d5,#8c564b,#c49c94,#e377c2,#f7b6d2,#7f7f7f,#c7c7c7,#bcbd22,#dbdb8d,#17becf,#9edae5")
-    else if (i==3)  P_colors("#393b79,#5254a3,#6b6ecf,#9c9ede,#637939,#8ca252,#b5cf6b,#cedb9c,#8c6d31,#bd9e39,#e7ba52,#e7cb94,#843c39,#ad494a,#d6616b,#e7969c,#7b4173,#a55194,#ce6dbd,#de9ed6")
-    else            P_colors("#3182bd,#6baed6,#9ecae1,#c6dbef,#e6550d,#fd8d3c,#fdae6b,#fdd0a2,#31a354,#74c476,#a1d99b,#c7e9c0,#756bb1,#9e9ac8,#bcbddc,#dadaeb,#636363,#969696,#bdbdbd,#d9d9d9")
-    P_note("categorical colors from D3.js, using values found at github.com/d3")
-    P_source("github.com/d3")
-    return(1)
-}
-`Bool' `MAIN'::P_lin(`Bool' r, `SS' p)
-{
-    `Int' i
-
-    if      (!smatch(gettok(p), "lin"))             return(0)
-    if      (smatch(p, "lin carcolor"))             {; if (!r) return(1); i=1;  }
-    else if (smatch(p, "lin carcolor algorithm"))   {; if (!r) return(1); i=2;  }
-    else if (smatch(p, "lin food"))                 {; if (!r) return(1); i=3;  }
-    else if (smatch(p, "lin food algorithm"))       {; if (!r) return(1); i=4;  }
-    else if (smatch(p, "lin features"))             {; if (!r) return(1); i=5;  }
-    else if (smatch(p, "lin features algorithm"))   {; if (!r) return(1); i=6;  }
-    else if (smatch(p, "lin activities"))           {; if (!r) return(1); i=7;  }
-    else if (smatch(p, "lin activities algorithm")) {; if (!r) return(1); i=8;  }
-    else if (smatch(p, "lin fruits"))               {; if (!r) return(1); i=9;  }
-    else if (smatch(p, "lin fruits algorithm"))     {; if (!r) return(1); i=10; }
-    else if (smatch(p, "lin vegetables"))           {; if (!r) return(1); i=11; }
-    else if (smatch(p, "lin vegetables algorithm")) {; if (!r) return(1); i=12; }
-    else if (smatch(p, "lin drinks"))               {; if (!r) return(1); i=13; }
-    else if (smatch(p, "lin drinks algorithm"))     {; if (!r) return(1); i=14; }
-    else if (smatch(p, "lin brands"))               {; if (!r) return(1); i=15; }
-    else if (smatch(p, "lin brands algorithm"))     {; if (!r) return(1); i=16; }
-    else return(0)
-    P_pclass(1)
-    if (i==1) {
-        P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
-        P_names("Red,Silver,Black,Green,Brown,Blue")
-        P_note("Turkers-selected car colors by Lin et al. (2013)")
-    }
-    else if (i==2) {
-        P_colors("214 39 40,199 199 199,127 127 127,44 160 44,140 86 75,31 119 180")
-        P_names("Red,Silver,Black,Green,Brown,Blue")
-        P_note("algorithm-selected car colors by Lin et al. (2013)")
-    }
-    else if (i==3) {
-        P_colors("199 199 199,31 119 180,140 86 75,152 223 138,219 219 141,196 156 148,214 39 40")
-        //P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
-        P_names("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
-        P_note("Turkers-selected food colors by Lin et al. (2013)")
-    }
-    else if (i==4) {
-        P_colors("31 119 180,255 127 14,140 86 75,44 160 44,255 187 120,219 219 141,214 39 40")
-        //P_names("SourCream,BlueCheeseDressing,PorterhouseSteak,IcebergLettuce,OnionsRaw,PotatoBaked,Tomato")
-        P_names("Sour cream,Blue cheese dressing,Porterhouse steak,Iceberg lettuce,Onions (raw),Potato (baked),Tomato")
-        P_note("algorithm-selected food colors by Lin et al. (2013)")
-    }
-    else if (i==5) {
-        P_colors("214 39 40,31 119 180,174 119 232,44 160 44,152 223 138")
-        P_names("Speed,Reliability,Comfort,Safety,Efficiency")
-        P_note("Turkers-selected feature colors by Lin et al. (2013)")
-    }
-    else if (i==6) {
-        P_colors("214 39 40,31 119 180,140 86 75,255 127 14,44 160 44")
-        P_names("Speed,Reliability,Comfort,Safety,Efficiency")
-        P_note("algorithm-selected feature colors by Lin et al. (2013)")
-    }
-    else if (i==7) {
-        P_colors("31 119 180,214 39 40,152 223 138,44 160 44,127 127 127")
-        P_names("Sleeping,Working,Leisure,Eating,Driving")
-        P_note("Turkers-selected activity colors by Lin et al. (2013)")
-    }
-    else if (i==8) {
-        P_colors("140 86 75,255 127 14,31 119 180,227 119 194,214 39 40")
-        P_names("Sleeping,Working,Leisure,Eating,Driving")
-        P_note("algorithm-selected activity colors by Lin et al. (2013)")
-    }
-    else if (i==9) {
-        P_colors("146 195 51,251 222 6,64 105 166,200 0 0,127 34 147,251 162 127,255 86 29")
-        P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-        P_note("expert-selected fruit colors by Lin et al. (2013)")
-    }
-    else if (i==10) {
-        P_colors("44 160 44,188 189 34,31 119 180,214 39 40,148 103 189,255 187 120,255 127 14")
-        P_names("Apple,Banana,Blueberry,Cherry,Grape,Peach,Tangerine")
-        P_note("algorithm-selected fruit colors by Lin et al. (2013)")
-    }
-    else if (i==11) {
-        P_colors("255 141 61,157 212 105,245 208 64,104 59 101,239 197 143,139 129 57,255 26 34")
-        P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-        P_note("expert-selected vegetable colors by Lin et al. (2013)")
-    }
-    else if (i==12) {
-        P_colors("255 127 14,44 160 44,188 189 34,148 103 189,140 86 75,152 223 138,214 39 40")
-        P_names("Carrot,Celery,Corn,Eggplant,Mushroom,Olive,Tomato")
-        P_note("algorithm-selected vegetable colors by Lin et al. (2013)")
-    }
-    else if (i==13) {
-        P_colors("119 67 6,254 0 0,151 37 63,1 106 171,1 159 76,254 115 20,104 105 169")
-        //P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
-        P_names("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
-        P_note("expert-selected drinks colors by Lin et al. (2013)")
-    }
-    else if (i==14) {
-        P_colors("140 86 75,214 39 40,227 119 194,31 119 180,44 160 44,255 127 14,148 103 189")
-        //P_names("RootBeer,CocaCola,DrPepper,Pepsi,Sprite,Sunkist,WelchsGrape")
-        P_names("A&W Root Beer,Coca-Cola,Dr. Pepper,Pepsi,Sprite,Sunkist,Welch's Grape")
-        P_note("algorithm-selected drinks colors by Lin et al. (2013)")
-    }
-    else if (i==15) {
-        P_colors("161 165 169,44 163 218,242 99 33,255 183 0,0 112 66,204 0 0,123 0 153")
-        //P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
-        P_names("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
-        P_note("expert-selected brands colors by Lin et al. (2013)")
-    }
-    else {
-        P_colors("152 223 138,31 119 180,255 127 14,140 86 75,44 160 44,214 39 40,148 103 189")
-        //P_names("Apple,ATT,HomeDepot,Kodak,Starbucks,Target,Yahoo")
-        P_names("Apple,AT&T,Home Depot,Kodak,Starbucks,Target,Yahoo!")
-        P_note("algorithm-selected brands colors by Lin et al. (2013)")
-    }
-    P_source("Lin et al. (2013)")
-    return(1)
-}
-`Bool' `MAIN'::P_spmap(`Bool' r, `SS' pal,`RS' n0)
-{
-    `Int' n, i
-    `RM'  C
-    `RC'  p
-    
-    if      (!smatch(gettok(pal), "spmap"))    return(0)
-    if      (smatch(pal, "spmap blues"))       {; if (!r) return(1); i=1; }
-    else if (smatch(pal, "spmap greens"))      {; if (!r) return(1); i=2; }
-    else if (smatch(pal, "spmap greys"))       {; if (!r) return(1); i=3; }
-    else if (smatch(pal, "spmap reds"))        {; if (!r) return(1); i=4; }
-    else if (smatch(pal, "spmap rainbow"))     {; if (!r) return(1); i=5; }
-    else if (smatch(pal, "spmap heat"))        {; if (!r) return(1); i=6; }
-    else if (smatch(pal, "spmap terrain"))     {; if (!r) return(1); i=7; }
-    else if (smatch(pal, "spmap topological")) {; if (!r) return(1); i=8; }
-    else return(0)
-    P_pclass(2)
-    if (i==1) {
-        n = __clip(n0, 2, 99)
-        p = ((1::n):-1) / (n-1)
-        C = J(n,1,208), (.2 :+ .8*p), (1 :- .6*p)
-        _set(C, "HSV")
-        P_note("light blue to blue color scheme from the spmap package by Pisati (2007)")
-    }
-    else if (i==2) {
-        n = __clip(n0, 2, 99)
-        p = ((1::n):-1) / (n-1)
-        C = (122 :+ 20*p), (.2 :+ .8*p), (1 :- .7*p)
-        _set(C, "HSV")
-        P_note("light green to green color scheme from the spmap package by Pisati (2007)")
-    }
-    else if (i==3) {
-        n = __clip(n0, 2, 99)
-        C = J(n,2,0), (.88 :- .88*((1::n):-1)/(n-1))
-        _set(C, "HSV")
-        P_note("light gray to black color scheme from the spmap package by Pisati (2007)")
-    }
-    else if (i==4) {
-        n = __clip(n0, 2, 99)
-        p = ((1::n):-1) / (n-1)
-        C = (20 :- 20*p), (.2 :+ .8*p), (1 :- rowmax((J(n, 1, 0), 1.2*(p:-.5))))
-        _set(C, "HSV")
-        P_note("light red to red color scheme from the spmap package by Pisati (2007)")
-    }
-    else if (i==5) {
-        n = __clip(n0, 2, 99)
-        C = (240 :- 240*((1::n):-1)/(n-1)), J(n,2,1)
-        _set(C, "HSV")
-        P_note("rainbow color scheme from the spmap package by Pisati (2007)")
-    }
-    else if (i==6) {
-        if      (n0<=2)  P_colors("255 255 0,255 0 0")
-        else if (n0==3)  P_colors("255 255 0,255 128 0,255 0 0")
-        else if (n0==4)  P_colors("255 255 128,255 255 0,255 128 0,255 0 0")
-        else if (n0==5)  P_colors("255 255 128,255 255 0,255 170 0,255 85 0,255 0 0")
-        else if (n0==6)  P_colors("255 255 128,255 255 0,255 191 0,255 128 0,255 64 0,255 0 0")
-        else if (n0==7)  P_colors("255 255 128,255 255 0,255 204 0,255 153 0,255 102 0,255 51 0,255 0 0")
-        else if (n0==8)  P_colors("255 255 191,255 255 64,255 255 0,255 204 0,255 153 0,255 102 0,255 51 0,255 0 0")
-        else if (n0==9)  P_colors("255 255 191,255 255 64,255 255 0,255 213 0,255 170 0,255 128 0,255 85 0,255 42 0,255 0 0")
-        else if (n0==10) P_colors("255 255 191,255 255 64,255 255 0,255 219 0,255 182 0,255 146 0,255 109 0,255 73 0,255 36 0,255 0 0")
-        else if (n0==11) P_colors("255 255 191,255 255 64,255 255 0,255 223 0,255 191 0,255 159 0,255 128 0,255 96 0,255 64 0,255 32 0,255 0 0")
-        else if (n0==12) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 223 0,255 191 0,255 159 0,255 128 0,255 96 0,255 64 0,255 32 0,255 0 0")
-        else if (n0==13) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 227 0,255 198 0,255 170 0,255 142 0,255 113 0,255 85 0,255 57 0,255 28 0,255 0 0")
-        else if (n0==14) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 229 0,255 204 0,255 178 0,255 153 0,255 128 0,255 102 0,255 77 0,255 51 0,255 26 0,255 0 0")
-        else if (n0==15) P_colors("255 255 213,255 255 128,255 255 42,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
-        else if (n0>=16) P_colors("255 255 223,255 255 159,255 255 96,255 255 32,255 255 0,255 232 0,255 209 0,255 185 0,255 162 0,255 139 0,255 116 0,255 93 0,255 70 0,255 46 0,255 23 0,255 0 0")
-        P_note("heat color scheme from the spmap package by Pisati (2007)")
-    }
-    else if (i==7) {
-        if      (n0<=2)  P_colors("0 166 0,242 242 242")
-        else if (n0==3)  P_colors("0 166 0,236 177 118,242 242 242")
-        else if (n0==4)  P_colors("0 166 0,230 230 0,236 177 118,242 242 242")
-        else if (n0==5)  P_colors("0 166 0,230 230 0,234 182 78,238 185 159,242 242 242")
-        else if (n0==6)  P_colors("0 166 0,99 198 0,230 230 0,234 182 78,238 185 159,242 242 242")
-        else if (n0==7)  P_colors("0 166 0,99 198 0,230 230 0,233 189 58,236 177 118,239 194 179,242 242 242")
-        else if (n0==8)  P_colors("0 166 0,62 187 0,139 208 0,230 230 0,233 189 58,236 177 118,239 194 179,242 242 242")
-        else if (n0==9)  P_colors("0 166 0,62 187 0,139 208 0,230 230 0,232 195 46,235 178 94,237 180 142,240 201 192,242 242 242")
-        else if (n0==10) P_colors("0 166 0,45 182 0,99 198 0,160 214 0,230 230 0,232 195 46,235 178 94,237 180 142,240 201 192,242 242 242")
-        else if (n0==11) P_colors("0 166 0,45 182 0,99 198 0,160 214 0,230 230 0,232 199 39,234 182 78,236 177 118,238 185 159,240 207 200,242 242 242")
-        else if (n0==12) P_colors("0 166 0,36 179 0,76 191 0,122 204 0,173 217 0,230 230 0,232 199 39,234 182 78,236 177 118,238 185 159,240 207 200,242 242 242")
-        else if (n0==13) P_colors("0 166 0,36 179 0,76 191 0,122 204 0,173 217 0,230 230 0,231 203 33,233 186 67,235 177 101,237 179 135,239 190 170,240 211 206,242 242 242")
-        else if (n0==14) P_colors("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 203 33,233 186 67,235 177 101,237 179 135,239 190 170,240 211 206,242 242 242")
-        else if (n0==15) P_colors("0 166 0,29 176 0,62 187 0,99 198 0,139 208 0,182 219 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
-        else if (n0>=16) P_colors("0 166 0,25 175 0,53 184 0,83 193 0,116 202 0,151 211 0,189 220 0,230 230 0,231 206 29,233 189 58,234 179 88,236 177 118,237 182 148,239 194 179,241 214 211,242 242 242")
-        P_note("terrain color scheme from the spmap package by Pisati (2007)")
-    }
-    else {
-        if      (n0<=2)  P_colors("76 0 255,0 229 255")
-        else if (n0==3)  P_colors("76 0 255,0 255 77,255 255 0")
-        else if (n0==4)  P_colors("76 0 255,0 229 255,0 255 77,255 255 0")
-        else if (n0==5)  P_colors("76 0 255,0 76 255,0 229 255,0 255 77,255 255 0")
-        else if (n0==6)  P_colors("76 0 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
-        else if (n0==7)  P_colors("76 0 255,0 76 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
-        else if (n0==8)  P_colors("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,230 255 0,255 255 0,255 224 178")
-        else if (n0==9)  P_colors("76 0 255,0 76 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
-        else if (n0==10) P_colors("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
-        else if (n0==11) P_colors("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,77 255 0,230 255 0,255 255 0,255 222 89,255 224 178")
-        else if (n0==12) P_colors("76 0 255,0 25 255,0 128 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
-        else if (n0==13) P_colors("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
-        else if (n0==14) P_colors("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,26 255 0,128 255 0,230 255 0,255 255 0,255 229 59,255 219 119,255 224 178")
-        else if (n0==15) P_colors("76 0 255,0 0 255,0 76 255,0 153 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
-        else if (n0>=16) P_colors("76 0 255,15 0 255,0 46 255,0 107 255,0 168 255,0 229 255,0 255 77,0 255 0,77 255 0,153 255 0,230 255 0,255 255 0,255 234 45,255 222 89,255 219 134,255 224 178")
-        P_note("topological color scheme from the spmap package by Pisati (2007)")
-    }
-    P_source("Pisati (2007)")
-    return(1)
-}
-`Bool' `MAIN'::P_sfso(`Bool' r, `SS' p)
-{
-    `Int' i
-    
-    if      (!smatch(gettok(p), "sfso"))  return(0)
-    if      (smatch(p, "sfso blue"))      {; if (!r) return(1); i=1;  }
-    else if (smatch(p, "sfso brown"))     {; if (!r) return(1); i=2;  }
-    else if (smatch(p, "sfso orange"))    {; if (!r) return(1); i=3;  }
-    else if (smatch(p, "sfso red"))       {; if (!r) return(1); i=4;  }
-    else if (smatch(p, "sfso pink"))      {; if (!r) return(1); i=5;  }
-    else if (smatch(p, "sfso purple"))    {; if (!r) return(1); i=6;  }
-    else if (smatch(p, "sfso violet"))    {; if (!r) return(1); i=7;  }
-    else if (smatch(p, "sfso ltblue"))    {; if (!r) return(1); i=8;  }
-    else if (smatch(p, "sfso turquoise")) {; if (!r) return(1); i=9;  }
-    else if (smatch(p, "sfso green"))     {; if (!r) return(1); i=10; }
-    else if (smatch(p, "sfso olive"))     {; if (!r) return(1); i=11; }
-    else if (smatch(p, "sfso black"))     {; if (!r) return(1); i=12; }
-    else if (smatch(p, "sfso parties"))   {; if (!r) return(1); i=13; }
-    else if (smatch(p, "sfso languages")) {; if (!r) return(1); i=14; }
-    else if (smatch(p, "sfso votes"))     {; if (!r) return(1); i=15; }
-    else return(0)
-    P_pclass(2)
-    if (i==1) {
-        P_colors("#1c3259,#374a83,#6473aa,#8497cf,#afbce2,#d8def2,#e8eaf7")
-        P_names(",,,BFS-Blau,,,BFS-Blau 20%")
-        P_note("dark blue to light blue color scheme")
-    }
-    else if (i==2) {
-        P_colors("#6b0616,#a1534e,#b67d6c,#cca58f,#ddc3a8,#eee3cd")
-        P_note("dark brown to light brown color scheme")
-    }
-    else if (i==3) {
-        P_colors("#92490d,#ce6725,#d68c25,#e2b224,#eccf76,#f6e7be")
-        P_note("dark orange to light orange color scheme")
-    }
-    else if (i==4) {
-        P_colors("#6d0724,#a61346,#c62a4f,#d17477,#dea49f,#efd6d1")
-        P_note("dark red to light red color scheme")
-    }
-    else if (i==5) {
-        P_colors("#7c0051,#a4006f,#c0007c,#cc669d,#da9dbf,#efd7e5")
-        P_note("dark pink to light pink color scheme")
-    }
-    else if (i==6) {
-        P_colors("#5e0059,#890883,#a23392,#bf64a6,#d79dc5,#efd7e8")
-        P_note("dark purple to light purple color scheme")
-    }
-    else if (i==7) {
-        P_colors("#3a0054,#682b86,#8c58a3,#a886bc,#c5b0d5,#e1d7eb")
-        P_note("dark violet to light violet color scheme")
-    }
-    else if (i==8) {
-        P_colors("#076e8d,#1b9dc9,#76b8da,#abd0e7,#c8e0f2,#edf5fd")
-        P_note("lighter version of blue color scheme")
-    }
-    else if (i==9) {
-        P_colors("#005046,#107a6d,#3aa59a,#95c6c3,#cbe1df,#e9f2f5")
-        P_note("dark turquoise to light turquoise color scheme")
-    }
-    else if (i==10) {
-        P_colors("#3b6519,#68a239,#95c15b,#b3d17f,#d3e3af,#ecf2d1")
-        P_note("dark green to light green color scheme")
-    }
-    else if (i==11) {
-        P_colors("#6f6f02,#a3a20a,#c5c00c,#e3df86,#eeecbc,#fefde6")
-        P_note("dark olive to light olive color scheme")
-    }
-    else if (i==12) {
-        P_colors("#3f3f3e,#838382,#b2b3b3,#d4d5d5,#e6e6e7,#f7f7f7")
-        P_note("dark gray to light gray color scheme")
-    }
-    else if (i==13) {
-        P_pclass(1)
-        P_colors("#6268AF,#f39f5e,#ea546f,#547d34,#cbd401,#ffff00,#26b300,#792a8f,#9fabd9,#f0da9d,#bebebe")
-        P_names("FDP,CVP,SP,SVP,GLP,BDP,Grüne,small leftwing parties,small middle parties,small rightwing parties,other parties")
-        P_note("Swiss parties color scheme")
-    }
-    else if (i==14) {
-        P_pclass(1)
-        P_colors("#c73e31,#4570ba,#4ca767,#ecce42,#7f5fa9")
-        P_names("German,French,Italian,Rhaeto-Romanic,English")
-        P_note("Swiss language region color scheme")
-    }
-    else {
-        P_pclass(3)
-        P_colors("#6d2a83,#8a559c,#a77fb5,#c5aacd,#e2d4e6,#daeadb,#b5d5b8,#8fc194,#6aac71,#45974d")
-        P_names("No,,,,,,,,,Yes")
-        P_note("vote share color scheme")
-    }
-    P_source("Swiss Federal Statistical Office")
-    return(1)
-}
-`Bool' `MAIN'::P_webcolors(`Bool' r, `SS' p)
-{
-    `Int' i
-    
-    if      (!smatch(gettok(p), "webcolors"))  return(0)
-    if      (smatch(p, "webcolors"))           {; if (!r) return(1); i=0;  }
-    else if (smatch(p, "webcolors pink"))      {; if (!r) return(1); i=1;  }
-    else if (smatch(p, "webcolors purple"))    {; if (!r) return(1); i=2;  }
-    else if (smatch(p, "webcolors redorange")) {; if (!r) return(1); i=3;  }
-    else if (smatch(p, "webcolors yellow"))    {; if (!r) return(1); i=4;  }
-    else if (smatch(p, "webcolors green"))     {; if (!r) return(1); i=5;  }
-    else if (smatch(p, "webcolors cyan"))      {; if (!r) return(1); i=6;  }
-    else if (smatch(p, "webcolors blue"))      {; if (!r) return(1); i=7;  }
-    else if (smatch(p, "webcolors brown"))     {; if (!r) return(1); i=8;  }
-    else if (smatch(p, "webcolors white"))     {; if (!r) return(1); i=9;  }
-    else if (smatch(p, "webcolors gray"))      {; if (!r) return(1); i=10; }
-    else if (smatch(p, "webcolors grey"))      {; if (!r) return(1); i=11; }
-    else return(0)
-    P_pclass(1)
-    if      (i==1)  P_colors("Pink,LightPink,HotPink,DeepPink,PaleVioletRed,MediumVioletRed")
-    else if (i==2)  P_colors("Lavender,Thistle,Plum,Orchid,Violet,Fuchsia,Magenta,MediumOrchid,DarkOrchid,DarkViolet,BlueViolet,DarkMagenta,Purple,MediumPurple,MediumSlateBlue,SlateBlue,DarkSlateBlue,RebeccaPurple,Indigo")
-    else if (i==3)  P_colors("LightSalmon,Salmon,DarkSalmon,LightCoral,IndianRed,Crimson,Red,FireBrick,DarkRed,Orange,DarkOrange,Coral,Tomato,OrangeRed")
-    else if (i==4)  P_colors("Gold,Yellow,LightYellow,LemonChiffon,LightGoldenRodYellow,PapayaWhip,Moccasin,PeachPuff,PaleGoldenRod,Khaki,DarkKhaki")
-    else if (i==5)  P_colors("GreenYellow,Chartreuse,LawnGreen,Lime,LimeGreen,PaleGreen,LightGreen,MediumSpringGreen,SpringGreen,MediumSeaGreen,SeaGreen,ForestGreen,Green,DarkGreen,YellowGreen,OliveDrab,DarkOliveGreen,MediumAquaMarine,DarkSeaGreen,LightSeaGreen,DarkCyan,Teal")
-    else if (i==6)  P_colors("Aqua,Cyan,LightCyan,PaleTurquoise,Aquamarine,Turquoise,MediumTurquoise,DarkTurquoise")
-    else if (i==7)  P_colors("CadetBlue,SteelBlue,LightSteelBlue,LightBlue,PowderBlue,LightSkyBlue,SkyBlue,CornflowerBlue,DeepSkyBlue,DodgerBlue,RoyalBlue,Blue,MediumBlue,DarkBlue,Navy,MidnightBlue")
-    else if (i==8)  P_colors("Cornsilk,BlanchedAlmond,Bisque,NavajoWhite,Wheat,BurlyWood,Tan,RosyBrown,SandyBrown,GoldenRod,DarkGoldenRod,Peru,Chocolate,Olive,SaddleBrown,Sienna,Brown,Maroon")
-    else if (i==9)  P_colors("White,Snow,HoneyDew,MintCream,Azure,AliceBlue,GhostWhite,WhiteSmoke,SeaShell,Beige,OldLace,FloralWhite,Ivory,AntiqueWhite,Linen,LavenderBlush,MistyRose")
-    else if (i==10) P_colors("Gainsboro,LightGray,Silver,DarkGray,DimGray,Gray,LightSlateGray,SlateGray,DarkSlateGray,Black")
-    else if (i==11) P_colors("Gainsboro,LightGrey,Silver,DarkGrey,DimGrey,Grey,LightSlateGrey,SlateGrey,DarkSlateGrey,Black")
-    else {
-        if (webcolors.N()==0) webcolors()
-        Colors_set(sort(webcolors.keys(),1))
-    }
-    P_note("HTML colors from www.w3schools.com")
-    P_source("www.w3schools.com/colors/colors_names.asp")
-    return(1)
-}
-
-end
-
-* {smcl}
-* {marker matplotlib}{bf:Matplotlib color maps} {hline}
-* Colors from Matplotlib (matplotlib.org), a Python 2D plotting library 
-* Sources (retrieved on 14sep2018):
-*   {browse "https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/_cm.py"}
-*   {browse "https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/_cm_listed.py"}
-* Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
-* {asis}
-
-mata:
-
-void `MAIN'::matplotlib(| `SS' pal, `RS' n, `RV' range)
-{
-    S = &data1
-    _matplotlib(pal, n, range)
-    replacedata()
-}
-
-void `MAIN'::add_matplotlib(| `SS' pal, `RS' n, `RV' range)
-{
-    S = &data1
-    _matplotlib(pal, n, range)
-    appenddata()
-}
-
-void `MAIN'::_matplotlib(| `SS' pal0, `RS' n0, `RV' range)
-{
-    `SS'   pal
-    `Bool' ispu
-    `Int'  n
-    `RM'   R, G, B, RGB1
-    
-    S->pclass = "sequential"
-    ispu = `FALSE'
-    n = (n0<. ? (n0<0 ? 0 : n0) : 15)
-    pal = strlower(pal0)
-    RGB1 = J(0, 3, .)
-    if      (smatch(pal, "viridis"))  {; viridis(RGB1); ispu = `TRUE'; }
-    else if (smatch(pal, "magma"))    {; magma(RGB1)  ; ispu = `TRUE'; }
-    else if (smatch(pal, "inferno"))  {; inferno(RGB1); ispu = `TRUE'; }
-    else if (smatch(pal, "plasma"))   {; plasma(RGB1) ; ispu = `TRUE'; }
-    else if (smatch(pal, "cividis"))  {; cividis(RGB1); ispu = `TRUE'; }
-    else if (smatch(pal, "twilight")) { 
-        twilight(RGB1) 
-        ispu = `TRUE'
-        S->pclass = "diverging"
-    }
-    else if (smatch(pal, "twilight shifted")) { 
-        twilight(RGB1)
-        RGB1 = RGB1[|rows(RGB1)/2+1,1 \ .,.|] \ RGB1[|1,1 \ rows(RGB1)/2,.|]
-        RGB1 = RGB1[rows(RGB1)::1,]
-        ispu = `TRUE'
-        S->pclass = "diverging"
-    }
-    else if (smatch(pal, "autumn")) {
-        R = (0, 1, 1) \ (1, 1, 1)
-        G = (0, 0, 0) \ (1, 1, 1)
-        B = (0, 0, 0) \ (1, 0, 0)
-    }
-    else if (smatch(pal, "spring")) {
-        R = (0, 1, 1) \ (1, 1, 1)
-        G = (0, 0, 0) \ (1, 1, 1)
-        B = (0, 1, 1) \ (1, 0, 0)
-    }
-    else if (smatch(pal, "summer")) {
-        R = (0,  0,  0) \ (1,  1,  1)
-        G = (0, .5, .5) \ (1,  1,  1)
-        B = (0, .4, .4) \ (1, .4, .4)
-    }
-    else if (smatch(pal, "winter")) {
-        R = (0, 0, 0) \ (1,  0,  0)
-        G = (0, 0, 0) \ (1,  1,  1)
-        B = (0, 1, 1) \ (1, .5, .5)
-    }
-    else if (smatch(pal, "bone")) {
-        R = (0, 0, 0) \ (.746032, .652778, .652778) \ (1, 1, 1)
-        G = (0, 0, 0) \ (.365079, .319444, .319444) \ (.746032, .777778, .777778) \ (1, 1, 1)
-        B = (0, 0, 0) \ (.365079, .444444, .444444) \ (1, 1, 1)
-    }
-    else if (smatch(pal, "cool")) {
-        R = (0, 0, 0) \ (1, 1, 1)
-        G = (0, 1, 1) \ (1, 0, 0)
-        B = (0, 1, 1) \ (1, 1, 1)
-    }
-    else if (smatch(pal, "copper")) {
-        R = (0, 0, 0) \ (.809524, 1, 1) \ (1, 1, 1)
-        G = (0, 0, 0) \ (1, .7812, .7812)
-        B = (0, 0, 0) \ (1, .4975, .4975)
-    }
-    else if (smatch(pal, "coolwarm")) {
-        S->pclass = "diverging"
-        // Matplotlib source note:
-        // # This bipolar color map was generated from CoolWarmFloat33.csv of
-        // # "Diverging Color Maps for Scientific Visualization" by Kenneth Moreland.
-        // # <http://www.kennethmoreland.com/color-maps/>
-        R = (0,      .2298057,   .2298057) \
-            (.03125, .26623388,  .26623388) \
-            (.0625,  .30386891,  .30386891) \
-            (.09375, .342804478, .342804478) \
-            (.125,   .38301334,  .38301334) \
-            (.15625, .424369608, .424369608) \
-            (.1875,  .46666708,  .46666708) \
-            (.21875, .509635204, .509635204) \
-            (.25,    .552953156, .552953156) \
-            (.28125, .596262162, .596262162) \
-            (.3125,  .639176211, .639176211) \
-            (.34375, .681291281, .681291281) \
-            (.375,   .722193294, .722193294) \
-            (.40625, .761464949, .761464949) \
-            (.4375,  .798691636, .798691636) \
-            (.46875, .833466556, .833466556) \
-            (.5,     .865395197, .865395197) \
-            (.53125, .897787179, .897787179) \
-            (.5625,  .924127593, .924127593) \
-            (.59375, .944468518, .944468518) \
-            (.625,   .958852946, .958852946) \
-            (.65625, .96732803,  .96732803) \
-            (.6875,  .969954137, .969954137) \
-            (.71875, .966811177, .966811177) \
-            (.75,    .958003065, .958003065) \
-            (.78125, .943660866, .943660866) \
-            (.8125,  .923944917, .923944917) \
-            (.84375, .89904617,  .89904617) \
-            (.875,   .869186849, .869186849) \
-            (.90625, .834620542, .834620542) \
-            (.9375,  .795631745, .795631745) \
-            (.96875, .752534934, .752534934) \
-            (1,      .705673158, .705673158)
-        G = (0,      .298717966, .298717966) \
-            (.03125, .353094838, .353094838) \
-            (.0625,  .406535296, .406535296) \
-            (.09375, .458757618, .458757618) \
-            (.125,   .50941904,  .50941904) \
-            (.15625, .558148092, .558148092) \
-            (.1875,  .604562568, .604562568) \
-            (.21875, .648280772, .648280772) \
-            (.25,    .688929332, .688929332) \
-            (.28125, .726149107, .726149107) \
-            (.3125,  .759599947, .759599947) \
-            (.34375, .788964712, .788964712) \
-            (.375,   .813952739, .813952739) \
-            (.40625, .834302879, .834302879) \
-            (.4375,  .849786142, .849786142) \
-            (.46875, .860207984, .860207984) \
-            (.5,     .86541021,  .86541021) \
-            (.53125, .848937047, .848937047) \
-            (.5625,  .827384882, .827384882) \
-            (.59375, .800927443, .800927443) \
-            (.625,   .769767752, .769767752) \
-            (.65625, .734132809, .734132809) \
-            (.6875,  .694266682, .694266682) \
-            (.71875, .650421156, .650421156) \
-            (.75,    .602842431, .602842431) \
-            (.78125, .551750968, .551750968) \
-            (.8125,  .49730856,  .49730856) \
-            (.84375, .439559467, .439559467) \
-            (.875,   .378313092, .378313092) \
-            (.90625, .312874446, .312874446) \
-            (.9375,  .24128379,  .24128379) \
-            (.96875, .157246067, .157246067) \
-            (1,      .01555616,  .01555616)
-        B = (0,      .753683153, .753683153) \
-            (.03125, .801466763, .801466763) \
-            (.0625,  .84495867,  .84495867) \
-            (.09375, .883725899, .883725899) \
-            (.125,   .917387822, .917387822) \
-            (.15625, .945619588, .945619588) \
-            (.1875,  .968154911, .968154911) \
-            (.21875, .98478814,  .98478814) \
-            (.25,    .995375608, .995375608) \
-            (.28125, .999836203, .999836203) \
-            (.3125,  .998151185, .998151185) \
-            (.34375, .990363227, .990363227) \
-            (.375,   .976574709, .976574709) \
-            (.40625, .956945269, .956945269) \
-            (.4375,  .931688648, .931688648) \
-            (.46875, .901068838, .901068838) \
-            (.5,     .865395561, .865395561) \
-            (.53125, .820880546, .820880546) \
-            (.5625,  .774508472, .774508472) \
-            (.59375, .726736146, .726736146) \
-            (.625,   .678007945, .678007945) \
-            (.65625, .628751763, .628751763) \
-            (.6875,  .579375448, .579375448) \
-            (.71875, .530263762, .530263762) \
-            (.75,    .481775914, .481775914) \
-            (.78125, .434243684, .434243684) \
-            (.8125,  .387970225, .387970225) \
-            (.84375, .343229596, .343229596) \
-            (.875,   .300267182, .300267182) \
-            (.90625, .259301199, .259301199) \
-            (.9375,  .220525627, .220525627) \
-            (.96875, .184115123, .184115123) \
-            (1,      .150232812, .150232812)
-    }
-    else if (smatch(pal, "jet")) {
-        R = (0,  0,  0) \ (.35, 0, 0) \ (.66, 1, 1) \ (.89, 1, 1) \ (1, .5, .5)
-        G = (0,  0,  0) \ (.125, 0, 0) \ (.375, 1, 1) \ (.64, 1, 1) \ (.91, 0, 0) \ (1, 0, 0)
-        B = (0, .5, .5) \ (.11, 1, 1) \ (.34, 1, 1) \ (.65, 0, 0) \ (1, 0, 0)
-    }
-    else if (smatch(pal, "hot")) {
-        R = (0, .0416, .0416) \ (.365079, 1, 1) \ (1, 1, 1)
-        G = (0, 0, 0) \ (.365079, 0, 0) \ (.746032, 1, 1) \ (1, 1, 1)
-        B = (0, 0, 0) \ (.746032, 0, 0) \ (1, 1, 1)
-    }
-    else {
-        display("{err}colormap '" + pal0 + "' not found")
-        exit(3499)
-    }
-    S->name = "matplotlib " + pal
-    if (ispu) _set(colipolate(RGB1, n, range), "RGB1")       // viridis and friends
-    else      _set(matplotlib_ip(R, G, B, n, range), "RGB1") // other palettes
-    S->note   = pal + " colormap from matplotlib.org"
-    S->source = "matplotlib.org"
-}
-
-`RM' `MAIN'::matplotlib_ip(`RM' R, `RM' G, `RM' B, `RS' n, | `RV' range0)
-{                         // (consistency of input is not checked)
-    `RV' range
-    
-    assert_cols(R, 3); assert_cols(G, 3); assert_cols(B, 3)
-    range = clip(_ipolate_setrange(range0), 0, 1) // restrict range to [0,1]
-    return((_matplotlib_ip(R, n, range[1], range[2]),
-            _matplotlib_ip(G, n, range[1], range[2]),
-            _matplotlib_ip(B, n, range[1], range[2])))
-}
-
-`RC' `MAIN'::_matplotlib_ip(`RM' xy, `RS' n, `RS' from, `RS' to)
-{
-    `Int' i, j, reverse
-    `RC'  x, y
-
-    if (n==0) return(J(0, 1, .))
-    reverse = 0
-    if (from>to) {
-        reverse = 1
-        x = rangen(to, from, n)
-    }
-    else x = rangen(from, to, n)
-    y = J(n, 1, .)
-    j = 1
-    for (i=1; i<=n; i++) {
-        while (xy[j+1,1]<x[i]) j++
-        if (x[i]==xy[j,1]) y[i] = xy[j,3]
-        else y[i] = xy[j,3] + (xy[j+1,2] - xy[j,3]) * (x[i] - xy[j,1]) / 
-                                                      (xy[j+1,1] - xy[j,1])
-    }
-    if (reverse) return(y[n::1])
-    return(y)
-}
-
-void `MAIN'::magma(`RM' RGB1)
-{
-    `Int' i
-    
-    i = 0
-    RGB1 = J(256, 3 ,.)
-    RGB1[++i,] = (.001462, .000466, .013866)
-    RGB1[++i,] = (.002258, .001295, .018331)
-    RGB1[++i,] = (.003279, .002305, .023708)
-    RGB1[++i,] = (.004512, .003490, .029965)
-    RGB1[++i,] = (.005950, .004843, .037130)
-    RGB1[++i,] = (.007588, .006356, .044973)
-    RGB1[++i,] = (.009426, .008022, .052844)
-    RGB1[++i,] = (.011465, .009828, .060750)
-    RGB1[++i,] = (.013708, .011771, .068667)
-    RGB1[++i,] = (.016156, .013840, .076603)
-    RGB1[++i,] = (.018815, .016026, .084584)
-    RGB1[++i,] = (.021692, .018320, .092610)
-    RGB1[++i,] = (.024792, .020715, .100676)
-    RGB1[++i,] = (.028123, .023201, .108787)
-    RGB1[++i,] = (.031696, .025765, .116965)
-    RGB1[++i,] = (.035520, .028397, .125209)
-    RGB1[++i,] = (.039608, .031090, .133515)
-    RGB1[++i,] = (.043830, .033830, .141886)
-    RGB1[++i,] = (.048062, .036607, .150327)
-    RGB1[++i,] = (.052320, .039407, .158841)
-    RGB1[++i,] = (.056615, .042160, .167446)
-    RGB1[++i,] = (.060949, .044794, .176129)
-    RGB1[++i,] = (.065330, .047318, .184892)
-    RGB1[++i,] = (.069764, .049726, .193735)
-    RGB1[++i,] = (.074257, .052017, .202660)
-    RGB1[++i,] = (.078815, .054184, .211667)
-    RGB1[++i,] = (.083446, .056225, .220755)
-    RGB1[++i,] = (.088155, .058133, .229922)
-    RGB1[++i,] = (.092949, .059904, .239164)
-    RGB1[++i,] = (.097833, .061531, .248477)
-    RGB1[++i,] = (.102815, .063010, .257854)
-    RGB1[++i,] = (.107899, .064335, .267289)
-    RGB1[++i,] = (.113094, .065492, .276784)
-    RGB1[++i,] = (.118405, .066479, .286321)
-    RGB1[++i,] = (.123833, .067295, .295879)
-    RGB1[++i,] = (.129380, .067935, .305443)
-    RGB1[++i,] = (.135053, .068391, .315000)
-    RGB1[++i,] = (.140858, .068654, .324538)
-    RGB1[++i,] = (.146785, .068738, .334011)
-    RGB1[++i,] = (.152839, .068637, .343404)
-    RGB1[++i,] = (.159018, .068354, .352688)
-    RGB1[++i,] = (.165308, .067911, .361816)
-    RGB1[++i,] = (.171713, .067305, .370771)
-    RGB1[++i,] = (.178212, .066576, .379497)
-    RGB1[++i,] = (.184801, .065732, .387973)
-    RGB1[++i,] = (.191460, .064818, .396152)
-    RGB1[++i,] = (.198177, .063862, .404009)
-    RGB1[++i,] = (.204935, .062907, .411514)
-    RGB1[++i,] = (.211718, .061992, .418647)
-    RGB1[++i,] = (.218512, .061158, .425392)
-    RGB1[++i,] = (.225302, .060445, .431742)
-    RGB1[++i,] = (.232077, .059889, .437695)
-    RGB1[++i,] = (.238826, .059517, .443256)
-    RGB1[++i,] = (.245543, .059352, .448436)
-    RGB1[++i,] = (.252220, .059415, .453248)
-    RGB1[++i,] = (.258857, .059706, .457710)
-    RGB1[++i,] = (.265447, .060237, .461840)
-    RGB1[++i,] = (.271994, .060994, .465660)
-    RGB1[++i,] = (.278493, .061978, .469190)
-    RGB1[++i,] = (.284951, .063168, .472451)
-    RGB1[++i,] = (.291366, .064553, .475462)
-    RGB1[++i,] = (.297740, .066117, .478243)
-    RGB1[++i,] = (.304081, .067835, .480812)
-    RGB1[++i,] = (.310382, .069702, .483186)
-    RGB1[++i,] = (.316654, .071690, .485380)
-    RGB1[++i,] = (.322899, .073782, .487408)
-    RGB1[++i,] = (.329114, .075972, .489287)
-    RGB1[++i,] = (.335308, .078236, .491024)
-    RGB1[++i,] = (.341482, .080564, .492631)
-    RGB1[++i,] = (.347636, .082946, .494121)
-    RGB1[++i,] = (.353773, .085373, .495501)
-    RGB1[++i,] = (.359898, .087831, .496778)
-    RGB1[++i,] = (.366012, .090314, .497960)
-    RGB1[++i,] = (.372116, .092816, .499053)
-    RGB1[++i,] = (.378211, .095332, .500067)
-    RGB1[++i,] = (.384299, .097855, .501002)
-    RGB1[++i,] = (.390384, .100379, .501864)
-    RGB1[++i,] = (.396467, .102902, .502658)
-    RGB1[++i,] = (.402548, .105420, .503386)
-    RGB1[++i,] = (.408629, .107930, .504052)
-    RGB1[++i,] = (.414709, .110431, .504662)
-    RGB1[++i,] = (.420791, .112920, .505215)
-    RGB1[++i,] = (.426877, .115395, .505714)
-    RGB1[++i,] = (.432967, .117855, .506160)
-    RGB1[++i,] = (.439062, .120298, .506555)
-    RGB1[++i,] = (.445163, .122724, .506901)
-    RGB1[++i,] = (.451271, .125132, .507198)
-    RGB1[++i,] = (.457386, .127522, .507448)
-    RGB1[++i,] = (.463508, .129893, .507652)
-    RGB1[++i,] = (.469640, .132245, .507809)
-    RGB1[++i,] = (.475780, .134577, .507921)
-    RGB1[++i,] = (.481929, .136891, .507989)
-    RGB1[++i,] = (.488088, .139186, .508011)
-    RGB1[++i,] = (.494258, .141462, .507988)
-    RGB1[++i,] = (.500438, .143719, .507920)
-    RGB1[++i,] = (.506629, .145958, .507806)
-    RGB1[++i,] = (.512831, .148179, .507648)
-    RGB1[++i,] = (.519045, .150383, .507443)
-    RGB1[++i,] = (.525270, .152569, .507192)
-    RGB1[++i,] = (.531507, .154739, .506895)
-    RGB1[++i,] = (.537755, .156894, .506551)
-    RGB1[++i,] = (.544015, .159033, .506159)
-    RGB1[++i,] = (.550287, .161158, .505719)
-    RGB1[++i,] = (.556571, .163269, .505230)
-    RGB1[++i,] = (.562866, .165368, .504692)
-    RGB1[++i,] = (.569172, .167454, .504105)
-    RGB1[++i,] = (.575490, .169530, .503466)
-    RGB1[++i,] = (.581819, .171596, .502777)
-    RGB1[++i,] = (.588158, .173652, .502035)
-    RGB1[++i,] = (.594508, .175701, .501241)
-    RGB1[++i,] = (.600868, .177743, .500394)
-    RGB1[++i,] = (.607238, .179779, .499492)
-    RGB1[++i,] = (.613617, .181811, .498536)
-    RGB1[++i,] = (.620005, .183840, .497524)
-    RGB1[++i,] = (.626401, .185867, .496456)
-    RGB1[++i,] = (.632805, .187893, .495332)
-    RGB1[++i,] = (.639216, .189921, .494150)
-    RGB1[++i,] = (.645633, .191952, .492910)
-    RGB1[++i,] = (.652056, .193986, .491611)
-    RGB1[++i,] = (.658483, .196027, .490253)
-    RGB1[++i,] = (.664915, .198075, .488836)
-    RGB1[++i,] = (.671349, .200133, .487358)
-    RGB1[++i,] = (.677786, .202203, .485819)
-    RGB1[++i,] = (.684224, .204286, .484219)
-    RGB1[++i,] = (.690661, .206384, .482558)
-    RGB1[++i,] = (.697098, .208501, .480835)
-    RGB1[++i,] = (.703532, .210638, .479049)
-    RGB1[++i,] = (.709962, .212797, .477201)
-    RGB1[++i,] = (.716387, .214982, .475290)
-    RGB1[++i,] = (.722805, .217194, .473316)
-    RGB1[++i,] = (.729216, .219437, .471279)
-    RGB1[++i,] = (.735616, .221713, .469180)
-    RGB1[++i,] = (.742004, .224025, .467018)
-    RGB1[++i,] = (.748378, .226377, .464794)
-    RGB1[++i,] = (.754737, .228772, .462509)
-    RGB1[++i,] = (.761077, .231214, .460162)
-    RGB1[++i,] = (.767398, .233705, .457755)
-    RGB1[++i,] = (.773695, .236249, .455289)
-    RGB1[++i,] = (.779968, .238851, .452765)
-    RGB1[++i,] = (.786212, .241514, .450184)
-    RGB1[++i,] = (.792427, .244242, .447543)
-    RGB1[++i,] = (.798608, .247040, .444848)
-    RGB1[++i,] = (.804752, .249911, .442102)
-    RGB1[++i,] = (.810855, .252861, .439305)
-    RGB1[++i,] = (.816914, .255895, .436461)
-    RGB1[++i,] = (.822926, .259016, .433573)
-    RGB1[++i,] = (.828886, .262229, .430644)
-    RGB1[++i,] = (.834791, .265540, .427671)
-    RGB1[++i,] = (.840636, .268953, .424666)
-    RGB1[++i,] = (.846416, .272473, .421631)
-    RGB1[++i,] = (.852126, .276106, .418573)
-    RGB1[++i,] = (.857763, .279857, .415496)
-    RGB1[++i,] = (.863320, .283729, .412403)
-    RGB1[++i,] = (.868793, .287728, .409303)
-    RGB1[++i,] = (.874176, .291859, .406205)
-    RGB1[++i,] = (.879464, .296125, .403118)
-    RGB1[++i,] = (.884651, .300530, .400047)
-    RGB1[++i,] = (.889731, .305079, .397002)
-    RGB1[++i,] = (.894700, .309773, .393995)
-    RGB1[++i,] = (.899552, .314616, .391037)
-    RGB1[++i,] = (.904281, .319610, .388137)
-    RGB1[++i,] = (.908884, .324755, .385308)
-    RGB1[++i,] = (.913354, .330052, .382563)
-    RGB1[++i,] = (.917689, .335500, .379915)
-    RGB1[++i,] = (.921884, .341098, .377376)
-    RGB1[++i,] = (.925937, .346844, .374959)
-    RGB1[++i,] = (.929845, .352734, .372677)
-    RGB1[++i,] = (.933606, .358764, .370541)
-    RGB1[++i,] = (.937221, .364929, .368567)
-    RGB1[++i,] = (.940687, .371224, .366762)
-    RGB1[++i,] = (.944006, .377643, .365136)
-    RGB1[++i,] = (.947180, .384178, .363701)
-    RGB1[++i,] = (.950210, .390820, .362468)
-    RGB1[++i,] = (.953099, .397563, .361438)
-    RGB1[++i,] = (.955849, .404400, .360619)
-    RGB1[++i,] = (.958464, .411324, .360014)
-    RGB1[++i,] = (.960949, .418323, .359630)
-    RGB1[++i,] = (.963310, .425390, .359469)
-    RGB1[++i,] = (.965549, .432519, .359529)
-    RGB1[++i,] = (.967671, .439703, .359810)
-    RGB1[++i,] = (.969680, .446936, .360311)
-    RGB1[++i,] = (.971582, .454210, .361030)
-    RGB1[++i,] = (.973381, .461520, .361965)
-    RGB1[++i,] = (.975082, .468861, .363111)
-    RGB1[++i,] = (.976690, .476226, .364466)
-    RGB1[++i,] = (.978210, .483612, .366025)
-    RGB1[++i,] = (.979645, .491014, .367783)
-    RGB1[++i,] = (.981000, .498428, .369734)
-    RGB1[++i,] = (.982279, .505851, .371874)
-    RGB1[++i,] = (.983485, .513280, .374198)
-    RGB1[++i,] = (.984622, .520713, .376698)
-    RGB1[++i,] = (.985693, .528148, .379371)
-    RGB1[++i,] = (.986700, .535582, .382210)
-    RGB1[++i,] = (.987646, .543015, .385210)
-    RGB1[++i,] = (.988533, .550446, .388365)
-    RGB1[++i,] = (.989363, .557873, .391671)
-    RGB1[++i,] = (.990138, .565296, .395122)
-    RGB1[++i,] = (.990871, .572706, .398714)
-    RGB1[++i,] = (.991558, .580107, .402441)
-    RGB1[++i,] = (.992196, .587502, .406299)
-    RGB1[++i,] = (.992785, .594891, .410283)
-    RGB1[++i,] = (.993326, .602275, .414390)
-    RGB1[++i,] = (.993834, .609644, .418613)
-    RGB1[++i,] = (.994309, .616999, .422950)
-    RGB1[++i,] = (.994738, .624350, .427397)
-    RGB1[++i,] = (.995122, .631696, .431951)
-    RGB1[++i,] = (.995480, .639027, .436607)
-    RGB1[++i,] = (.995810, .646344, .441361)
-    RGB1[++i,] = (.996096, .653659, .446213)
-    RGB1[++i,] = (.996341, .660969, .451160)
-    RGB1[++i,] = (.996580, .668256, .456192)
-    RGB1[++i,] = (.996775, .675541, .461314)
-    RGB1[++i,] = (.996925, .682828, .466526)
-    RGB1[++i,] = (.997077, .690088, .471811)
-    RGB1[++i,] = (.997186, .697349, .477182)
-    RGB1[++i,] = (.997254, .704611, .482635)
-    RGB1[++i,] = (.997325, .711848, .488154)
-    RGB1[++i,] = (.997351, .719089, .493755)
-    RGB1[++i,] = (.997351, .726324, .499428)
-    RGB1[++i,] = (.997341, .733545, .505167)
-    RGB1[++i,] = (.997285, .740772, .510983)
-    RGB1[++i,] = (.997228, .747981, .516859)
-    RGB1[++i,] = (.997138, .755190, .522806)
-    RGB1[++i,] = (.997019, .762398, .528821)
-    RGB1[++i,] = (.996898, .769591, .534892)
-    RGB1[++i,] = (.996727, .776795, .541039)
-    RGB1[++i,] = (.996571, .783977, .547233)
-    RGB1[++i,] = (.996369, .791167, .553499)
-    RGB1[++i,] = (.996162, .798348, .559820)
-    RGB1[++i,] = (.995932, .805527, .566202)
-    RGB1[++i,] = (.995680, .812706, .572645)
-    RGB1[++i,] = (.995424, .819875, .579140)
-    RGB1[++i,] = (.995131, .827052, .585701)
-    RGB1[++i,] = (.994851, .834213, .592307)
-    RGB1[++i,] = (.994524, .841387, .598983)
-    RGB1[++i,] = (.994222, .848540, .605696)
-    RGB1[++i,] = (.993866, .855711, .612482)
-    RGB1[++i,] = (.993545, .862859, .619299)
-    RGB1[++i,] = (.993170, .870024, .626189)
-    RGB1[++i,] = (.992831, .877168, .633109)
-    RGB1[++i,] = (.992440, .884330, .640099)
-    RGB1[++i,] = (.992089, .891470, .647116)
-    RGB1[++i,] = (.991688, .898627, .654202)
-    RGB1[++i,] = (.991332, .905763, .661309)
-    RGB1[++i,] = (.990930, .912915, .668481)
-    RGB1[++i,] = (.990570, .920049, .675675)
-    RGB1[++i,] = (.990175, .927196, .682926)
-    RGB1[++i,] = (.989815, .934329, .690198)
-    RGB1[++i,] = (.989434, .941470, .697519)
-    RGB1[++i,] = (.989077, .948604, .704863)
-    RGB1[++i,] = (.988717, .955742, .712242)
-    RGB1[++i,] = (.988367, .962878, .719649)
-    RGB1[++i,] = (.988033, .970012, .727077)
-    RGB1[++i,] = (.987691, .977154, .734536)
-    RGB1[++i,] = (.987387, .984288, .742002)
-    RGB1[++i,] = (.987053, .991438, .749504)
-}
-
-void `MAIN'::inferno(`RM' RGB1)
-{
-    `Int' i
-    
-    i = 0
-    RGB1 = J(256, 3 ,.)
-    RGB1[++i,] = (.001462, .000466, .013866)
-    RGB1[++i,] = (.002267, .001270, .018570)
-    RGB1[++i,] = (.003299, .002249, .024239)
-    RGB1[++i,] = (.004547, .003392, .030909)
-    RGB1[++i,] = (.006006, .004692, .038558)
-    RGB1[++i,] = (.007676, .006136, .046836)
-    RGB1[++i,] = (.009561, .007713, .055143)
-    RGB1[++i,] = (.011663, .009417, .063460)
-    RGB1[++i,] = (.013995, .011225, .071862)
-    RGB1[++i,] = (.016561, .013136, .080282)
-    RGB1[++i,] = (.019373, .015133, .088767)
-    RGB1[++i,] = (.022447, .017199, .097327)
-    RGB1[++i,] = (.025793, .019331, .105930)
-    RGB1[++i,] = (.029432, .021503, .114621)
-    RGB1[++i,] = (.033385, .023702, .123397)
-    RGB1[++i,] = (.037668, .025921, .132232)
-    RGB1[++i,] = (.042253, .028139, .141141)
-    RGB1[++i,] = (.046915, .030324, .150164)
-    RGB1[++i,] = (.051644, .032474, .159254)
-    RGB1[++i,] = (.056449, .034569, .168414)
-    RGB1[++i,] = (.061340, .036590, .177642)
-    RGB1[++i,] = (.066331, .038504, .186962)
-    RGB1[++i,] = (.071429, .040294, .196354)
-    RGB1[++i,] = (.076637, .041905, .205799)
-    RGB1[++i,] = (.081962, .043328, .215289)
-    RGB1[++i,] = (.087411, .044556, .224813)
-    RGB1[++i,] = (.092990, .045583, .234358)
-    RGB1[++i,] = (.098702, .046402, .243904)
-    RGB1[++i,] = (.104551, .047008, .253430)
-    RGB1[++i,] = (.110536, .047399, .262912)
-    RGB1[++i,] = (.116656, .047574, .272321)
-    RGB1[++i,] = (.122908, .047536, .281624)
-    RGB1[++i,] = (.129285, .047293, .290788)
-    RGB1[++i,] = (.135778, .046856, .299776)
-    RGB1[++i,] = (.142378, .046242, .308553)
-    RGB1[++i,] = (.149073, .045468, .317085)
-    RGB1[++i,] = (.155850, .044559, .325338)
-    RGB1[++i,] = (.162689, .043554, .333277)
-    RGB1[++i,] = (.169575, .042489, .340874)
-    RGB1[++i,] = (.176493, .041402, .348111)
-    RGB1[++i,] = (.183429, .040329, .354971)
-    RGB1[++i,] = (.190367, .039309, .361447)
-    RGB1[++i,] = (.197297, .038400, .367535)
-    RGB1[++i,] = (.204209, .037632, .373238)
-    RGB1[++i,] = (.211095, .037030, .378563)
-    RGB1[++i,] = (.217949, .036615, .383522)
-    RGB1[++i,] = (.224763, .036405, .388129)
-    RGB1[++i,] = (.231538, .036405, .392400)
-    RGB1[++i,] = (.238273, .036621, .396353)
-    RGB1[++i,] = (.244967, .037055, .400007)
-    RGB1[++i,] = (.251620, .037705, .403378)
-    RGB1[++i,] = (.258234, .038571, .406485)
-    RGB1[++i,] = (.264810, .039647, .409345)
-    RGB1[++i,] = (.271347, .040922, .411976)
-    RGB1[++i,] = (.277850, .042353, .414392)
-    RGB1[++i,] = (.284321, .043933, .416608)
-    RGB1[++i,] = (.290763, .045644, .418637)
-    RGB1[++i,] = (.297178, .047470, .420491)
-    RGB1[++i,] = (.303568, .049396, .422182)
-    RGB1[++i,] = (.309935, .051407, .423721)
-    RGB1[++i,] = (.316282, .053490, .425116)
-    RGB1[++i,] = (.322610, .055634, .426377)
-    RGB1[++i,] = (.328921, .057827, .427511)
-    RGB1[++i,] = (.335217, .060060, .428524)
-    RGB1[++i,] = (.341500, .062325, .429425)
-    RGB1[++i,] = (.347771, .064616, .430217)
-    RGB1[++i,] = (.354032, .066925, .430906)
-    RGB1[++i,] = (.360284, .069247, .431497)
-    RGB1[++i,] = (.366529, .071579, .431994)
-    RGB1[++i,] = (.372768, .073915, .432400)
-    RGB1[++i,] = (.379001, .076253, .432719)
-    RGB1[++i,] = (.385228, .078591, .432955)
-    RGB1[++i,] = (.391453, .080927, .433109)
-    RGB1[++i,] = (.397674, .083257, .433183)
-    RGB1[++i,] = (.403894, .085580, .433179)
-    RGB1[++i,] = (.410113, .087896, .433098)
-    RGB1[++i,] = (.416331, .090203, .432943)
-    RGB1[++i,] = (.422549, .092501, .432714)
-    RGB1[++i,] = (.428768, .094790, .432412)
-    RGB1[++i,] = (.434987, .097069, .432039)
-    RGB1[++i,] = (.441207, .099338, .431594)
-    RGB1[++i,] = (.447428, .101597, .431080)
-    RGB1[++i,] = (.453651, .103848, .430498)
-    RGB1[++i,] = (.459875, .106089, .429846)
-    RGB1[++i,] = (.466100, .108322, .429125)
-    RGB1[++i,] = (.472328, .110547, .428334)
-    RGB1[++i,] = (.478558, .112764, .427475)
-    RGB1[++i,] = (.484789, .114974, .426548)
-    RGB1[++i,] = (.491022, .117179, .425552)
-    RGB1[++i,] = (.497257, .119379, .424488)
-    RGB1[++i,] = (.503493, .121575, .423356)
-    RGB1[++i,] = (.509730, .123769, .422156)
-    RGB1[++i,] = (.515967, .125960, .420887)
-    RGB1[++i,] = (.522206, .128150, .419549)
-    RGB1[++i,] = (.528444, .130341, .418142)
-    RGB1[++i,] = (.534683, .132534, .416667)
-    RGB1[++i,] = (.540920, .134729, .415123)
-    RGB1[++i,] = (.547157, .136929, .413511)
-    RGB1[++i,] = (.553392, .139134, .411829)
-    RGB1[++i,] = (.559624, .141346, .410078)
-    RGB1[++i,] = (.565854, .143567, .408258)
-    RGB1[++i,] = (.572081, .145797, .406369)
-    RGB1[++i,] = (.578304, .148039, .404411)
-    RGB1[++i,] = (.584521, .150294, .402385)
-    RGB1[++i,] = (.590734, .152563, .400290)
-    RGB1[++i,] = (.596940, .154848, .398125)
-    RGB1[++i,] = (.603139, .157151, .395891)
-    RGB1[++i,] = (.609330, .159474, .393589)
-    RGB1[++i,] = (.615513, .161817, .391219)
-    RGB1[++i,] = (.621685, .164184, .388781)
-    RGB1[++i,] = (.627847, .166575, .386276)
-    RGB1[++i,] = (.633998, .168992, .383704)
-    RGB1[++i,] = (.640135, .171438, .381065)
-    RGB1[++i,] = (.646260, .173914, .378359)
-    RGB1[++i,] = (.652369, .176421, .375586)
-    RGB1[++i,] = (.658463, .178962, .372748)
-    RGB1[++i,] = (.664540, .181539, .369846)
-    RGB1[++i,] = (.670599, .184153, .366879)
-    RGB1[++i,] = (.676638, .186807, .363849)
-    RGB1[++i,] = (.682656, .189501, .360757)
-    RGB1[++i,] = (.688653, .192239, .357603)
-    RGB1[++i,] = (.694627, .195021, .354388)
-    RGB1[++i,] = (.700576, .197851, .351113)
-    RGB1[++i,] = (.706500, .200728, .347777)
-    RGB1[++i,] = (.712396, .203656, .344383)
-    RGB1[++i,] = (.718264, .206636, .340931)
-    RGB1[++i,] = (.724103, .209670, .337424)
-    RGB1[++i,] = (.729909, .212759, .333861)
-    RGB1[++i,] = (.735683, .215906, .330245)
-    RGB1[++i,] = (.741423, .219112, .326576)
-    RGB1[++i,] = (.747127, .222378, .322856)
-    RGB1[++i,] = (.752794, .225706, .319085)
-    RGB1[++i,] = (.758422, .229097, .315266)
-    RGB1[++i,] = (.764010, .232554, .311399)
-    RGB1[++i,] = (.769556, .236077, .307485)
-    RGB1[++i,] = (.775059, .239667, .303526)
-    RGB1[++i,] = (.780517, .243327, .299523)
-    RGB1[++i,] = (.785929, .247056, .295477)
-    RGB1[++i,] = (.791293, .250856, .291390)
-    RGB1[++i,] = (.796607, .254728, .287264)
-    RGB1[++i,] = (.801871, .258674, .283099)
-    RGB1[++i,] = (.807082, .262692, .278898)
-    RGB1[++i,] = (.812239, .266786, .274661)
-    RGB1[++i,] = (.817341, .270954, .270390)
-    RGB1[++i,] = (.822386, .275197, .266085)
-    RGB1[++i,] = (.827372, .279517, .261750)
-    RGB1[++i,] = (.832299, .283913, .257383)
-    RGB1[++i,] = (.837165, .288385, .252988)
-    RGB1[++i,] = (.841969, .292933, .248564)
-    RGB1[++i,] = (.846709, .297559, .244113)
-    RGB1[++i,] = (.851384, .302260, .239636)
-    RGB1[++i,] = (.855992, .307038, .235133)
-    RGB1[++i,] = (.860533, .311892, .230606)
-    RGB1[++i,] = (.865006, .316822, .226055)
-    RGB1[++i,] = (.869409, .321827, .221482)
-    RGB1[++i,] = (.873741, .326906, .216886)
-    RGB1[++i,] = (.878001, .332060, .212268)
-    RGB1[++i,] = (.882188, .337287, .207628)
-    RGB1[++i,] = (.886302, .342586, .202968)
-    RGB1[++i,] = (.890341, .347957, .198286)
-    RGB1[++i,] = (.894305, .353399, .193584)
-    RGB1[++i,] = (.898192, .358911, .188860)
-    RGB1[++i,] = (.902003, .364492, .184116)
-    RGB1[++i,] = (.905735, .370140, .179350)
-    RGB1[++i,] = (.909390, .375856, .174563)
-    RGB1[++i,] = (.912966, .381636, .169755)
-    RGB1[++i,] = (.916462, .387481, .164924)
-    RGB1[++i,] = (.919879, .393389, .160070)
-    RGB1[++i,] = (.923215, .399359, .155193)
-    RGB1[++i,] = (.926470, .405389, .150292)
-    RGB1[++i,] = (.929644, .411479, .145367)
-    RGB1[++i,] = (.932737, .417627, .140417)
-    RGB1[++i,] = (.935747, .423831, .135440)
-    RGB1[++i,] = (.938675, .430091, .130438)
-    RGB1[++i,] = (.941521, .436405, .125409)
-    RGB1[++i,] = (.944285, .442772, .120354)
-    RGB1[++i,] = (.946965, .449191, .115272)
-    RGB1[++i,] = (.949562, .455660, .110164)
-    RGB1[++i,] = (.952075, .462178, .105031)
-    RGB1[++i,] = (.954506, .468744, .099874)
-    RGB1[++i,] = (.956852, .475356, .094695)
-    RGB1[++i,] = (.959114, .482014, .089499)
-    RGB1[++i,] = (.961293, .488716, .084289)
-    RGB1[++i,] = (.963387, .495462, .079073)
-    RGB1[++i,] = (.965397, .502249, .073859)
-    RGB1[++i,] = (.967322, .509078, .068659)
-    RGB1[++i,] = (.969163, .515946, .063488)
-    RGB1[++i,] = (.970919, .522853, .058367)
-    RGB1[++i,] = (.972590, .529798, .053324)
-    RGB1[++i,] = (.974176, .536780, .048392)
-    RGB1[++i,] = (.975677, .543798, .043618)
-    RGB1[++i,] = (.977092, .550850, .039050)
-    RGB1[++i,] = (.978422, .557937, .034931)
-    RGB1[++i,] = (.979666, .565057, .031409)
-    RGB1[++i,] = (.980824, .572209, .028508)
-    RGB1[++i,] = (.981895, .579392, .026250)
-    RGB1[++i,] = (.982881, .586606, .024661)
-    RGB1[++i,] = (.983779, .593849, .023770)
-    RGB1[++i,] = (.984591, .601122, .023606)
-    RGB1[++i,] = (.985315, .608422, .024202)
-    RGB1[++i,] = (.985952, .615750, .025592)
-    RGB1[++i,] = (.986502, .623105, .027814)
-    RGB1[++i,] = (.986964, .630485, .030908)
-    RGB1[++i,] = (.987337, .637890, .034916)
-    RGB1[++i,] = (.987622, .645320, .039886)
-    RGB1[++i,] = (.987819, .652773, .045581)
-    RGB1[++i,] = (.987926, .660250, .051750)
-    RGB1[++i,] = (.987945, .667748, .058329)
-    RGB1[++i,] = (.987874, .675267, .065257)
-    RGB1[++i,] = (.987714, .682807, .072489)
-    RGB1[++i,] = (.987464, .690366, .079990)
-    RGB1[++i,] = (.987124, .697944, .087731)
-    RGB1[++i,] = (.986694, .705540, .095694)
-    RGB1[++i,] = (.986175, .713153, .103863)
-    RGB1[++i,] = (.985566, .720782, .112229)
-    RGB1[++i,] = (.984865, .728427, .120785)
-    RGB1[++i,] = (.984075, .736087, .129527)
-    RGB1[++i,] = (.983196, .743758, .138453)
-    RGB1[++i,] = (.982228, .751442, .147565)
-    RGB1[++i,] = (.981173, .759135, .156863)
-    RGB1[++i,] = (.980032, .766837, .166353)
-    RGB1[++i,] = (.978806, .774545, .176037)
-    RGB1[++i,] = (.977497, .782258, .185923)
-    RGB1[++i,] = (.976108, .789974, .196018)
-    RGB1[++i,] = (.974638, .797692, .206332)
-    RGB1[++i,] = (.973088, .805409, .216877)
-    RGB1[++i,] = (.971468, .813122, .227658)
-    RGB1[++i,] = (.969783, .820825, .238686)
-    RGB1[++i,] = (.968041, .828515, .249972)
-    RGB1[++i,] = (.966243, .836191, .261534)
-    RGB1[++i,] = (.964394, .843848, .273391)
-    RGB1[++i,] = (.962517, .851476, .285546)
-    RGB1[++i,] = (.960626, .859069, .298010)
-    RGB1[++i,] = (.958720, .866624, .310820)
-    RGB1[++i,] = (.956834, .874129, .323974)
-    RGB1[++i,] = (.954997, .881569, .337475)
-    RGB1[++i,] = (.953215, .888942, .351369)
-    RGB1[++i,] = (.951546, .896226, .365627)
-    RGB1[++i,] = (.950018, .903409, .380271)
-    RGB1[++i,] = (.948683, .910473, .395289)
-    RGB1[++i,] = (.947594, .917399, .410665)
-    RGB1[++i,] = (.946809, .924168, .426373)
-    RGB1[++i,] = (.946392, .930761, .442367)
-    RGB1[++i,] = (.946403, .937159, .458592)
-    RGB1[++i,] = (.946903, .943348, .474970)
-    RGB1[++i,] = (.947937, .949318, .491426)
-    RGB1[++i,] = (.949545, .955063, .507860)
-    RGB1[++i,] = (.951740, .960587, .524203)
-    RGB1[++i,] = (.954529, .965896, .540361)
-    RGB1[++i,] = (.957896, .971003, .556275)
-    RGB1[++i,] = (.961812, .975924, .571925)
-    RGB1[++i,] = (.966249, .980678, .587206)
-    RGB1[++i,] = (.971162, .985282, .602154)
-    RGB1[++i,] = (.976511, .989753, .616760)
-    RGB1[++i,] = (.982257, .994109, .631017)
-    RGB1[++i,] = (.988362, .998364, .644924)
-}
-
-void `MAIN'::plasma(`RM' RGB1)
-{
-    `Int' i
-    
-    i = 0
-    RGB1 = J(256, 3 ,.)
-    RGB1[++i,] = (.050383, .029803, .527975)
-    RGB1[++i,] = (.063536, .028426, .533124)
-    RGB1[++i,] = (.075353, .027206, .538007)
-    RGB1[++i,] = (.086222, .026125, .542658)
-    RGB1[++i,] = (.096379, .025165, .547103)
-    RGB1[++i,] = (.105980, .024309, .551368)
-    RGB1[++i,] = (.115124, .023556, .555468)
-    RGB1[++i,] = (.123903, .022878, .559423)
-    RGB1[++i,] = (.132381, .022258, .563250)
-    RGB1[++i,] = (.140603, .021687, .566959)
-    RGB1[++i,] = (.148607, .021154, .570562)
-    RGB1[++i,] = (.156421, .020651, .574065)
-    RGB1[++i,] = (.164070, .020171, .577478)
-    RGB1[++i,] = (.171574, .019706, .580806)
-    RGB1[++i,] = (.178950, .019252, .584054)
-    RGB1[++i,] = (.186213, .018803, .587228)
-    RGB1[++i,] = (.193374, .018354, .590330)
-    RGB1[++i,] = (.200445, .017902, .593364)
-    RGB1[++i,] = (.207435, .017442, .596333)
-    RGB1[++i,] = (.214350, .016973, .599239)
-    RGB1[++i,] = (.221197, .016497, .602083)
-    RGB1[++i,] = (.227983, .016007, .604867)
-    RGB1[++i,] = (.234715, .015502, .607592)
-    RGB1[++i,] = (.241396, .014979, .610259)
-    RGB1[++i,] = (.248032, .014439, .612868)
-    RGB1[++i,] = (.254627, .013882, .615419)
-    RGB1[++i,] = (.261183, .013308, .617911)
-    RGB1[++i,] = (.267703, .012716, .620346)
-    RGB1[++i,] = (.274191, .012109, .622722)
-    RGB1[++i,] = (.280648, .011488, .625038)
-    RGB1[++i,] = (.287076, .010855, .627295)
-    RGB1[++i,] = (.293478, .010213, .629490)
-    RGB1[++i,] = (.299855, .009561, .631624)
-    RGB1[++i,] = (.306210, .008902, .633694)
-    RGB1[++i,] = (.312543, .008239, .635700)
-    RGB1[++i,] = (.318856, .007576, .637640)
-    RGB1[++i,] = (.325150, .006915, .639512)
-    RGB1[++i,] = (.331426, .006261, .641316)
-    RGB1[++i,] = (.337683, .005618, .643049)
-    RGB1[++i,] = (.343925, .004991, .644710)
-    RGB1[++i,] = (.350150, .004382, .646298)
-    RGB1[++i,] = (.356359, .003798, .647810)
-    RGB1[++i,] = (.362553, .003243, .649245)
-    RGB1[++i,] = (.368733, .002724, .650601)
-    RGB1[++i,] = (.374897, .002245, .651876)
-    RGB1[++i,] = (.381047, .001814, .653068)
-    RGB1[++i,] = (.387183, .001434, .654177)
-    RGB1[++i,] = (.393304, .001114, .655199)
-    RGB1[++i,] = (.399411, .000859, .656133)
-    RGB1[++i,] = (.405503, .000678, .656977)
-    RGB1[++i,] = (.411580, .000577, .657730)
-    RGB1[++i,] = (.417642, .000564, .658390)
-    RGB1[++i,] = (.423689, .000646, .658956)
-    RGB1[++i,] = (.429719, .000831, .659425)
-    RGB1[++i,] = (.435734, .001127, .659797)
-    RGB1[++i,] = (.441732, .001540, .660069)
-    RGB1[++i,] = (.447714, .002080, .660240)
-    RGB1[++i,] = (.453677, .002755, .660310)
-    RGB1[++i,] = (.459623, .003574, .660277)
-    RGB1[++i,] = (.465550, .004545, .660139)
-    RGB1[++i,] = (.471457, .005678, .659897)
-    RGB1[++i,] = (.477344, .006980, .659549)
-    RGB1[++i,] = (.483210, .008460, .659095)
-    RGB1[++i,] = (.489055, .010127, .658534)
-    RGB1[++i,] = (.494877, .011990, .657865)
-    RGB1[++i,] = (.500678, .014055, .657088)
-    RGB1[++i,] = (.506454, .016333, .656202)
-    RGB1[++i,] = (.512206, .018833, .655209)
-    RGB1[++i,] = (.517933, .021563, .654109)
-    RGB1[++i,] = (.523633, .024532, .652901)
-    RGB1[++i,] = (.529306, .027747, .651586)
-    RGB1[++i,] = (.534952, .031217, .650165)
-    RGB1[++i,] = (.540570, .034950, .648640)
-    RGB1[++i,] = (.546157, .038954, .647010)
-    RGB1[++i,] = (.551715, .043136, .645277)
-    RGB1[++i,] = (.557243, .047331, .643443)
-    RGB1[++i,] = (.562738, .051545, .641509)
-    RGB1[++i,] = (.568201, .055778, .639477)
-    RGB1[++i,] = (.573632, .060028, .637349)
-    RGB1[++i,] = (.579029, .064296, .635126)
-    RGB1[++i,] = (.584391, .068579, .632812)
-    RGB1[++i,] = (.589719, .072878, .630408)
-    RGB1[++i,] = (.595011, .077190, .627917)
-    RGB1[++i,] = (.600266, .081516, .625342)
-    RGB1[++i,] = (.605485, .085854, .622686)
-    RGB1[++i,] = (.610667, .090204, .619951)
-    RGB1[++i,] = (.615812, .094564, .617140)
-    RGB1[++i,] = (.620919, .098934, .614257)
-    RGB1[++i,] = (.625987, .103312, .611305)
-    RGB1[++i,] = (.631017, .107699, .608287)
-    RGB1[++i,] = (.636008, .112092, .605205)
-    RGB1[++i,] = (.640959, .116492, .602065)
-    RGB1[++i,] = (.645872, .120898, .598867)
-    RGB1[++i,] = (.650746, .125309, .595617)
-    RGB1[++i,] = (.655580, .129725, .592317)
-    RGB1[++i,] = (.660374, .134144, .588971)
-    RGB1[++i,] = (.665129, .138566, .585582)
-    RGB1[++i,] = (.669845, .142992, .582154)
-    RGB1[++i,] = (.674522, .147419, .578688)
-    RGB1[++i,] = (.679160, .151848, .575189)
-    RGB1[++i,] = (.683758, .156278, .571660)
-    RGB1[++i,] = (.688318, .160709, .568103)
-    RGB1[++i,] = (.692840, .165141, .564522)
-    RGB1[++i,] = (.697324, .169573, .560919)
-    RGB1[++i,] = (.701769, .174005, .557296)
-    RGB1[++i,] = (.706178, .178437, .553657)
-    RGB1[++i,] = (.710549, .182868, .550004)
-    RGB1[++i,] = (.714883, .187299, .546338)
-    RGB1[++i,] = (.719181, .191729, .542663)
-    RGB1[++i,] = (.723444, .196158, .538981)
-    RGB1[++i,] = (.727670, .200586, .535293)
-    RGB1[++i,] = (.731862, .205013, .531601)
-    RGB1[++i,] = (.736019, .209439, .527908)
-    RGB1[++i,] = (.740143, .213864, .524216)
-    RGB1[++i,] = (.744232, .218288, .520524)
-    RGB1[++i,] = (.748289, .222711, .516834)
-    RGB1[++i,] = (.752312, .227133, .513149)
-    RGB1[++i,] = (.756304, .231555, .509468)
-    RGB1[++i,] = (.760264, .235976, .505794)
-    RGB1[++i,] = (.764193, .240396, .502126)
-    RGB1[++i,] = (.768090, .244817, .498465)
-    RGB1[++i,] = (.771958, .249237, .494813)
-    RGB1[++i,] = (.775796, .253658, .491171)
-    RGB1[++i,] = (.779604, .258078, .487539)
-    RGB1[++i,] = (.783383, .262500, .483918)
-    RGB1[++i,] = (.787133, .266922, .480307)
-    RGB1[++i,] = (.790855, .271345, .476706)
-    RGB1[++i,] = (.794549, .275770, .473117)
-    RGB1[++i,] = (.798216, .280197, .469538)
-    RGB1[++i,] = (.801855, .284626, .465971)
-    RGB1[++i,] = (.805467, .289057, .462415)
-    RGB1[++i,] = (.809052, .293491, .458870)
-    RGB1[++i,] = (.812612, .297928, .455338)
-    RGB1[++i,] = (.816144, .302368, .451816)
-    RGB1[++i,] = (.819651, .306812, .448306)
-    RGB1[++i,] = (.823132, .311261, .444806)
-    RGB1[++i,] = (.826588, .315714, .441316)
-    RGB1[++i,] = (.830018, .320172, .437836)
-    RGB1[++i,] = (.833422, .324635, .434366)
-    RGB1[++i,] = (.836801, .329105, .430905)
-    RGB1[++i,] = (.840155, .333580, .427455)
-    RGB1[++i,] = (.843484, .338062, .424013)
-    RGB1[++i,] = (.846788, .342551, .420579)
-    RGB1[++i,] = (.850066, .347048, .417153)
-    RGB1[++i,] = (.853319, .351553, .413734)
-    RGB1[++i,] = (.856547, .356066, .410322)
-    RGB1[++i,] = (.859750, .360588, .406917)
-    RGB1[++i,] = (.862927, .365119, .403519)
-    RGB1[++i,] = (.866078, .369660, .400126)
-    RGB1[++i,] = (.869203, .374212, .396738)
-    RGB1[++i,] = (.872303, .378774, .393355)
-    RGB1[++i,] = (.875376, .383347, .389976)
-    RGB1[++i,] = (.878423, .387932, .386600)
-    RGB1[++i,] = (.881443, .392529, .383229)
-    RGB1[++i,] = (.884436, .397139, .379860)
-    RGB1[++i,] = (.887402, .401762, .376494)
-    RGB1[++i,] = (.890340, .406398, .373130)
-    RGB1[++i,] = (.893250, .411048, .369768)
-    RGB1[++i,] = (.896131, .415712, .366407)
-    RGB1[++i,] = (.898984, .420392, .363047)
-    RGB1[++i,] = (.901807, .425087, .359688)
-    RGB1[++i,] = (.904601, .429797, .356329)
-    RGB1[++i,] = (.907365, .434524, .352970)
-    RGB1[++i,] = (.910098, .439268, .349610)
-    RGB1[++i,] = (.912800, .444029, .346251)
-    RGB1[++i,] = (.915471, .448807, .342890)
-    RGB1[++i,] = (.918109, .453603, .339529)
-    RGB1[++i,] = (.920714, .458417, .336166)
-    RGB1[++i,] = (.923287, .463251, .332801)
-    RGB1[++i,] = (.925825, .468103, .329435)
-    RGB1[++i,] = (.928329, .472975, .326067)
-    RGB1[++i,] = (.930798, .477867, .322697)
-    RGB1[++i,] = (.933232, .482780, .319325)
-    RGB1[++i,] = (.935630, .487712, .315952)
-    RGB1[++i,] = (.937990, .492667, .312575)
-    RGB1[++i,] = (.940313, .497642, .309197)
-    RGB1[++i,] = (.942598, .502639, .305816)
-    RGB1[++i,] = (.944844, .507658, .302433)
-    RGB1[++i,] = (.947051, .512699, .299049)
-    RGB1[++i,] = (.949217, .517763, .295662)
-    RGB1[++i,] = (.951344, .522850, .292275)
-    RGB1[++i,] = (.953428, .527960, .288883)
-    RGB1[++i,] = (.955470, .533093, .285490)
-    RGB1[++i,] = (.957469, .538250, .282096)
-    RGB1[++i,] = (.959424, .543431, .278701)
-    RGB1[++i,] = (.961336, .548636, .275305)
-    RGB1[++i,] = (.963203, .553865, .271909)
-    RGB1[++i,] = (.965024, .559118, .268513)
-    RGB1[++i,] = (.966798, .564396, .265118)
-    RGB1[++i,] = (.968526, .569700, .261721)
-    RGB1[++i,] = (.970205, .575028, .258325)
-    RGB1[++i,] = (.971835, .580382, .254931)
-    RGB1[++i,] = (.973416, .585761, .251540)
-    RGB1[++i,] = (.974947, .591165, .248151)
-    RGB1[++i,] = (.976428, .596595, .244767)
-    RGB1[++i,] = (.977856, .602051, .241387)
-    RGB1[++i,] = (.979233, .607532, .238013)
-    RGB1[++i,] = (.980556, .613039, .234646)
-    RGB1[++i,] = (.981826, .618572, .231287)
-    RGB1[++i,] = (.983041, .624131, .227937)
-    RGB1[++i,] = (.984199, .629718, .224595)
-    RGB1[++i,] = (.985301, .635330, .221265)
-    RGB1[++i,] = (.986345, .640969, .217948)
-    RGB1[++i,] = (.987332, .646633, .214648)
-    RGB1[++i,] = (.988260, .652325, .211364)
-    RGB1[++i,] = (.989128, .658043, .208100)
-    RGB1[++i,] = (.989935, .663787, .204859)
-    RGB1[++i,] = (.990681, .669558, .201642)
-    RGB1[++i,] = (.991365, .675355, .198453)
-    RGB1[++i,] = (.991985, .681179, .195295)
-    RGB1[++i,] = (.992541, .687030, .192170)
-    RGB1[++i,] = (.993032, .692907, .189084)
-    RGB1[++i,] = (.993456, .698810, .186041)
-    RGB1[++i,] = (.993814, .704741, .183043)
-    RGB1[++i,] = (.994103, .710698, .180097)
-    RGB1[++i,] = (.994324, .716681, .177208)
-    RGB1[++i,] = (.994474, .722691, .174381)
-    RGB1[++i,] = (.994553, .728728, .171622)
-    RGB1[++i,] = (.994561, .734791, .168938)
-    RGB1[++i,] = (.994495, .740880, .166335)
-    RGB1[++i,] = (.994355, .746995, .163821)
-    RGB1[++i,] = (.994141, .753137, .161404)
-    RGB1[++i,] = (.993851, .759304, .159092)
-    RGB1[++i,] = (.993482, .765499, .156891)
-    RGB1[++i,] = (.993033, .771720, .154808)
-    RGB1[++i,] = (.992505, .777967, .152855)
-    RGB1[++i,] = (.991897, .784239, .151042)
-    RGB1[++i,] = (.991209, .790537, .149377)
-    RGB1[++i,] = (.990439, .796859, .147870)
-    RGB1[++i,] = (.989587, .803205, .146529)
-    RGB1[++i,] = (.988648, .809579, .145357)
-    RGB1[++i,] = (.987621, .815978, .144363)
-    RGB1[++i,] = (.986509, .822401, .143557)
-    RGB1[++i,] = (.985314, .828846, .142945)
-    RGB1[++i,] = (.984031, .835315, .142528)
-    RGB1[++i,] = (.982653, .841812, .142303)
-    RGB1[++i,] = (.981190, .848329, .142279)
-    RGB1[++i,] = (.979644, .854866, .142453)
-    RGB1[++i,] = (.977995, .861432, .142808)
-    RGB1[++i,] = (.976265, .868016, .143351)
-    RGB1[++i,] = (.974443, .874622, .144061)
-    RGB1[++i,] = (.972530, .881250, .144923)
-    RGB1[++i,] = (.970533, .887896, .145919)
-    RGB1[++i,] = (.968443, .894564, .147014)
-    RGB1[++i,] = (.966271, .901249, .148180)
-    RGB1[++i,] = (.964021, .907950, .149370)
-    RGB1[++i,] = (.961681, .914672, .150520)
-    RGB1[++i,] = (.959276, .921407, .151566)
-    RGB1[++i,] = (.956808, .928152, .152409)
-    RGB1[++i,] = (.954287, .934908, .152921)
-    RGB1[++i,] = (.951726, .941671, .152925)
-    RGB1[++i,] = (.949151, .948435, .152178)
-    RGB1[++i,] = (.946602, .955190, .150328)
-    RGB1[++i,] = (.944152, .961916, .146861)
-    RGB1[++i,] = (.941896, .968590, .140956)
-    RGB1[++i,] = (.940015, .975158, .131326)
-}
-
-void `MAIN'::viridis(`RM' RGB1)
-{
-    `Int' i
-    
-    i = 0
-    RGB1 = J(256, 3 ,.)
-    RGB1[++i,] = (.267004, .004874, .329415)
-    RGB1[++i,] = (.268510, .009605, .335427)
-    RGB1[++i,] = (.269944, .014625, .341379)
-    RGB1[++i,] = (.271305, .019942, .347269)
-    RGB1[++i,] = (.272594, .025563, .353093)
-    RGB1[++i,] = (.273809, .031497, .358853)
-    RGB1[++i,] = (.274952, .037752, .364543)
-    RGB1[++i,] = (.276022, .044167, .370164)
-    RGB1[++i,] = (.277018, .050344, .375715)
-    RGB1[++i,] = (.277941, .056324, .381191)
-    RGB1[++i,] = (.278791, .062145, .386592)
-    RGB1[++i,] = (.279566, .067836, .391917)
-    RGB1[++i,] = (.280267, .073417, .397163)
-    RGB1[++i,] = (.280894, .078907, .402329)
-    RGB1[++i,] = (.281446, .084320, .407414)
-    RGB1[++i,] = (.281924, .089666, .412415)
-    RGB1[++i,] = (.282327, .094955, .417331)
-    RGB1[++i,] = (.282656, .100196, .422160)
-    RGB1[++i,] = (.282910, .105393, .426902)
-    RGB1[++i,] = (.283091, .110553, .431554)
-    RGB1[++i,] = (.283197, .115680, .436115)
-    RGB1[++i,] = (.283229, .120777, .440584)
-    RGB1[++i,] = (.283187, .125848, .444960)
-    RGB1[++i,] = (.283072, .130895, .449241)
-    RGB1[++i,] = (.282884, .135920, .453427)
-    RGB1[++i,] = (.282623, .140926, .457517)
-    RGB1[++i,] = (.282290, .145912, .461510)
-    RGB1[++i,] = (.281887, .150881, .465405)
-    RGB1[++i,] = (.281412, .155834, .469201)
-    RGB1[++i,] = (.280868, .160771, .472899)
-    RGB1[++i,] = (.280255, .165693, .476498)
-    RGB1[++i,] = (.279574, .170599, .479997)
-    RGB1[++i,] = (.278826, .175490, .483397)
-    RGB1[++i,] = (.278012, .180367, .486697)
-    RGB1[++i,] = (.277134, .185228, .489898)
-    RGB1[++i,] = (.276194, .190074, .493001)
-    RGB1[++i,] = (.275191, .194905, .496005)
-    RGB1[++i,] = (.274128, .199721, .498911)
-    RGB1[++i,] = (.273006, .204520, .501721)
-    RGB1[++i,] = (.271828, .209303, .504434)
-    RGB1[++i,] = (.270595, .214069, .507052)
-    RGB1[++i,] = (.269308, .218818, .509577)
-    RGB1[++i,] = (.267968, .223549, .512008)
-    RGB1[++i,] = (.266580, .228262, .514349)
-    RGB1[++i,] = (.265145, .232956, .516599)
-    RGB1[++i,] = (.263663, .237631, .518762)
-    RGB1[++i,] = (.262138, .242286, .520837)
-    RGB1[++i,] = (.260571, .246922, .522828)
-    RGB1[++i,] = (.258965, .251537, .524736)
-    RGB1[++i,] = (.257322, .256130, .526563)
-    RGB1[++i,] = (.255645, .260703, .528312)
-    RGB1[++i,] = (.253935, .265254, .529983)
-    RGB1[++i,] = (.252194, .269783, .531579)
-    RGB1[++i,] = (.250425, .274290, .533103)
-    RGB1[++i,] = (.248629, .278775, .534556)
-    RGB1[++i,] = (.246811, .283237, .535941)
-    RGB1[++i,] = (.244972, .287675, .537260)
-    RGB1[++i,] = (.243113, .292092, .538516)
-    RGB1[++i,] = (.241237, .296485, .539709)
-    RGB1[++i,] = (.239346, .300855, .540844)
-    RGB1[++i,] = (.237441, .305202, .541921)
-    RGB1[++i,] = (.235526, .309527, .542944)
-    RGB1[++i,] = (.233603, .313828, .543914)
-    RGB1[++i,] = (.231674, .318106, .544834)
-    RGB1[++i,] = (.229739, .322361, .545706)
-    RGB1[++i,] = (.227802, .326594, .546532)
-    RGB1[++i,] = (.225863, .330805, .547314)
-    RGB1[++i,] = (.223925, .334994, .548053)
-    RGB1[++i,] = (.221989, .339161, .548752)
-    RGB1[++i,] = (.220057, .343307, .549413)
-    RGB1[++i,] = (.218130, .347432, .550038)
-    RGB1[++i,] = (.216210, .351535, .550627)
-    RGB1[++i,] = (.214298, .355619, .551184)
-    RGB1[++i,] = (.212395, .359683, .551710)
-    RGB1[++i,] = (.210503, .363727, .552206)
-    RGB1[++i,] = (.208623, .367752, .552675)
-    RGB1[++i,] = (.206756, .371758, .553117)
-    RGB1[++i,] = (.204903, .375746, .553533)
-    RGB1[++i,] = (.203063, .379716, .553925)
-    RGB1[++i,] = (.201239, .383670, .554294)
-    RGB1[++i,] = (.199430, .387607, .554642)
-    RGB1[++i,] = (.197636, .391528, .554969)
-    RGB1[++i,] = (.195860, .395433, .555276)
-    RGB1[++i,] = (.194100, .399323, .555565)
-    RGB1[++i,] = (.192357, .403199, .555836)
-    RGB1[++i,] = (.190631, .407061, .556089)
-    RGB1[++i,] = (.188923, .410910, .556326)
-    RGB1[++i,] = (.187231, .414746, .556547)
-    RGB1[++i,] = (.185556, .418570, .556753)
-    RGB1[++i,] = (.183898, .422383, .556944)
-    RGB1[++i,] = (.182256, .426184, .557120)
-    RGB1[++i,] = (.180629, .429975, .557282)
-    RGB1[++i,] = (.179019, .433756, .557430)
-    RGB1[++i,] = (.177423, .437527, .557565)
-    RGB1[++i,] = (.175841, .441290, .557685)
-    RGB1[++i,] = (.174274, .445044, .557792)
-    RGB1[++i,] = (.172719, .448791, .557885)
-    RGB1[++i,] = (.171176, .452530, .557965)
-    RGB1[++i,] = (.169646, .456262, .558030)
-    RGB1[++i,] = (.168126, .459988, .558082)
-    RGB1[++i,] = (.166617, .463708, .558119)
-    RGB1[++i,] = (.165117, .467423, .558141)
-    RGB1[++i,] = (.163625, .471133, .558148)
-    RGB1[++i,] = (.162142, .474838, .558140)
-    RGB1[++i,] = (.160665, .478540, .558115)
-    RGB1[++i,] = (.159194, .482237, .558073)
-    RGB1[++i,] = (.157729, .485932, .558013)
-    RGB1[++i,] = (.156270, .489624, .557936)
-    RGB1[++i,] = (.154815, .493313, .557840)
-    RGB1[++i,] = (.153364, .497000, .557724)
-    RGB1[++i,] = (.151918, .500685, .557587)
-    RGB1[++i,] = (.150476, .504369, .557430)
-    RGB1[++i,] = (.149039, .508051, .557250)
-    RGB1[++i,] = (.147607, .511733, .557049)
-    RGB1[++i,] = (.146180, .515413, .556823)
-    RGB1[++i,] = (.144759, .519093, .556572)
-    RGB1[++i,] = (.143343, .522773, .556295)
-    RGB1[++i,] = (.141935, .526453, .555991)
-    RGB1[++i,] = (.140536, .530132, .555659)
-    RGB1[++i,] = (.139147, .533812, .555298)
-    RGB1[++i,] = (.137770, .537492, .554906)
-    RGB1[++i,] = (.136408, .541173, .554483)
-    RGB1[++i,] = (.135066, .544853, .554029)
-    RGB1[++i,] = (.133743, .548535, .553541)
-    RGB1[++i,] = (.132444, .552216, .553018)
-    RGB1[++i,] = (.131172, .555899, .552459)
-    RGB1[++i,] = (.129933, .559582, .551864)
-    RGB1[++i,] = (.128729, .563265, .551229)
-    RGB1[++i,] = (.127568, .566949, .550556)
-    RGB1[++i,] = (.126453, .570633, .549841)
-    RGB1[++i,] = (.125394, .574318, .549086)
-    RGB1[++i,] = (.124395, .578002, .548287)
-    RGB1[++i,] = (.123463, .581687, .547445)
-    RGB1[++i,] = (.122606, .585371, .546557)
-    RGB1[++i,] = (.121831, .589055, .545623)
-    RGB1[++i,] = (.121148, .592739, .544641)
-    RGB1[++i,] = (.120565, .596422, .543611)
-    RGB1[++i,] = (.120092, .600104, .542530)
-    RGB1[++i,] = (.119738, .603785, .541400)
-    RGB1[++i,] = (.119512, .607464, .540218)
-    RGB1[++i,] = (.119423, .611141, .538982)
-    RGB1[++i,] = (.119483, .614817, .537692)
-    RGB1[++i,] = (.119699, .618490, .536347)
-    RGB1[++i,] = (.120081, .622161, .534946)
-    RGB1[++i,] = (.120638, .625828, .533488)
-    RGB1[++i,] = (.121380, .629492, .531973)
-    RGB1[++i,] = (.122312, .633153, .530398)
-    RGB1[++i,] = (.123444, .636809, .528763)
-    RGB1[++i,] = (.124780, .640461, .527068)
-    RGB1[++i,] = (.126326, .644107, .525311)
-    RGB1[++i,] = (.128087, .647749, .523491)
-    RGB1[++i,] = (.130067, .651384, .521608)
-    RGB1[++i,] = (.132268, .655014, .519661)
-    RGB1[++i,] = (.134692, .658636, .517649)
-    RGB1[++i,] = (.137339, .662252, .515571)
-    RGB1[++i,] = (.140210, .665859, .513427)
-    RGB1[++i,] = (.143303, .669459, .511215)
-    RGB1[++i,] = (.146616, .673050, .508936)
-    RGB1[++i,] = (.150148, .676631, .506589)
-    RGB1[++i,] = (.153894, .680203, .504172)
-    RGB1[++i,] = (.157851, .683765, .501686)
-    RGB1[++i,] = (.162016, .687316, .499129)
-    RGB1[++i,] = (.166383, .690856, .496502)
-    RGB1[++i,] = (.170948, .694384, .493803)
-    RGB1[++i,] = (.175707, .697900, .491033)
-    RGB1[++i,] = (.180653, .701402, .488189)
-    RGB1[++i,] = (.185783, .704891, .485273)
-    RGB1[++i,] = (.191090, .708366, .482284)
-    RGB1[++i,] = (.196571, .711827, .479221)
-    RGB1[++i,] = (.202219, .715272, .476084)
-    RGB1[++i,] = (.208030, .718701, .472873)
-    RGB1[++i,] = (.214000, .722114, .469588)
-    RGB1[++i,] = (.220124, .725509, .466226)
-    RGB1[++i,] = (.226397, .728888, .462789)
-    RGB1[++i,] = (.232815, .732247, .459277)
-    RGB1[++i,] = (.239374, .735588, .455688)
-    RGB1[++i,] = (.246070, .738910, .452024)
-    RGB1[++i,] = (.252899, .742211, .448284)
-    RGB1[++i,] = (.259857, .745492, .444467)
-    RGB1[++i,] = (.266941, .748751, .440573)
-    RGB1[++i,] = (.274149, .751988, .436601)
-    RGB1[++i,] = (.281477, .755203, .432552)
-    RGB1[++i,] = (.288921, .758394, .428426)
-    RGB1[++i,] = (.296479, .761561, .424223)
-    RGB1[++i,] = (.304148, .764704, .419943)
-    RGB1[++i,] = (.311925, .767822, .415586)
-    RGB1[++i,] = (.319809, .770914, .411152)
-    RGB1[++i,] = (.327796, .773980, .406640)
-    RGB1[++i,] = (.335885, .777018, .402049)
-    RGB1[++i,] = (.344074, .780029, .397381)
-    RGB1[++i,] = (.352360, .783011, .392636)
-    RGB1[++i,] = (.360741, .785964, .387814)
-    RGB1[++i,] = (.369214, .788888, .382914)
-    RGB1[++i,] = (.377779, .791781, .377939)
-    RGB1[++i,] = (.386433, .794644, .372886)
-    RGB1[++i,] = (.395174, .797475, .367757)
-    RGB1[++i,] = (.404001, .800275, .362552)
-    RGB1[++i,] = (.412913, .803041, .357269)
-    RGB1[++i,] = (.421908, .805774, .351910)
-    RGB1[++i,] = (.430983, .808473, .346476)
-    RGB1[++i,] = (.440137, .811138, .340967)
-    RGB1[++i,] = (.449368, .813768, .335384)
-    RGB1[++i,] = (.458674, .816363, .329727)
-    RGB1[++i,] = (.468053, .818921, .323998)
-    RGB1[++i,] = (.477504, .821444, .318195)
-    RGB1[++i,] = (.487026, .823929, .312321)
-    RGB1[++i,] = (.496615, .826376, .306377)
-    RGB1[++i,] = (.506271, .828786, .300362)
-    RGB1[++i,] = (.515992, .831158, .294279)
-    RGB1[++i,] = (.525776, .833491, .288127)
-    RGB1[++i,] = (.535621, .835785, .281908)
-    RGB1[++i,] = (.545524, .838039, .275626)
-    RGB1[++i,] = (.555484, .840254, .269281)
-    RGB1[++i,] = (.565498, .842430, .262877)
-    RGB1[++i,] = (.575563, .844566, .256415)
-    RGB1[++i,] = (.585678, .846661, .249897)
-    RGB1[++i,] = (.595839, .848717, .243329)
-    RGB1[++i,] = (.606045, .850733, .236712)
-    RGB1[++i,] = (.616293, .852709, .230052)
-    RGB1[++i,] = (.626579, .854645, .223353)
-    RGB1[++i,] = (.636902, .856542, .216620)
-    RGB1[++i,] = (.647257, .858400, .209861)
-    RGB1[++i,] = (.657642, .860219, .203082)
-    RGB1[++i,] = (.668054, .861999, .196293)
-    RGB1[++i,] = (.678489, .863742, .189503)
-    RGB1[++i,] = (.688944, .865448, .182725)
-    RGB1[++i,] = (.699415, .867117, .175971)
-    RGB1[++i,] = (.709898, .868751, .169257)
-    RGB1[++i,] = (.720391, .870350, .162603)
-    RGB1[++i,] = (.730889, .871916, .156029)
-    RGB1[++i,] = (.741388, .873449, .149561)
-    RGB1[++i,] = (.751884, .874951, .143228)
-    RGB1[++i,] = (.762373, .876424, .137064)
-    RGB1[++i,] = (.772852, .877868, .131109)
-    RGB1[++i,] = (.783315, .879285, .125405)
-    RGB1[++i,] = (.793760, .880678, .120005)
-    RGB1[++i,] = (.804182, .882046, .114965)
-    RGB1[++i,] = (.814576, .883393, .110347)
-    RGB1[++i,] = (.824940, .884720, .106217)
-    RGB1[++i,] = (.835270, .886029, .102646)
-    RGB1[++i,] = (.845561, .887322, .099702)
-    RGB1[++i,] = (.855810, .888601, .097452)
-    RGB1[++i,] = (.866013, .889868, .095953)
-    RGB1[++i,] = (.876168, .891125, .095250)
-    RGB1[++i,] = (.886271, .892374, .095374)
-    RGB1[++i,] = (.896320, .893616, .096335)
-    RGB1[++i,] = (.906311, .894855, .098125)
-    RGB1[++i,] = (.916242, .896091, .100717)
-    RGB1[++i,] = (.926106, .897330, .104071)
-    RGB1[++i,] = (.935904, .898570, .108131)
-    RGB1[++i,] = (.945636, .899815, .112838)
-    RGB1[++i,] = (.955300, .901065, .118128)
-    RGB1[++i,] = (.964894, .902323, .123941)
-    RGB1[++i,] = (.974417, .903590, .130215)
-    RGB1[++i,] = (.983868, .904867, .136897)
-    RGB1[++i,] = (.993248, .906157, .143936)
-}
-
-void `MAIN'::cividis(`RM' RGB1)
-{
-    `Int' i
-    
-    i = 0
-    RGB1 = J(256, 3 ,.)
-    RGB1[++i,] = (.000000, .135112, .304751)
-    RGB1[++i,] = (.000000, .138068, .311105)
-    RGB1[++i,] = (.000000, .141013, .317579)
-    RGB1[++i,] = (.000000, .143951, .323982)
-    RGB1[++i,] = (.000000, .146877, .330479)
-    RGB1[++i,] = (.000000, .149791, .337065)
-    RGB1[++i,] = (.000000, .152673, .343704)
-    RGB1[++i,] = (.000000, .155377, .350500)
-    RGB1[++i,] = (.000000, .157932, .357521)
-    RGB1[++i,] = (.000000, .160495, .364534)
-    RGB1[++i,] = (.000000, .163058, .371608)
-    RGB1[++i,] = (.000000, .165621, .378769)
-    RGB1[++i,] = (.000000, .168204, .385902)
-    RGB1[++i,] = (.000000, .170800, .393100)
-    RGB1[++i,] = (.000000, .173420, .400353)
-    RGB1[++i,] = (.000000, .176082, .407577)
-    RGB1[++i,] = (.000000, .178802, .414764)
-    RGB1[++i,] = (.000000, .181610, .421859)
-    RGB1[++i,] = (.000000, .184550, .428802)
-    RGB1[++i,] = (.000000, .186915, .435532)
-    RGB1[++i,] = (.000000, .188769, .439563)
-    RGB1[++i,] = (.000000, .190950, .441085)
-    RGB1[++i,] = (.000000, .193366, .441561)
-    RGB1[++i,] = (.003602, .195911, .441564)
-    RGB1[++i,] = (.017852, .198528, .441248)
-    RGB1[++i,] = (.032110, .201199, .440785)
-    RGB1[++i,] = (.046205, .203903, .440196)
-    RGB1[++i,] = (.058378, .206629, .439531)
-    RGB1[++i,] = (.068968, .209372, .438863)
-    RGB1[++i,] = (.078624, .212122, .438105)
-    RGB1[++i,] = (.087465, .214879, .437342)
-    RGB1[++i,] = (.095645, .217643, .436593)
-    RGB1[++i,] = (.103401, .220406, .435790)
-    RGB1[++i,] = (.110658, .223170, .435067)
-    RGB1[++i,] = (.117612, .225935, .434308)
-    RGB1[++i,] = (.124291, .228697, .433547)
-    RGB1[++i,] = (.130669, .231458, .432840)
-    RGB1[++i,] = (.136830, .234216, .432148)
-    RGB1[++i,] = (.142852, .236972, .431404)
-    RGB1[++i,] = (.148638, .239724, .430752)
-    RGB1[++i,] = (.154261, .242475, .430120)
-    RGB1[++i,] = (.159733, .245221, .429528)
-    RGB1[++i,] = (.165113, .247965, .428908)
-    RGB1[++i,] = (.170362, .250707, .428325)
-    RGB1[++i,] = (.175490, .253444, .427790)
-    RGB1[++i,] = (.180503, .256180, .427299)
-    RGB1[++i,] = (.185453, .258914, .426788)
-    RGB1[++i,] = (.190303, .261644, .426329)
-    RGB1[++i,] = (.195057, .264372, .425924)
-    RGB1[++i,] = (.199764, .267099, .425497)
-    RGB1[++i,] = (.204385, .269823, .425126)
-    RGB1[++i,] = (.208926, .272546, .424809)
-    RGB1[++i,] = (.213431, .275266, .424480)
-    RGB1[++i,] = (.217863, .277985, .424206)
-    RGB1[++i,] = (.222264, .280702, .423914)
-    RGB1[++i,] = (.226598, .283419, .423678)
-    RGB1[++i,] = (.230871, .286134, .423498)
-    RGB1[++i,] = (.235120, .288848, .423304)
-    RGB1[++i,] = (.239312, .291562, .423167)
-    RGB1[++i,] = (.243485, .294274, .423014)
-    RGB1[++i,] = (.247605, .296986, .422917)
-    RGB1[++i,] = (.251675, .299698, .422873)
-    RGB1[++i,] = (.255731, .302409, .422814)
-    RGB1[++i,] = (.259740, .305120, .422810)
-    RGB1[++i,] = (.263738, .307831, .422789)
-    RGB1[++i,] = (.267693, .310542, .422821)
-    RGB1[++i,] = (.271639, .313253, .422837)
-    RGB1[++i,] = (.275513, .315965, .422979)
-    RGB1[++i,] = (.279411, .318677, .423031)
-    RGB1[++i,] = (.283240, .321390, .423211)
-    RGB1[++i,] = (.287065, .324103, .423373)
-    RGB1[++i,] = (.290884, .326816, .423517)
-    RGB1[++i,] = (.294669, .329531, .423716)
-    RGB1[++i,] = (.298421, .332247, .423973)
-    RGB1[++i,] = (.302169, .334963, .424213)
-    RGB1[++i,] = (.305886, .337681, .424512)
-    RGB1[++i,] = (.309601, .340399, .424790)
-    RGB1[++i,] = (.313287, .343120, .425120)
-    RGB1[++i,] = (.316941, .345842, .425512)
-    RGB1[++i,] = (.320595, .348565, .425889)
-    RGB1[++i,] = (.324250, .351289, .426250)
-    RGB1[++i,] = (.327875, .354016, .426670)
-    RGB1[++i,] = (.331474, .356744, .427144)
-    RGB1[++i,] = (.335073, .359474, .427605)
-    RGB1[++i,] = (.338673, .362206, .428053)
-    RGB1[++i,] = (.342246, .364939, .428559)
-    RGB1[++i,] = (.345793, .367676, .429127)
-    RGB1[++i,] = (.349341, .370414, .429685)
-    RGB1[++i,] = (.352892, .373153, .430226)
-    RGB1[++i,] = (.356418, .375896, .430823)
-    RGB1[++i,] = (.359916, .378641, .431501)
-    RGB1[++i,] = (.363446, .381388, .432075)
-    RGB1[++i,] = (.366923, .384139, .432796)
-    RGB1[++i,] = (.370430, .386890, .433428)
-    RGB1[++i,] = (.373884, .389646, .434209)
-    RGB1[++i,] = (.377371, .392404, .434890)
-    RGB1[++i,] = (.380830, .395164, .435653)
-    RGB1[++i,] = (.384268, .397928, .436475)
-    RGB1[++i,] = (.387705, .400694, .437305)
-    RGB1[++i,] = (.391151, .403464, .438096)
-    RGB1[++i,] = (.394568, .406236, .438986)
-    RGB1[++i,] = (.397991, .409011, .439848)
-    RGB1[++i,] = (.401418, .411790, .440708)
-    RGB1[++i,] = (.404820, .414572, .441642)
-    RGB1[++i,] = (.408226, .417357, .442570)
-    RGB1[++i,] = (.411607, .420145, .443577)
-    RGB1[++i,] = (.414992, .422937, .444578)
-    RGB1[++i,] = (.418383, .425733, .445560)
-    RGB1[++i,] = (.421748, .428531, .446640)
-    RGB1[++i,] = (.425120, .431334, .447692)
-    RGB1[++i,] = (.428462, .434140, .448864)
-    RGB1[++i,] = (.431817, .436950, .449982)
-    RGB1[++i,] = (.435168, .439763, .451134)
-    RGB1[++i,] = (.438504, .442580, .452341)
-    RGB1[++i,] = (.441810, .445402, .453659)
-    RGB1[++i,] = (.445148, .448226, .454885)
-    RGB1[++i,] = (.448447, .451053, .456264)
-    RGB1[++i,] = (.451759, .453887, .457582)
-    RGB1[++i,] = (.455072, .456718, .458976)
-    RGB1[++i,] = (.458366, .459552, .460457)
-    RGB1[++i,] = (.461616, .462405, .461969)
-    RGB1[++i,] = (.464947, .465241, .463395)
-    RGB1[++i,] = (.468254, .468083, .464908)
-    RGB1[++i,] = (.471501, .470960, .466357)
-    RGB1[++i,] = (.474812, .473832, .467681)
-    RGB1[++i,] = (.478186, .476699, .468845)
-    RGB1[++i,] = (.481622, .479573, .469767)
-    RGB1[++i,] = (.485141, .482451, .470384)
-    RGB1[++i,] = (.488697, .485318, .471008)
-    RGB1[++i,] = (.492278, .488198, .471453)
-    RGB1[++i,] = (.495913, .491076, .471751)
-    RGB1[++i,] = (.499552, .493960, .472032)
-    RGB1[++i,] = (.503185, .496851, .472305)
-    RGB1[++i,] = (.506866, .499743, .472432)
-    RGB1[++i,] = (.510540, .502643, .472550)
-    RGB1[++i,] = (.514226, .505546, .472640)
-    RGB1[++i,] = (.517920, .508454, .472707)
-    RGB1[++i,] = (.521643, .511367, .472639)
-    RGB1[++i,] = (.525348, .514285, .472660)
-    RGB1[++i,] = (.529086, .517207, .472543)
-    RGB1[++i,] = (.532829, .520135, .472401)
-    RGB1[++i,] = (.536553, .523067, .472352)
-    RGB1[++i,] = (.540307, .526005, .472163)
-    RGB1[++i,] = (.544069, .528948, .471947)
-    RGB1[++i,] = (.547840, .531895, .471704)
-    RGB1[++i,] = (.551612, .534849, .471439)
-    RGB1[++i,] = (.555393, .537807, .471147)
-    RGB1[++i,] = (.559181, .540771, .470829)
-    RGB1[++i,] = (.562972, .543741, .470488)
-    RGB1[++i,] = (.566802, .546715, .469988)
-    RGB1[++i,] = (.570607, .549695, .469593)
-    RGB1[++i,] = (.574417, .552682, .469172)
-    RGB1[++i,] = (.578236, .555673, .468724)
-    RGB1[++i,] = (.582087, .558670, .468118)
-    RGB1[++i,] = (.585916, .561674, .467618)
-    RGB1[++i,] = (.589753, .564682, .467090)
-    RGB1[++i,] = (.593622, .567697, .466401)
-    RGB1[++i,] = (.597469, .570718, .465821)
-    RGB1[++i,] = (.601354, .573743, .465074)
-    RGB1[++i,] = (.605211, .576777, .464441)
-    RGB1[++i,] = (.609105, .579816, .463638)
-    RGB1[++i,] = (.612977, .582861, .462950)
-    RGB1[++i,] = (.616852, .585913, .462237)
-    RGB1[++i,] = (.620765, .588970, .461351)
-    RGB1[++i,] = (.624654, .592034, .460583)
-    RGB1[++i,] = (.628576, .595104, .459641)
-    RGB1[++i,] = (.632506, .598180, .458668)
-    RGB1[++i,] = (.636412, .601264, .457818)
-    RGB1[++i,] = (.640352, .604354, .456791)
-    RGB1[++i,] = (.644270, .607450, .455886)
-    RGB1[++i,] = (.648222, .610553, .454801)
-    RGB1[++i,] = (.652178, .613664, .453689)
-    RGB1[++i,] = (.656114, .616780, .452702)
-    RGB1[++i,] = (.660082, .619904, .451534)
-    RGB1[++i,] = (.664055, .623034, .450338)
-    RGB1[++i,] = (.668008, .626171, .449270)
-    RGB1[++i,] = (.671991, .629316, .448018)
-    RGB1[++i,] = (.675981, .632468, .446736)
-    RGB1[++i,] = (.679979, .635626, .445424)
-    RGB1[++i,] = (.683950, .638793, .444251)
-    RGB1[++i,] = (.687957, .641966, .442886)
-    RGB1[++i,] = (.691971, .645145, .441491)
-    RGB1[++i,] = (.695985, .648334, .440072)
-    RGB1[++i,] = (.700008, .651529, .438624)
-    RGB1[++i,] = (.704037, .654731, .437147)
-    RGB1[++i,] = (.708067, .657942, .435647)
-    RGB1[++i,] = (.712105, .661160, .434117)
-    RGB1[++i,] = (.716177, .664384, .432386)
-    RGB1[++i,] = (.720222, .667618, .430805)
-    RGB1[++i,] = (.724274, .670859, .429194)
-    RGB1[++i,] = (.728334, .674107, .427554)
-    RGB1[++i,] = (.732422, .677364, .425717)
-    RGB1[++i,] = (.736488, .680629, .424028)
-    RGB1[++i,] = (.740589, .683900, .422131)
-    RGB1[++i,] = (.744664, .687181, .420393)
-    RGB1[++i,] = (.748772, .690470, .418448)
-    RGB1[++i,] = (.752886, .693766, .416472)
-    RGB1[++i,] = (.756975, .697071, .414659)
-    RGB1[++i,] = (.761096, .700384, .412638)
-    RGB1[++i,] = (.765223, .703705, .410587)
-    RGB1[++i,] = (.769353, .707035, .408516)
-    RGB1[++i,] = (.773486, .710373, .406422)
-    RGB1[++i,] = (.777651, .713719, .404112)
-    RGB1[++i,] = (.781795, .717074, .401966)
-    RGB1[++i,] = (.785965, .720438, .399613)
-    RGB1[++i,] = (.790116, .723810, .397423)
-    RGB1[++i,] = (.794298, .727190, .395016)
-    RGB1[++i,] = (.798480, .730580, .392597)
-    RGB1[++i,] = (.802667, .733978, .390153)
-    RGB1[++i,] = (.806859, .737385, .387684)
-    RGB1[++i,] = (.811054, .740801, .385198)
-    RGB1[++i,] = (.815274, .744226, .382504)
-    RGB1[++i,] = (.819499, .747659, .379785)
-    RGB1[++i,] = (.823729, .751101, .377043)
-    RGB1[++i,] = (.827959, .754553, .374292)
-    RGB1[++i,] = (.832192, .758014, .371529)
-    RGB1[++i,] = (.836429, .761483, .368747)
-    RGB1[++i,] = (.840693, .764962, .365746)
-    RGB1[++i,] = (.844957, .768450, .362741)
-    RGB1[++i,] = (.849223, .771947, .359729)
-    RGB1[++i,] = (.853515, .775454, .356500)
-    RGB1[++i,] = (.857809, .778969, .353259)
-    RGB1[++i,] = (.862105, .782494, .350011)
-    RGB1[++i,] = (.866421, .786028, .346571)
-    RGB1[++i,] = (.870717, .789572, .343333)
-    RGB1[++i,] = (.875057, .793125, .339685)
-    RGB1[++i,] = (.879378, .796687, .336241)
-    RGB1[++i,] = (.883720, .800258, .332599)
-    RGB1[++i,] = (.888081, .803839, .328770)
-    RGB1[++i,] = (.892440, .807430, .324968)
-    RGB1[++i,] = (.896818, .811030, .320982)
-    RGB1[++i,] = (.901195, .814639, .317021)
-    RGB1[++i,] = (.905589, .818257, .312889)
-    RGB1[++i,] = (.910000, .821885, .308594)
-    RGB1[++i,] = (.914407, .825522, .304348)
-    RGB1[++i,] = (.918828, .829168, .299960)
-    RGB1[++i,] = (.923279, .832822, .295244)
-    RGB1[++i,] = (.927724, .836486, .290611)
-    RGB1[++i,] = (.932180, .840159, .285880)
-    RGB1[++i,] = (.936660, .843841, .280876)
-    RGB1[++i,] = (.941147, .847530, .275815)
-    RGB1[++i,] = (.945654, .851228, .270532)
-    RGB1[++i,] = (.950178, .854933, .265085)
-    RGB1[++i,] = (.954725, .858646, .259365)
-    RGB1[++i,] = (.959284, .862365, .253563)
-    RGB1[++i,] = (.963872, .866089, .247445)
-    RGB1[++i,] = (.968469, .869819, .241310)
-    RGB1[++i,] = (.973114, .873550, .234677)
-    RGB1[++i,] = (.977780, .877281, .227954)
-    RGB1[++i,] = (.982497, .881008, .220878)
-    RGB1[++i,] = (.987293, .884718, .213336)
-    RGB1[++i,] = (.992218, .888385, .205468)
-    RGB1[++i,] = (.994847, .892954, .203445)
-    RGB1[++i,] = (.995249, .898384, .207561)
-    RGB1[++i,] = (.995503, .903866, .212370)
-    RGB1[++i,] = (.995737, .909344, .217772)
-}
-
-void `MAIN'::twilight(`RM' RGB1)
-{
-    `Int' i
-    
-    i = 0
-    RGB1 = J(510, 3 ,.)
-    RGB1[++i,] = (.88575015840754434, .85000924943067835 , .8879736506427196)
-    RGB1[++i,] = (.88378520195539056, .85072940540310626 , .88723222096949894)
-    RGB1[++i,] = (.88172231059285788, .85127594077653468 , .88638056925514819)
-    RGB1[++i,] = (.8795410528270573 , .85165675407495722 , .8854143767924102)
-    RGB1[++i,] = (.87724880858965482, .85187028338870274 , .88434120381311432)
-    RGB1[++i,] = (.87485347508575972, .85191526123023187 , .88316926967613829)
-    RGB1[++i,] = (.87233134085124076, .85180165478080894 , .88189704355001619)
-    RGB1[++i,] = (.86970474853509816, .85152403004797894 , .88053883390003362)
-    RGB1[++i,] = (.86696015505333579, .8510896085314068  , .87909766977173343)
-    RGB1[++i,] = (.86408985081463996, .85050391167507788 , .87757925784892632)
-    RGB1[++i,] = (.86110245436899846, .84976754857001258 , .87599242923439569)
-    RGB1[++i,] = (.85798259245670372, .84888934810281835 , .87434038553446281)
-    RGB1[++i,] = (.85472593189256985, .84787488124672816 , .8726282980930582)
-    RGB1[++i,] = (.85133714570857189, .84672735796116472 , .87086081657350445)
-    RGB1[++i,] = (.84780710702577922, .8454546229209523  , .86904036783694438)
-    RGB1[++i,] = (.8441261828674842 , .84406482711037389 , .86716973322690072)
-    RGB1[++i,] = (.84030420805957784, .8425605950855084  , .865250882410458)
-    RGB1[++i,] = (.83634031809191178, .84094796518951942 , .86328528001070159)
-    RGB1[++i,] = (.83222705712934408, .83923490627754482 , .86127563500427884)
-    RGB1[++i,] = (.82796894316013536, .83742600751395202 , .85922399451306786)
-    RGB1[++i,] = (.82357429680252847, .83552487764795436 , .85713191328514948)
-    RGB1[++i,] = (.81904654677937527, .8335364929949034  , .85500206287010105)
-    RGB1[++i,] = (.81438982121143089, .83146558694197847 , .85283759062147024)
-    RGB1[++i,] = (.8095999819094809 , .82931896673505456 , .85064441601050367)
-    RGB1[++i,] = (.80469164429814577, .82709838780560663 , .84842449296974021)
-    RGB1[++i,] = (.79967075421267997, .82480781812080928 , .84618210029578533)
-    RGB1[++i,] = (.79454305089231114, .82245116226304615 , .84392184786827984)
-    RGB1[++i,] = (.78931445564608915, .82003213188702007 , .8416486380471222)
-    RGB1[++i,] = (.78399101042764918, .81755426400533426 , .83936747464036732)
-    RGB1[++i,] = (.77857892008227592, .81502089378742548 , .8370834463093898)
-    RGB1[++i,] = (.77308416590170936, .81243524735466011 , .83480172950579679)
-    RGB1[++i,] = (.76751108504417864, .8098007598713145  , .83252816638059668)
-    RGB1[++i,] = (.76186907937980286, .80711949387647486 , .830266486168872)
-    RGB1[++i,] = (.75616443584381976, .80439408733477935 , .82802138994719998)
-    RGB1[++i,] = (.75040346765406696, .80162699008965321 , .82579737851082424)
-    RGB1[++i,] = (.74459247771890169, .79882047719583249 , .82359867586156521)
-    RGB1[++i,] = (.73873771700494939, .79597665735031009 , .82142922780433014)
-    RGB1[++i,] = (.73284543645523459, .79309746468844067 , .81929263384230377)
-    RGB1[++i,] = (.72692177512829703, .7901846863592763  , .81719217466726379)
-    RGB1[++i,] = (.72097280665536778, .78723995923452639 , .81513073920879264)
-    RGB1[++i,] = (.71500403076252128, .78426487091581187 , .81311116559949914)
-    RGB1[++i,] = (.70902078134539304, .78126088716070907 , .81113591855117928)
-    RGB1[++i,] = (.7030297722540817 , .77822904973358131 , .80920618848056969)
-    RGB1[++i,] = (.6970365443886174 , .77517050008066057 , .80732335380063447)
-    RGB1[++i,] = (.69104641009309098, .77208629460678091 , .80548841690679074)
-    RGB1[++i,] = (.68506446154395928, .7689774029354699  , .80370206267176914)
-    RGB1[++i,] = (.67909554499882152, .76584472131395898 , .8019646617300199)
-    RGB1[++i,] = (.67314422559426212, .76268908733890484 , .80027628545809526)
-    RGB1[++i,] = (.66721479803752815, .7595112803730375  , .79863674654537764)
-    RGB1[++i,] = (.6613112930078745 , .75631202708719025 , .7970456043491897)
-    RGB1[++i,] = (.65543692326454717, .75309208756768431 , .79550271129031047)
-    RGB1[++i,] = (.64959573004253479, .74985201221941766 , .79400674021499107)
-    RGB1[++i,] = (.6437910831099849 , .7465923800833657  , .79255653201306053)
-    RGB1[++i,] = (.63802586828545982, .74331376714033193 , .79115100459573173)
-    RGB1[++i,] = (.6323027138710603 , .74001672160131404 , .78978892762640429)
-    RGB1[++i,] = (.62662402022604591, .73670175403699445 , .78846901316334561)
-    RGB1[++i,] = (.62099193064817548, .73336934798923203 , .78718994624696581)
-    RGB1[++i,] = (.61540846411770478, .73001995232739691 , .78595022706750484)
-    RGB1[++i,] = (.60987543176093062, .72665398759758293 , .78474835732694714)
-    RGB1[++i,] = (.60439434200274855, .7232718614323369  , .78358295593535587)
-    RGB1[++i,] = (.5989665814482068 , .71987394892246725 , .78245259899346642)
-    RGB1[++i,] = (.59359335696837223, .7164606049658685  , .78135588237640097)
-    RGB1[++i,] = (.58827579780555495, .71303214646458135 , .78029141405636515)
-    RGB1[++i,] = (.58301487036932409, .70958887676997473 , .77925781820476592)
-    RGB1[++i,] = (.5778116438998202 , .70613106157153982 , .77825345121025524)
-    RGB1[++i,] = (.5726668948158774 , .7026589535425779  , .77727702680911992)
-    RGB1[++i,] = (.56758117853861967, .69917279302646274 , .77632748534275298)
-    RGB1[++i,] = (.56255515357219343, .69567278381629649 , .77540359142309845)
-    RGB1[++i,] = (.55758940419605174, .69215911458254054 , .7745041337932782)
-    RGB1[++i,] = (.55268450589347129, .68863194515166382 , .7736279426902245)
-    RGB1[++i,] = (.54784098153018634, .68509142218509878 , .77277386473440868)
-    RGB1[++i,] = (.54305932424018233, .68153767253065878 , .77194079697835083)
-    RGB1[++i,] = (.53834015575176275, .67797081129095405 , .77112734439057717)
-    RGB1[++i,] = (.53368389147728401, .67439093705212727 , .7703325054879735)
-    RGB1[++i,] = (.529090861832473  , .67079812302806219 , .76955552292313134)
-    RGB1[++i,] = (.52456151470593582, .66719242996142225 , .76879541714230948)
-    RGB1[++i,] = (.52009627392235558, .66357391434030388 , .76805119403344102)
-    RGB1[++i,] = (.5156955988596057 , .65994260812897998 , .76732191489596169)
-    RGB1[++i,] = (.51135992541601927, .65629853981831865 , .76660663780645333)
-    RGB1[++i,] = (.50708969576451657, .65264172403146448 , .76590445660835849)
-    RGB1[++i,] = (.5028853540415561 , .64897216734095264 , .76521446718174913)
-    RGB1[++i,] = (.49874733661356069, .6452898684900934  , .76453578734180083)
-    RGB1[++i,] = (.4946761847863938 , .64159484119504429 , .76386719002130909)
-    RGB1[++i,] = (.49067224938561221, .63788704858847078 , .76320812763163837)
-    RGB1[++i,] = (.4867359599430568 , .63416646251100506 , .76255780085924041)
-    RGB1[++i,] = (.4828677867260272 , .6304330455306234  , .76191537149895305)
-    RGB1[++i,] = (.47906816236197386, .62668676251860134 , .76128000375662419)
-    RGB1[++i,] = (.47533752394906287, .62292757283835809 , .76065085571817748)
-    RGB1[++i,] = (.47167629518877091, .61915543242884641 , .76002709227883047)
-    RGB1[++i,] = (.46808490970531597, .61537028695790286 , .75940789891092741)
-    RGB1[++i,] = (.46456376716303932, .61157208822864151 , .75879242623025811)
-    RGB1[++i,] = (.46111326647023881, .607760777169989   , .75817986436807139)
-    RGB1[++i,] = (.45773377230160567, .60393630046586455 , .75756936901859162)
-    RGB1[++i,] = (.45442563977552913, .60009859503858665 , .75696013660606487)
-    RGB1[++i,] = (.45118918687617743, .59624762051353541 , .75635120643246645)
-    RGB1[++i,] = (.44802470933589172, .59238331452146575 , .75574176474107924)
-    RGB1[++i,] = (.44493246854215379, .5885055998308617  , .7551311041857901)
-    RGB1[++i,] = (.44191271766696399, .58461441100175571 , .75451838884410671)
-    RGB1[++i,] = (.43896563958048396, .58070969241098491 , .75390276208285945)
-    RGB1[++i,] = (.43609138958356369, .57679137998186081 , .7532834105961016)
-    RGB1[++i,] = (.43329008867358393, .57285941625606673 , .75265946532566674)
-    RGB1[++i,] = (.43056179073057571, .56891374572457176 , .75203008099312696)
-    RGB1[++i,] = (.42790652284925834, .5649543060909209  , .75139443521914839)
-    RGB1[++i,] = (.42532423665011354, .56098104959950301 , .75075164989005116)
-    RGB1[++i,] = (.42281485675772662, .55699392126996583 , .75010086988227642)
-    RGB1[++i,] = (.42037822361396326, .55299287158108168 , .7494412559451894)
-    RGB1[++i,] = (.41801414079233629, .54897785421888889 , .74877193167001121)
-    RGB1[++i,] = (.4157223260454232 , .54494882715350401 , .74809204459000522)
-    RGB1[++i,] = (.41350245743314729, .54090574771098476 , .74740073297543086)
-    RGB1[++i,] = (.41135414697304568, .53684857765005933 , .74669712855065784)
-    RGB1[++i,] = (.4092768899914751 , .53277730177130322 , .74598030635707824)
-    RGB1[++i,] = (.40727018694219069, .52869188011057411 , .74524942637581271)
-    RGB1[++i,] = (.40533343789303178, .52459228174983119 , .74450365836708132)
-    RGB1[++i,] = (.40346600333905397, .52047847653840029 , .74374215223567086)
-    RGB1[++i,] = (.40166714010896104, .51635044969688759 , .7429640345324835)
-    RGB1[++i,] = (.39993606933454834, .51220818143218516 , .74216844571317986)
-    RGB1[++i,] = (.3982719152586337 , .50805166539276136 , .74135450918099721)
-    RGB1[++i,] = (.39667374905665609, .50388089053847973 , .74052138580516735)
-    RGB1[++i,] = (.39514058808207631, .49969585326377758 , .73966820211715711)
-    RGB1[++i,] = (.39367135736822567, .49549655777451179 , .738794102296364)
-    RGB1[++i,] = (.39226494876209317, .49128300332899261 , .73789824784475078)
-    RGB1[++i,] = (.39092017571994903, .48705520251223039 , .73697977133881254)
-    RGB1[++i,] = (.38963580160340855, .48281316715123496 , .73603782546932739)
-    RGB1[++i,] = (.38841053300842432, .47855691131792805 , .73507157641157261)
-    RGB1[++i,] = (.38724301459330251, .47428645933635388 , .73408016787854391)
-    RGB1[++i,] = (.38613184178892102, .4700018340988123  , .7330627749243106)
-    RGB1[++i,] = (.38507556793651387, .46570306719930193 , .73201854033690505)
-    RGB1[++i,] = (.38407269378943537, .46139018782416635 , .73094665432902683)
-    RGB1[++i,] = (.38312168084402748, .45706323581407199 , .72984626791353258)
-    RGB1[++i,] = (.38222094988570376, .45272225034283325 , .72871656144003782)
-    RGB1[++i,] = (.38136887930454161, .44836727669277859 , .72755671317141346)
-    RGB1[++i,] = (.38056380696565623, .44399837208633719 , .72636587045135315)
-    RGB1[++i,] = (.37980403744848751, .43961558821222629 , .72514323778761092)
-    RGB1[++i,] = (.37908789283110761, .43521897612544935 , .72388798691323131)
-    RGB1[++i,] = (.378413635091359  , .43080859411413064 , .72259931993061044)
-    RGB1[++i,] = (.37777949753513729, .4263845142616835  , .72127639993530235)
-    RGB1[++i,] = (.37718371844251231, .42194680223454828 , .71991841524475775)
-    RGB1[++i,] = (.37662448930806297, .41749553747893614 , .71852454736176108)
-    RGB1[++i,] = (.37610001286385814, .41303079952477062 , .71709396919920232)
-    RGB1[++i,] = (.37560846919442398, .40855267638072096 , .71562585091587549)
-    RGB1[++i,] = (.37514802505380473, .4040612609993941  , .7141193695725726)
-    RGB1[++i,] = (.37471686019302231, .3995566498711684  , .71257368516500463)
-    RGB1[++i,] = (.37431313199312338, .39503894828283309 , .71098796522377461)
-    RGB1[++i,] = (.37393499330475782, .39050827529375831 , .70936134293478448)
-    RGB1[++i,] = (.3735806215098284 , .38596474386057539 , .70769297607310577)
-    RGB1[++i,] = (.37324816143326384, .38140848555753937 , .70598200974806036)
-    RGB1[++i,] = (.37293578646665032, .37683963835219841 , .70422755780589941)
-    RGB1[++i,] = (.37264166757849604, .37225835004836849 , .7024287314570723)
-    RGB1[++i,] = (.37236397858465387, .36766477862108266 , .70058463496520773)
-    RGB1[++i,] = (.37210089702443822, .36305909736982378 , .69869434615073722)
-    RGB1[++i,] = (.3718506155898596 , .35844148285875221 , .69675695810256544)
-    RGB1[++i,] = (.37161133234400479, .3538121372967869  , .69477149919380887)
-    RGB1[++i,] = (.37138124223736607, .34917126878479027 , .69273703471928827)
-    RGB1[++i,] = (.37115856636209105, .34451911410230168 , .69065253586464992)
-    RGB1[++i,] = (.37094151551337329, .33985591488818123 , .68851703379505125)
-    RGB1[++i,] = (.37072833279422668, .33518193808489577 , .68632948169606767)
-    RGB1[++i,] = (.37051738634484427, .33049741244307851 , .68408888788857214)
-    RGB1[++i,] = (.37030682071842685, .32580269697872455 , .68179411684486679)
-    RGB1[++i,] = (.37009487130772695, .3210981375964933  , .67944405399056851)
-    RGB1[++i,] = (.36987980329025361, .31638410101153364 , .67703755438090574)
-    RGB1[++i,] = (.36965987626565955, .31166098762951971 , .67457344743419545)
-    RGB1[++i,] = (.36943334591276228, .30692923551862339 , .67205052849120617)
-    RGB1[++i,] = (.36919847837592484, .30218932176507068 , .66946754331614522)
-    RGB1[++i,] = (.36895355306596778, .29744175492366276 , .66682322089824264)
-    RGB1[++i,] = (.36869682231895268, .29268709856150099 , .66411625298236909)
-    RGB1[++i,] = (.36842655638020444, .28792596437778462 , .66134526910944602)
-    RGB1[++i,] = (.36814101479899719, .28315901221182987 , .65850888806972308)
-    RGB1[++i,] = (.36783843696531082, .27838697181297761 , .65560566838453704)
-    RGB1[++i,] = (.36751707094367697, .27361063317090978 , .65263411711618635)
-    RGB1[++i,] = (.36717513650699446, .26883085667326956 , .64959272297892245)
-    RGB1[++i,] = (.36681085540107988, .26404857724525643 , .64647991652908243)
-    RGB1[++i,] = (.36642243251550632, .25926481158628106 , .64329409140765537)
-    RGB1[++i,] = (.36600853966739794, .25448043878086224 , .64003361803368586)
-    RGB1[++i,] = (.36556698373538982, .24969683475296395 , .63669675187488584)
-    RGB1[++i,] = (.36509579845886808, .24491536803550484 , .63328173520055586)
-    RGB1[++i,] = (.36459308890125008, .24013747024823828 , .62978680155026101)
-    RGB1[++i,] = (.36405693022088509, .23536470386204195 , .62621013451953023)
-    RGB1[++i,] = (.36348537610385145, .23059876218396419 , .62254988622392882)
-    RGB1[++i,] = (.36287643560041027, .22584149293287031 , .61880417410823019)
-    RGB1[++i,] = (.36222809558295926, .22109488427338303 , .61497112346096128)
-    RGB1[++i,] = (.36153829010998356, .21636111429594002 , .61104880679640927)
-    RGB1[++i,] = (.36080493826624654, .21164251793458128 , .60703532172064711)
-    RGB1[++i,] = (.36002681809096376, .20694122817889948 , .60292845431916875)
-    RGB1[++i,] = (.35920088560930186, .20226037920758122 , .5987265295935138)
-    RGB1[++i,] = (.35832489966617809, .197602942459778   , .59442768517501066)
-    RGB1[++i,] = (.35739663292915563, .19297208197842461 , .59003011251063131)
-    RGB1[++i,] = (.35641381143126327, .18837119869242164 , .5855320765920552)
-    RGB1[++i,] = (.35537415306906722, .18380392577704466 , .58093191431832802)
-    RGB1[++i,] = (.35427534960663759, .17927413271618647 , .57622809660668717)
-    RGB1[++i,] = (.35311574421123737, .17478570377561287 , .57141871523555288)
-    RGB1[++i,] = (.35189248608873791, .17034320478524959 , .56650284911216653)
-    RGB1[++i,] = (.35060304441931012, .16595129984720861 , .56147964703993225)
-    RGB1[++i,] = (.34924513554955644, .16161477763045118 , .55634837474163779)
-    RGB1[++i,] = (.34781653238777782, .15733863511152979 , .55110853452703257)
-    RGB1[++i,] = (.34631507175793091, .15312802296627787 , .5457599924248665)
-    RGB1[++i,] = (.34473901574536375, .14898820589826409 , .54030245920406539)
-    RGB1[++i,] = (.34308600291572294, .14492465359918028 , .53473704282067103)
-    RGB1[++i,] = (.34135411074506483, .1409427920655632  , .52906500940336754)
-    RGB1[++i,] = (.33954168752669694, .13704801896718169 , .52328797535085236)
-    RGB1[++i,] = (.33764732090671112, .13324562282438077 , .51740807573979475)
-    RGB1[++i,] = (.33566978565015315, .12954074251271822 , .51142807215168951)
-    RGB1[++i,] = (.33360804901486002, .12593818301005921 , .50535164796654897)
-    RGB1[++i,] = (.33146154891145124, .12244245263391232 , .49918274588431072)
-    RGB1[++i,] = (.32923005203231409, .11905764321981127 , .49292595612342666)
-    RGB1[++i,] = (.3269137124539796 , .1157873496841953  , .48658646495697461)
-    RGB1[++i,] = (.32451307931207785, .11263459791730848 , .48017007211645196)
-    RGB1[++i,] = (.32202882276069322, .10960114111258401 , .47368494725726878)
-    RGB1[++i,] = (.31946262395497965, .10668879882392659 , .46713728801395243)
-    RGB1[++i,] = (.31681648089023501, .10389861387653518 , .46053414662739794)
-    RGB1[++i,] = (.31409278414755532, .10123077676403242 , .45388335612058467)
-    RGB1[++i,] = (.31129434479712365, .098684771934052201, .44719313715161618)
-    RGB1[++i,] = (.30842444457210105, .096259385340577736, .44047194882050544)
-    RGB1[++i,] = (.30548675819945936, .093952764840823738, .43372849999361113)
-    RGB1[++i,] = (.30248536364574252, .091761187397303601, .42697404043749887)
-    RGB1[++i,] = (.29942483960214772, .089682253716750038, .42021619665853854)
-    RGB1[++i,] = (.29631000388905288, .087713250960463951, .41346259134143476)
-    RGB1[++i,] = (.29314593096985248, .085850656889620708, .40672178082365834)
-    RGB1[++i,] = (.28993792445176608, .08409078829085731 , .40000214725256295)
-    RGB1[++i,] = (.28669151388283165, .082429873848480689, .39331182532243375)
-    RGB1[++i,] = (.28341239797185225, .080864153365499375, .38665868550105914)
-    RGB1[++i,] = (.28010638576975472, .079389994802261526, .38005028528138707)
-    RGB1[++i,] = (.27677939615815589, .078003941033788216, .37349382846504675)
-    RGB1[++i,] = (.27343739342450812, .076702800237496066, .36699616136347685)
-    RGB1[++i,] = (.27008637749114051, .075483675584275545, .36056376228111864)
-    RGB1[++i,] = (.26673233211995284, .074344018028546205, .35420276066240958)
-    RGB1[++i,] = (.26338121807151404, .073281657939897077, .34791888996380105)
-    RGB1[++i,] = (.26003895187439957, .072294781043362205, .3417175669546984)
-    RGB1[++i,] = (.25671191651083902, .071380106242082242, .33560648984600089)
-    RGB1[++i,] = (.25340685873736807, .070533582926851829, .3295945757321303)
-    RGB1[++i,] = (.25012845306199383, .069758206429106989, .32368100685760637)
-    RGB1[++i,] = (.24688226237958999, .069053639449204451, .31786993834254956)
-    RGB1[++i,] = (.24367372557466271, .068419855150922693, .31216524050888372)
-    RGB1[++i,] = (.24050813332295939, .067857103814855602, .30657054493678321)
-    RGB1[++i,] = (.23739062429054825, .067365888050555517, .30108922184065873)
-    RGB1[++i,] = (.23433055727563878, .066935599661639394, .29574009929867601)
-    RGB1[++i,] = (.23132955273021344, .066576186939090592, .29051361067988485)
-    RGB1[++i,] = (.2283917709422868 , .06628997924139618 , .28541074411068496)
-    RGB1[++i,] = (.22552164337737857, .066078173119395595, .28043398847505197)
-    RGB1[++i,] = (.22272706739121817, .065933790675651943, .27559714652053702)
-    RGB1[++i,] = (.22001251100779617, .065857918918907604, .27090279994325861)
-    RGB1[++i,] = (.21737845072382705, .065859661233562045, .26634209349669508)
-    RGB1[++i,] = (.21482843531473683, .065940385613778491, .26191675992376573)
-    RGB1[++i,] = (.21237411048541005, .066085024661758446, .25765165093569542)
-    RGB1[++i,] = (.21001214221188125, .066308573918947178, .2535289048041211)
-    RGB1[++i,] = (.2077442377448806 , .06661453200418091 , .24954644291943817)
-    RGB1[++i,] = (.20558051999470117, .066990462397868739, .24572497420147632)
-    RGB1[++i,] = (.20352007949514977, .067444179612424215, .24205576625191821)
-    RGB1[++i,] = (.20156133764129841, .067983271026200248, .23852974228695395)
-    RGB1[++i,] = (.19971571438603364, .068592710553704722, .23517094067076993)
-    RGB1[++i,] = (.19794834061899208, .069314066071660657, .23194647381302336)
-    RGB1[++i,] = (.1960826032659409 , .070321227242423623, .22874673279569585)
-    RGB1[++i,] = (.19410351363791453, .071608304856891569, .22558727307410353)
-    RGB1[++i,] = (.19199449184606268, .073182830649273306, .22243385243433622)
-    RGB1[++i,] = (.18975853639094634, .075019861862143766, .2193005075652994)
-    RGB1[++i,] = (.18739228342697645, .077102096899588329, .21618875376309582)
-    RGB1[++i,] = (.18488035509396164, .079425730279723883, .21307651648984993)
-    RGB1[++i,] = (.18774482037046955, .077251588468039312, .21387448578597812)
-    RGB1[++i,] = (.19049578401722037, .075311278416787641, .2146562337112265)
-    RGB1[++i,] = (.1931548636579131 , .073606819040117955, .21542362939081539)
-    RGB1[++i,] = (.19571853588267552, .072157781039602742, .21617499187076789)
-    RGB1[++i,] = (.19819343656336558, .070974625252738788, .21690975060032436)
-    RGB1[++i,] = (.20058760685133747, .070064576149984209, .21762721310371608)
-    RGB1[++i,] = (.20290365333558247, .069435248580458964, .21833167885096033)
-    RGB1[++i,] = (.20531725273301316, .068919592266397572, .21911516689288835)
-    RGB1[++i,] = (.20785704662965598, .068484398797025281, .22000133917653536)
-    RGB1[++i,] = (.21052882914958676, .06812195249816172 , .22098759107715404)
-    RGB1[++i,] = (.2133313859647627 , .067830148426026665, .22207043213024291)
-    RGB1[++i,] = (.21625279838647882, .067616330270516389, .22324568672294431)
-    RGB1[++i,] = (.21930503925136402, .067465786362940039, .22451023616807558)
-    RGB1[++i,] = (.22247308588973624, .067388214053092838, .22585960379408354)
-    RGB1[++i,] = (.2257539681670791 , .067382132300147474, .22728984778098055)
-    RGB1[++i,] = (.22915620278592841, .067434730871152565, .22879681433956656)
-    RGB1[++i,] = (.23266299920501882, .067557104388479783, .23037617493752832)
-    RGB1[++i,] = (.23627495835774248, .06774359820987802 , .23202360805926608)
-    RGB1[++i,] = (.23999586188690308, .067985029964779953, .23373434258507808)
-    RGB1[++i,] = (.24381149720247919, .068289851529011875, .23550427698321885)
-    RGB1[++i,] = (.24772092990501099, .068653337909486523, .2373288009471749)
-    RGB1[++i,] = (.25172899728289466, .069064630826035506, .23920260612763083)
-    RGB1[++i,] = (.25582135547481771, .06953231029187984 , .24112190491594204)
-    RGB1[++i,] = (.25999463887892144, .070053855603861875, .24308218808684579)
-    RGB1[++i,] = (.26425512207060942, .070616595622995437, .24507758869355967)
-    RGB1[++i,] = (.26859095948172862, .071226716277922458, .24710443563450618)
-    RGB1[++i,] = (.27299701518897301, .071883555446163511, .24915847093232929)
-    RGB1[++i,] = (.27747150809142801, .072582969899254779, .25123493995942769)
-    RGB1[++i,] = (.28201746297366942, .073315693214040967, .25332800295084507)
-    RGB1[++i,] = (.28662309235899847, .074088460826808866, .25543478673717029)
-    RGB1[++i,] = (.29128515387578635, .074899049847466703, .25755101595750435)
-    RGB1[++i,] = (.2960004726065818 , .075745336000958424, .25967245030364566)
-    RGB1[++i,] = (.30077276812918691, .076617824336164764, .26179294097819672)
-    RGB1[++i,] = (.30559226007249934, .077521963107537312, .26391006692119662)
-    RGB1[++i,] = (.31045520848595526, .078456871676182177, .2660200572779356)
-    RGB1[++i,] = (.31535870009205808, .079420997315243186, .26811904076941961)
-    RGB1[++i,] = (.32029986557994061, .080412994737554838, .27020322893039511)
-    RGB1[++i,] = (.32527888860401261, .081428390076546092, .27226772884656186)
-    RGB1[++i,] = (.33029174471181438, .08246763389003825 , .27430929404579435)
-    RGB1[++i,] = (.33533353224455448, .083532434119003962, .27632534356790039)
-    RGB1[++i,] = (.34040164359597463, .084622236191702671, .27831254595259397)
-    RGB1[++i,] = (.34549355713871799, .085736654965126335, .28026769921081435)
-    RGB1[++i,] = (.35060678246032478, .08687555176033529 , .28218770540182386)
-    RGB1[++i,] = (.35573889947341125, .088038974350243354, .2840695897279818)
-    RGB1[++i,] = (.36088752387578377, .089227194362745205, .28591050458531014)
-    RGB1[++i,] = (.36605031412464006, .090440685427697898, .2877077458811747)
-    RGB1[++i,] = (.37122508431309342, .091679997480262732, .28945865397633169)
-    RGB1[++i,] = (.3764103053221462 , .092945198093777909, .29116024157313919)
-    RGB1[++i,] = (.38160247377467543, .094238731263712183, .29281107506269488)
-    RGB1[++i,] = (.38679939079544168, .09556181960083443 , .29440901248173756)
-    RGB1[++i,] = (.39199887556812907, .09691583650296684 , .29595212005509081)
-    RGB1[++i,] = (.39719876876325577, .098302320968278623, .29743856476285779)
-    RGB1[++i,] = (.40239692379737496, .099722930314950553, .29886674369733968)
-    RGB1[++i,] = (.40759120392688708, .10117945586419633 , .30023519507728602)
-    RGB1[++i,] = (.41277985630360303, .1026734006932461  , .30154226437468967)
-    RGB1[++i,] = (.41796105205173684, .10420644885760968 , .30278652039631843)
-    RGB1[++i,] = (.42313214269556043, .10578120994917611 , .3039675809469457)
-    RGB1[++i,] = (.42829101315789753, .1073997763055258  , .30508479060294547)
-    RGB1[++i,] = (.4334355841041439 , .1090642347484701  , .30613767928289148)
-    RGB1[++i,] = (.43856378187931538, .11077667828375456 , .30712600062348083)
-    RGB1[++i,] = (.44367358645071275, .11253912421257944 , .30804973095465449)
-    RGB1[++i,] = (.44876299173174822, .11435355574622549 , .30890905921943196)
-    RGB1[++i,] = (.45383005086999889, .11622183788331528 , .30970441249844921)
-    RGB1[++i,] = (.45887288947308297, .11814571137706886 , .31043636979038808)
-    RGB1[++i,] = (.46389102840284874, .12012561256850712 , .31110343446582983)
-    RGB1[++i,] = (.46888111384598413, .12216445576414045 , .31170911458932665)
-    RGB1[++i,] = (.473841437035254  , .12426354237989065 , .31225470169927194)
-    RGB1[++i,] = (.47877034239726296, .12642401401409453 , .31274172735821959)
-    RGB1[++i,] = (.48366628618847957, .12864679022013889 , .31317188565991266)
-    RGB1[++i,] = (.48852847371852987, .13093210934893723 , .31354553695453014)
-    RGB1[++i,] = (.49335504375145617, .13328091630401023 , .31386561956734976)
-    RGB1[++i,] = (.49814435462074153, .13569380302451714 , .314135190862664)
-    RGB1[++i,] = (.50289524974970612, .13817086581280427 , .31435662153833671)
-    RGB1[++i,] = (.50760681181053691, .14071192654913128 , .31453200120082569)
-    RGB1[++i,] = (.51227835105321762, .14331656120063752 , .3146630922831542)
-    RGB1[++i,] = (.51690848800544464, .14598463068714407 , .31475407592280041)
-    RGB1[++i,] = (.52149652863229956, .14871544765633712 , .31480767954534428)
-    RGB1[++i,] = (.52604189625477482, .15150818660835483 , .31482653406646727)
-    RGB1[++i,] = (.53054420489856446, .15436183633886777 , .31481299789187128)
-    RGB1[++i,] = (.5350027976174474 , .15727540775107324 , .31477085207396532)
-    RGB1[++i,] = (.53941736649199057, .16024769309971934 , .31470295028655965)
-    RGB1[++i,] = (.54378771313608565, .16327738551419116 , .31461204226295625)
-    RGB1[++i,] = (.54811370033467621, .1663630904279047  , .31450102990914708)
-    RGB1[++i,] = (.55239521572711914, .16950338809328983 , .31437291554615371)
-    RGB1[++i,] = (.55663229034969341, .17269677158182117 , .31423043195101424)
-    RGB1[++i,] = (.56082499039117173, .17594170887918095 , .31407639883970623)
-    RGB1[++i,] = (.56497343529017696, .17923664950367169 , .3139136046337036)
-    RGB1[++i,] = (.56907784784011428, .18258004462335425 , .31374440956796529)
-    RGB1[++i,] = (.57313845754107873, .18597036007065024 , .31357126868520002)
-    RGB1[++i,] = (.57715550812992045, .18940601489760422 , .31339704333572083)
-    RGB1[++i,] = (.58112932761586555, .19288548904692518 , .31322399394183942)
-    RGB1[++i,] = (.58506024396466882, .19640737049066315 , .31305401163732732)
-    RGB1[++i,] = (.58894861935544707, .19997020971775276 , .31288922211590126)
-    RGB1[++i,] = (.59279480536520257, .20357251410079796 , .31273234839304942)
-    RGB1[++i,] = (.59659918109122367, .207212956082026   , .31258523031121233)
-    RGB1[++i,] = (.60036213010411577, .21089030138947745 , .31244934410414688)
-    RGB1[++i,] = (.60408401696732739, .21460331490206347 , .31232652641170694)
-    RGB1[++i,] = (.60776523994818654, .21835070166659282 , .31221903291870201)
-    RGB1[++i,] = (.6114062072731884 , .22213124697023234 , .31212881396435238)
-    RGB1[++i,] = (.61500723236391375, .22594402043981826 , .31205680685765741)
-    RGB1[++i,] = (.61856865258877192, .22978799249179921 , .31200463838728931)
-    RGB1[++i,] = (.62209079821082613, .2336621873300741  , .31197383273627388)
-    RGB1[++i,] = (.62557416500434959, .23756535071152696 , .31196698314912269)
-    RGB1[++i,] = (.62901892016985872, .24149689191922535 , .31198447195645718)
-    RGB1[++i,] = (.63242534854210275, .24545598775548677 , .31202765974624452)
-    RGB1[++i,] = (.6357937104834237 , .24944185818822678 , .31209793953300591)
-    RGB1[++i,] = (.6391243387840212 , .25345365461983138 , .31219689612063978)
-    RGB1[++i,] = (.642417577481186  , .257490519876798   , .31232631707560987)
-    RGB1[++i,] = (.64567349382645434, .26155203161615281 , .31248673753935263)
-    RGB1[++i,] = (.64889230169458245, .26563755336209077 , .31267941819570189)
-    RGB1[++i,] = (.65207417290277303, .26974650525236699 , .31290560605819168)
-    RGB1[++i,] = (.65521932609327127, .27387826652410152 , .3131666792687211)
-    RGB1[++i,] = (.6583280801134499 , .27803210957665631 , .3134643447952643)
-    RGB1[++i,] = (.66140037532601781, .28220778870555907 , .31379912926498488)
-    RGB1[++i,] = (.66443632469878844, .28640483614256179 , .31417223403606975)
-    RGB1[++i,] = (.66743603766369131, .29062280081258873 , .31458483752056837)
-    RGB1[++i,] = (.67039959547676198, .29486126309253047 , .31503813956872212)
-    RGB1[++i,] = (.67332725564817331, .29911962764489264 , .31553372323982209)
-    RGB1[++i,] = (.67621897924409746, .30339762792450425 , .3160724937230589)
-    RGB1[++i,] = (.67907474028157344, .30769497879760166 , .31665545668946665)
-    RGB1[++i,] = (.68189457150944521, .31201133280550686 , .31728380489244951)
-    RGB1[++i,] = (.68467850942494535, .31634634821222207 , .31795870784057567)
-    RGB1[++i,] = (.68742656435169625, .32069970535138104 , .31868137622277692)
-    RGB1[++i,] = (.6901389321505248 , .32507091815606004 , .31945332332898302)
-    RGB1[++i,] = (.69281544846764931, .32945984647042675 , .3202754315314667)
-    RGB1[++i,] = (.69545608346891119, .33386622163232865 , .32114884306985791)
-    RGB1[++i,] = (.6980608153581771 , .33828976326048621 , .32207478855218091)
-    RGB1[++i,] = (.70062962477242097, .34273019305341756 , .32305449047765694)
-    RGB1[++i,] = (.70316249458814151, .34718723719597999 , .32408913679491225)
-    RGB1[++i,] = (.70565951122610093, .35166052978120937 , .32518014084085567)
-    RGB1[++i,] = (.70812059568420482, .35614985523380299 , .32632861885644465)
-    RGB1[++i,] = (.7105456546582587 , .36065500290840113 , .32753574162788762)
-    RGB1[++i,] = (.71293466839773467, .36517570519856757 , .3288027427038317)
-    RGB1[++i,] = (.71528760614847287, .36971170225223449 , .3301308728723546)
-    RGB1[++i,] = (.71760444908133847, .37426272710686193 , .33152138620958932)
-    RGB1[++i,] = (.71988521490549851, .37882848839337313 , .33297555200245399)
-    RGB1[++i,] = (.7221299918421461 , .38340864508963057 , .33449469983585844)
-    RGB1[++i,] = (.72433865647781592, .38800301593162145 , .33607995965691828)
-    RGB1[++i,] = (.72651122900227549, .3926113126792577  , .3377325942005665)
-    RGB1[++i,] = (.72864773856716547, .39723324476747235 , .33945384341064017)
-    RGB1[++i,] = (.73074820754845171, .401868526884681   , .3412449533046818)
-    RGB1[++i,] = (.73281270506268747, .4065168468778026  , .34310715173410822)
-    RGB1[++i,] = (.73484133598564938, .41117787004519513 , .34504169470809071)
-    RGB1[++i,] = (.73683422173585866, .41585125850290111 , .34704978520758401)
-    RGB1[++i,] = (.73879140024599266, .42053672992315327 , .34913260148542435)
-    RGB1[++i,] = (.74071301619506091, .4252339389526239  , .35129130890802607)
-    RGB1[++i,] = (.7425992159973317 , .42994254036133867 , .35352709245374592)
-    RGB1[++i,] = (.74445018676570673, .43466217184617112 , .35584108091122535)
-    RGB1[++i,] = (.74626615789163442, .43939245044973502 , .35823439142300639)
-    RGB1[++i,] = (.74804739275559562, .44413297780351974 , .36070813602540136)
-    RGB1[++i,] = (.74979420547170472, .44888333481548809 , .36326337558360278)
-    RGB1[++i,] = (.75150685045891663, .45364314496866825 , .36590112443835765)
-    RGB1[++i,] = (.75318566369046569, .45841199172949604 , .36862236642234769)
-    RGB1[++i,] = (.75483105066959544, .46318942799460555 , .3714280448394211)
-    RGB1[++i,] = (.75644341577140706, .46797501437948458 , .37431909037543515)
-    RGB1[++i,] = (.75802325538455839, .4727682731566229  , .37729635531096678)
-    RGB1[++i,] = (.75957111105340058, .47756871222057079 , .380360657784311)
-    RGB1[++i,] = (.7610876378057071 , .48237579130289127 , .38351275723852291)
-    RGB1[++i,] = (.76257333554052609, .48718906673415824 , .38675335037837993)
-    RGB1[++i,] = (.76402885609288662, .49200802533379656 , .39008308392311997)
-    RGB1[++i,] = (.76545492593330511, .49683212909727231 , .39350254000115381)
-    RGB1[++i,] = (.76685228950643891, .5016608471009063  , .39701221751773474)
-    RGB1[++i,] = (.76822176599735303, .50649362371287909 , .40061257089416885)
-    RGB1[++i,] = (.7695642334401418 , .5113298901696085  , .40430398069682483)
-    RGB1[++i,] = (.77088091962302474, .51616892643469103 , .40808667584648967)
-    RGB1[++i,] = (.77217257229605551, .5210102658711383  , .41196089987122869)
-    RGB1[++i,] = (.77344021829889886, .52585332093451564 , .41592679539764366)
-    RGB1[++i,] = (.77468494746063199, .53069749384776732 , .41998440356963762)
-    RGB1[++i,] = (.77590790730685699, .53554217882461186 , .42413367909988375)
-    RGB1[++i,] = (.7771103295521099 , .54038674910561235 , .42837450371258479)
-    RGB1[++i,] = (.77829345807633121, .54523059488426595 , .432706647838971)
-    RGB1[++i,] = (.77945862731506643, .55007308413977274 , .43712979856444761)
-    RGB1[++i,] = (.78060774749483774, .55491335744890613 , .44164332426364639)
-    RGB1[++i,] = (.78174180478981836, .55975098052594863 , .44624687186865436)
-    RGB1[++i,] = (.78286225264440912, .56458533111166875 , .45093985823706345)
-    RGB1[++i,] = (.78397060836414478, .56941578326710418 , .45572154742892063)
-    RGB1[++i,] = (.78506845019606841, .5742417003617839  , .46059116206904965)
-    RGB1[++i,] = (.78615737132332963, .5790624629815756  , .46554778281918402)
-    RGB1[++i,] = (.78723904108188347, .58387743744557208 , .47059039582133383)
-    RGB1[++i,] = (.78831514045623963, .58868600173562435 , .47571791879076081)
-    RGB1[++i,] = (.78938737766251943, .5934875421745599  , .48092913815357724)
-    RGB1[++i,] = (.79045776847727878, .59828134277062461 , .48622257801969754)
-    RGB1[++i,] = (.79152832843475607, .60306670593147205 , .49159667021646397)
-    RGB1[++i,] = (.79260034304237448, .60784322087037024 , .49705020621532009)
-    RGB1[++i,] = (.79367559698664958, .61261029334072192 , .50258161291269432)
-    RGB1[++i,] = (.79475585972654039, .61736734400220705 , .50818921213102985)
-    RGB1[++i,] = (.79584292379583765, .62211378808451145 , .51387124091909786)
-    RGB1[++i,] = (.79693854719951607, .62684905679296699 , .5196258425240281)
-    RGB1[++i,] = (.79804447815136637, .63157258225089552 , .52545108144834785)
-    RGB1[++i,] = (.7991624518501963 , .63628379372029187 , .53134495942561433)
-    RGB1[++i,] = (.80029415389753977, .64098213306749863 , .53730535185141037)
-    RGB1[++i,] = (.80144124292560048, .64566703459218766 , .5433300863249918)
-    RGB1[++i,] = (.80260531146112946, .65033793748103852 , .54941691584603647)
-    RGB1[++i,] = (.80378792531077625, .65499426549472628 , .55556350867083815)
-    RGB1[++i,] = (.80499054790810298, .65963545027564163 , .56176745110546977)
-    RGB1[++i,] = (.80621460526927058, .66426089585282289 , .56802629178649788)
-    RGB1[++i,] = (.8074614045096935 , .6688700095398864  , .57433746373459582)
-    RGB1[++i,] = (.80873219170089694, .67346216702194517 , .58069834805576737)
-    RGB1[++i,] = (.81002809466520687, .67803672673971815 , .58710626908082753)
-    RGB1[++i,] = (.81135014011763329, .68259301546243389 , .59355848909050757)
-    RGB1[++i,] = (.81269922039881493, .68713033714618876 , .60005214820435104)
-    RGB1[++i,] = (.81407611046993344, .69164794791482131 , .6065843782630862)
-    RGB1[++i,] = (.81548146627279483, .69614505508308089 , .61315221209322646)
-    RGB1[++i,] = (.81691575775055891, .70062083014783982 , .61975260637257923)
-    RGB1[++i,] = (.81837931164498223, .70507438189635097 , .62638245478933297)
-    RGB1[++i,] = (.81987230650455289, .70950474978787481 , .63303857040067113)
-    RGB1[++i,] = (.8213947205565636 , .7139109141951604  , .63971766697672761)
-    RGB1[++i,] = (.82294635110428427, .71829177331290062 , .6464164243818421)
-    RGB1[++i,] = (.8245268129450285 , .72264614312088882 , .65313137915422603)
-    RGB1[++i,] = (.82613549710580259, .72697275518238258 , .65985900156216504)
-    RGB1[++i,] = (.8277716072353446 , .73127023324078089 , .66659570204682972)
-    RGB1[++i,] = (.82943407816481474, .7355371221572935  , .67333772009301907)
-    RGB1[++i,] = (.83112163529096306, .73977184647638616 , .68008125203631464)
-    RGB1[++i,] = (.83283277185777982, .74397271817459876 , .68682235874648545)
-    RGB1[++i,] = (.8345656905566583 , .7481379479992134  , .69355697649863846)
-    RGB1[++i,] = (.83631898844737929, .75226548952875261 , .70027999028864962)
-    RGB1[++i,] = (.83809123476131964, .75635314860808633 , .70698561390212977)
-    RGB1[++i,] = (.83987839884120874, .76039907199779677 , .71367147811129228)
-    RGB1[++i,] = (.84167750766845151, .76440101200982946 , .72033299387284622)
-    RGB1[++i,] = (.84348529222933699, .76835660399870176 , .72696536998972039)
-    RGB1[++i,] = (.84529810731955113, .77226338601044719 , .73356368240541492)
-    RGB1[++i,] = (.84711195507965098, .77611880236047159 , .74012275762807056)
-    RGB1[++i,] = (.84892245563117641, .77992021407650147 , .74663719293664366)
-    RGB1[++i,] = (.85072697023178789, .78366457342383888 , .7530974636118285)
-    RGB1[++i,] = (.85251907207708444, .78734936133548439 , .7594994148789691)
-    RGB1[++i,] = (.85429219611470464, .79097196777091994 , .76583801477914104)
-    RGB1[++i,] = (.85604022314725403, .79452963601550608 , .77210610037674143)
-    RGB1[++i,] = (.85775662943504905, .79801963142713928 , .77829571667247499)
-    RGB1[++i,] = (.8594346370300241 , .8014392309950078  , .78439788751383921)
-    RGB1[++i,] = (.86107117027565516, .80478517909812231 , .79039529663736285)
-    RGB1[++i,] = (.86265601051127572, .80805523804261525 , .796282666437655)
-    RGB1[++i,] = (.86418343723941027, .81124644224653542 , .80204612696863953)
-    RGB1[++i,] = (.86564934325605325, .81435544067514909 , .80766972324164554)
-    RGB1[++i,] = (.86705314907048503, .81737804041911244 , .81313419626911398)
-    RGB1[++i,] = (.86839954695818633, .82030875512181523 , .81841638963128993)
-    RGB1[++i,] = (.86969131502613806, .82314158859569164 , .82350476683173168)
-    RGB1[++i,] = (.87093846717297507, .82586857889438514 , .82838497261149613)
-    RGB1[++i,] = (.87215331978454325, .82848052823709672 , .8330486712880828)
-    RGB1[++i,] = (.87335171360916275, .83096715251272624 , .83748851001197089)
-    RGB1[++i,] = (.87453793320260187, .83331972948645461 , .84171925358069011)
-    RGB1[++i,] = (.87571458709961403, .8355302318472394  , .84575537519027078)
-    RGB1[++i,] = (.87687848451614692, .83759238071186537 , .84961373549150254)
-    RGB1[++i,] = (.87802298436649007, .83950165618540074 , .85330645352458923)
-    RGB1[++i,] = (.87913244240792765, .84125554884475906 , .85685572291039636)
-    RGB1[++i,] = (.88019293315695812, .84285224824778615 , .86027399927156634)
-    RGB1[++i,] = (.88119169871341951, .84429066717717349 , .86356595168669881)
-    RGB1[++i,] = (.88211542489401606, .84557007254559347 , .86673765046233331)
-    RGB1[++i,] = (.88295168595448525, .84668970275699273 , .86979617048190971)
-    RGB1[++i,] = (.88369127145898041, .84764891761519268 , .87274147101441557)
-    RGB1[++i,] = (.88432713054113543, .84844741572055415 , .87556785228242973)
-    RGB1[++i,] = (.88485138159908572, .84908426422893801 , .87828235285372469)
-    RGB1[++i,] = (.88525897972630474, .84955892810989209 , .88088414794024839)
-    RGB1[++i,] = (.88554714811952384, .84987174283631584 , .88336206121170946)
-    RGB1[++i,] = (.88571155122845646, .85002186115856315 , .88572538990087124)
+    _set(C, "HSV")
 }
 
 end
 
 exit
-
