@@ -23,6 +23,10 @@ Installation from GitHub:
 
 Main changes:
 
+    28may2020
+    - internal functions replacedata() and appenddata() did not clear the
+      temporary copy of the data container upon completion; this is fixed
+    
     27may2020
     - palette definitions, names colors, matplotlib colormap definitions, and color
       generator parameters are now kept in external source files that are read on

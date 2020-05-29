@@ -1,4 +1,4 @@
-*! version 1.0.7  25may2020  Ben Jann
+*! version 1.0.8  28may2020  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -444,6 +444,7 @@ void `MAIN'::replacedata()
 {
     N1 = data1.n
     swap(data, data1)
+    data1 = `DATA'()
 }
 
 void `MAIN'::updatedata()
@@ -469,6 +470,8 @@ void `MAIN'::appenddata()
     if (data1.note!="")    data.note   = data1.note
     if (data1.source!="")  data.source = data1.source
     if (data1.isip)        data.isip   = data1.isip
+    // clear temporary container
+    data1 = `DATA'()
 }
 
 void `MAIN'::removeadded()
