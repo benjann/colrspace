@@ -23,6 +23,9 @@ Installation from GitHub:
 
 Main changes:
 
+    06jun2020
+    - support for "_personal" library files added
+    
     28may2020
     - internal functions replacedata() and appenddata() did not clear the
       temporary copy of the data container upon completion; this is fixed

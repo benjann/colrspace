@@ -2945,6 +2945,14 @@
     {help colrspace_library_namedcolors:colrspace_library_namedcolors.sthlp}.
 
 {pstd}
+    You can extend the set of available palettes and colors by providing
+    personal library files. These files should be stored somewhere along the
+    {helpb adopath} (for example in the {cmd:PERSONAL} directory), so Stata can
+    find them, and they must be named as above but with a "_personal" 
+    suffix (e.g. "colrspace_library_palettes_personal.sthlp"). Each library file
+    has its peculiar syntax; see the explanations in the file headers.
+
+{pstd}
     A certification script testing internal consistency and comparing results to some
     test values and results from the {cmd:colorspacious} Python library by
     Smith (2018) (see file

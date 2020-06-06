@@ -1,4 +1,4 @@
-*! version 1.0.8  28may2020  Ben Jann
+*! version 1.0.9  06jun20200  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -365,6 +365,7 @@ class `MAIN' {
     private:
         `AA'    namedcolors
         void    namedcolorindex()
+        `Bool'  _namedcolorindex()
     
     // Palettes
     public:
@@ -4471,16 +4472,22 @@ mata:
 
 void `MAIN'::namedcolorindex()
 {
+    if (_namedcolorindex("namedcolors")) {
+        display("{err}colrspace_library_namedcolors.sthlp not found")
+        exit(error(601))
+    }
+    (void) _namedcolorindex("namedcolors_personal")
+}
+
+`Bool' `MAIN'::_namedcolorindex(`SS' lib)
+{
     `Int' l
     `SS'  fn, line, c, nm, hex
     `RS'  fh
     `SM'  EOF
     
-    fn = findfile("colrspace_library_namedcolors.sthlp")
-    if (fn=="") {
-        display("{err}colrspace_library_namedcolors.sthlp not found")
-        exit(error(601))
-    }
+    fn = findfile("colrspace_library_"+lib+".sthlp")
+    if (fn=="") return(1)
     hex = "#"
     fh  = fopen(fn, "r")
     EOF = J(0, 0, "")
@@ -4494,6 +4501,7 @@ void `MAIN'::namedcolorindex()
         namedcolors.put(nm, c)
     }
     fclose(fh)
+    return(0)
 }
 
 end
@@ -4539,7 +4547,8 @@ mata:
     for (;i;i--) {
         t = palettes.get(keys[i])
         if (isstring(t)) continue
-        src[i] = SRC[t]
+        if (t<=5) src[i] = SRC[t]
+        else      src[i] = SRC[mod(t,5)] + "_personal"
     }
     keys = ::select(keys, src:!="")
     src  = ::select(src, src:!="")
@@ -4582,6 +4591,10 @@ void `MAIN'::paletteindex() // create palette index
     //   t = 3         colormap from matplotlib library
     //   t = 4         color generator from generators library
     //   t = 5         internal palette/alias
+    //   t = 6         palette from personal palette library
+    //   t = 7         color group from personal namedcolors library
+    //   t = 8         colormap from personal matplotlib library
+    //   t = 9         color generator from personal generators library
     //   t = <string>  pure alias
     
     EOF = J(0, 0, "")
@@ -4598,7 +4611,7 @@ void `MAIN'::paletteindex() // create palette index
         while ((line=strltrim(fget(fh)))!=EOF) {
             if (substr(line,1,2)!=tn) continue // not a palette name
             nm = strtrim(substr(line,3,.))
-            if (nm=="") continue // color name is empty
+            if (nm=="") continue // palette name is empty
             if (t==3) nm = libraries[3] + " " + nm
             palettes.put(nm, t)
             if (t==2) {
@@ -4607,6 +4620,19 @@ void `MAIN'::paletteindex() // create palette index
                     palettes.put(nm, t)
                 }
             }
+        }
+        fclose(fh)
+        // personal library
+        lib = "colrspace_library_" + libraries[t] + "_personal.sthlp"
+        fn = findfile(lib)
+        if (fn=="") continue
+        fh = fopen(fn, "r")
+        while ((line=strltrim(fget(fh)))!=EOF) {
+            if (substr(line,1,2)!=tn) continue // not a palette name
+            nm = strtrim(substr(line,3,.))
+            if (nm=="") continue // palette name is empty
+            if (t==3) nm = libraries[3] + " " + nm // matplotlib
+            palettes.put(nm, t+5)
         }
         fclose(fh)
     }
@@ -4690,9 +4716,13 @@ void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
     n = (n0<. ? (n0<0 ? 0 : trunc(n0)) : 15)
     if      (t==1) Palette_palettes(pal, n)
     else if (t==2) Palette_namedcolors(pal)
-    else if (t==3) Palette_matplotlib(pal, n, o1) // o1: range
+    else if (t==3) Palette_matplotlib(pal, n, o1, 0) // o1: range
     else if (t==4) Palette_generators(pal, n, o1, o2, o3, o4) // o#; h, c, l, p
     else if (t==5) Palette_internal(pal, n, o1)   // o1: range
+    else if (t==6) Palette_palettes(pal, n, "_personal")
+    else if (t==7) Palette_namedcolors(pal, "_personal")
+    else if (t==8) Palette_matplotlib(pal, n, o1, 0, "_personal")
+    else if (t==9) Palette_generators(pal, n, o1, o2, o3, o4, "_personal")
     else return(0)
     S->name = pal
     
@@ -4754,7 +4784,7 @@ void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
     return(f)
 }
 
-void `MAIN'::Palette_palettes(`SS' pal, `RS' n)
+void `MAIN'::Palette_palettes(`SS' pal, `RS' n, | `SS' personal)
 {   // get palette from palettes library
     `Int'  i, j, r, l
     `SS'   s, t, tc, td, ts, tP, tPn, tN, tI
@@ -4763,7 +4793,7 @@ void `MAIN'::Palette_palettes(`SS' pal, `RS' n)
     `IntC' nc, p
     
     // read palette from library
-    f = Palette_read(pal, "palettes")
+    f = Palette_read(pal, "palettes"+personal)
     r = rows(f)
     
     // collect palette information 
@@ -4827,7 +4857,7 @@ void `MAIN'::Palette_palettes(`SS' pal, `RS' n)
     if (I!="") info_set(I, ",")
 }
 
-void `MAIN'::Palette_namedcolors(`SS' pal0)
+void `MAIN'::Palette_namedcolors(`SS' pal0, | `SS' personal)
 {   // get palette from namedcolors library
     `Int'  l, i, j, r
     `SS'   pal, t, tc, td, ts, hex
@@ -4835,9 +4865,11 @@ void `MAIN'::Palette_namedcolors(`SS' pal0)
     `SM'   P
     
     // read palette from library
-    if (substr(pal0,1,9)=="webcolors") pal = "HTML" + substr(pal0,10,.)
-    else                               pal = pal0
-    f = Palette_read(pal, "namedcolors")
+    pal = pal0
+    if (personal=="") {
+        if (substr(pal0,1,9)=="webcolors") pal = "HTML" + substr(pal,10,.)
+    }
+    f = Palette_read(pal, "namedcolors"+personal)
     r = rows(f)
     
     // process palette
@@ -4865,7 +4897,7 @@ void `MAIN'::Palette_namedcolors(`SS' pal0)
     Names_set(P[,2])
 }
 
-void `MAIN'::Palette_matplotlib(`SS' pal, `RS' n, `RV' range, | `Bool' shift)
+void `MAIN'::Palette_matplotlib(`SS' pal, `RS' n, `RV' range, `Bool' shift, | `SS' personal)
 {   // get palette from matplotlib library
     `Int'  i, j, r
     `SS'   t, tc, td, ts, tr
@@ -4874,7 +4906,7 @@ void `MAIN'::Palette_matplotlib(`SS' pal, `RS' n, `RV' range, | `Bool' shift)
     `IntR' rr
     
     // read palette from library
-    f = Palette_read(substr(pal,strpos(pal, " ")+1, .), "matplotlib")
+    f = Palette_read(substr(pal,strpos(pal, " ")+1, .), "matplotlib"+personal)
     r = rows(f)
     
     // process palette
@@ -4918,7 +4950,7 @@ void `MAIN'::Palette_matplotlib(`SS' pal, `RS' n, `RV' range, | `Bool' shift)
     }
 }
 
-void `MAIN'::Palette_generators(`SS' pal, `RS' n, | `RV' h, `RV' c, `RV' l, `RV' p)
+void `MAIN'::Palette_generators(`SS' pal, `RS' n, `RV' h, `RV' c, `RV' l, `RV' p, | `SS' personal)
 {   // get palette from color generator
     `Int'  r, i
     `SS'   t, tc, td, ts, tP
@@ -4926,7 +4958,7 @@ void `MAIN'::Palette_generators(`SS' pal, `RS' n, | `RV' h, `RV' c, `RV' l, `RV'
     `RR'   P
     
     // read palette from library
-    f = Palette_read(pal, "generators")
+    f = Palette_read(pal, "generators"+personal)
     r = rows(f)
     
     // process palette
@@ -4976,12 +5008,12 @@ void `MAIN'::Palette_internal(`SS' pal, `RS' n, | `RV' range)
     else if (pal=="HTML redorange")      Palette_htmlcolors(("red", "orange"))
     else if (pal=="webcolors")           Palette_htmlcolors()
     else if (pal=="webcolors redorange") Palette_htmlcolors(("red", "orange"))
-    else if (pal=="viridis")             Palette_matplotlib("matplotlib viridis", n, range)
-    else if (pal=="magma")               Palette_matplotlib("matplotlib magma", n, range)
-    else if (pal=="inferno")             Palette_matplotlib("matplotlib inferno", n, range)
-    else if (pal=="plasma")              Palette_matplotlib("matplotlib plasma", n, range)
-    else if (pal=="cividis")             Palette_matplotlib("matplotlib cividis", n, range)
-    else if (pal=="twilight")            Palette_matplotlib("matplotlib twilight", n, range)
+    else if (pal=="viridis")             Palette_matplotlib("matplotlib viridis", n, range, 0)
+    else if (pal=="magma")               Palette_matplotlib("matplotlib magma", n, range, 0)
+    else if (pal=="inferno")             Palette_matplotlib("matplotlib inferno", n, range, 0)
+    else if (pal=="plasma")              Palette_matplotlib("matplotlib plasma", n, range, 0)
+    else if (pal=="cividis")             Palette_matplotlib("matplotlib cividis", n, range, 0)
+    else if (pal=="twilight")            Palette_matplotlib("matplotlib twilight", n, range, 0)
     else if (pal=="twilight shifted")    Palette_matplotlib("matplotlib twilight", n, range, 1)
     else if (pal=="matplotlib twilight shifted") Palette_matplotlib("matplotlib twilight", n, range, 1)
     else if (pal=="spmap blues")         Palette_spmap("blues", n)
