@@ -1,4 +1,4 @@
-*! version 1.1.1  01apr2022  Ben Jann
+*! version 1.1.2  01apr2022  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -4652,15 +4652,22 @@ end
 
 mata:
 
-`SS' `MAIN'::pexists(| `SS' pal0)
+`SS' `MAIN'::pexists(| `SS' pal0, `SS' libname)
 {
     `Int' t
     `SS'  pal
+    `SR'  SRC
     
     if (palettes.N()==0) paletteindex()
     pal = pal0
     t = parse_palette(pal)
-    if (t) return(pal)
+    if (t) {
+        SRC = ("palettes", "namedcolors", "lsmaps", "generators", "rgbmaps")
+        if (t==99)     libname = "internal/alias"
+        else if (t<10) libname = SRC[t]
+        else           libname = SRC[t-10] + "_personal"
+        return(pal)
+    }
     return("")
 }
 
@@ -4784,6 +4791,7 @@ void `MAIN'::paletteindex() // create palette index
     palettes.put("tab20"                      , t)
     palettes.put("tab20b"                     , t)
     palettes.put("tab20c"                     , t)
+    palettes.put("sb6"                        , t)
     palettes.put("spmap blues"                , t)
     palettes.put("spmap greens"               , t)
     palettes.put("spmap greys"                , t)
@@ -4794,8 +4802,6 @@ void `MAIN'::paletteindex() // create palette index
     palettes.put("webcolors"                  , t)
     palettes.put("webcolors redorange"        , t)
     palettes.put("twilight shifted"           , t)
-    palettes.put("sb"        , "sb deep")
-    palettes.put("sb6"       , "sb deep6")
     palettes.put("sb"        , "sb deep")
     palettes.put("pals"      , "pals kelly")
     palettes.put("tol"       , "tol muted")
@@ -5177,6 +5183,7 @@ void `MAIN'::Palette_internal(`SS' pal, `RS' n, | `RV' range)
     else if (pal=="tab20")               Palette_palettes("d3 20", n)
     else if (pal=="tab20b")              Palette_palettes("d3 20b", n)
     else if (pal=="tab20c")              Palette_palettes("d3 20c", n)
+    else if (pal=="sb6")                 Palette_palettes("sb deep6", n)
     else if (pal=="spmap blues")         Palette_spmap("blues", n)
     else if (pal=="spmap greens")        Palette_spmap("greens", n)
     else if (pal=="spmap greys")         Palette_spmap("greys", n)

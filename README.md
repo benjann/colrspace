@@ -23,6 +23,11 @@ Installation from GitHub:
 
 Main changes:
 
+    01apr2022 (v 1.1.2 )
+    - S.pexists() now has a second argument to return the library name
+    - library_rbgmaps was incomplete; this is fixed
+    - sb6 is now a palette with an own name, not a pure alias
+
     01apr2022 (v 1.1.1)
     - circular interpolation was not implemented correctly; this is fixed;
       S.ipolate() now always determines the interpolation method based on the

@@ -1061,7 +1061,7 @@
     {stata colorpalette sb colorblind6:{bf:colorblind6}}
     {p_end}
 {p2col:{cmd:pals} [{it:scheme}]}qualitative palettes from the {cmd:pals} package in R
-    ({browse "https://github.com/kwstat/pals":github.com/kwstat/pals}),
+    ({browse "http://github.com/kwstat/pals":github.com/kwstat/pals}),
     where {it:scheme} is
     {stata colorpalette pals alphabet:{bf:alphabet}} (26),
     {stata colorpalette pals alphabet2:{bf:alphabet2}} (26),
@@ -1072,8 +1072,8 @@
     {stata colorpalette pals watlington:{bf:watlington}} (16)
     {p_end}
 {p2col:{cmd:tab} [{it:scheme}]}color schemes from
-    {browse "https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782":Tableau 10}
-    ({browse "https://github.com/jrnold/ggthemes/blob/main/data-raw/theme-data/tableau.yml":source}),
+    {browse "http://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782":Tableau 10}
+    ({browse "http://github.com/jrnold/ggthemes/blob/main/data-raw/theme-data/tableau.yml":source}),
     where {it:scheme} is as follows
     {p_end}
 {p2col:}qualitative: {stata colorpalette tab 10:{bf:10}} (default),
@@ -1108,8 +1108,7 @@
     {stata colorpalette tab Green-Gold:{bf:Green-Gold}} (20),
     {stata colorpalette tab Red-Gold:{bf:Red-Gold}} (21)
     {p_end}
-{p2col:}diverging (7):
-    {stata colorpalette tab Orange-Blue:{bf:Orange-Blue}},
+{p2col:}diverging (7): {stata colorpalette tab Orange-Blue:{bf:Orange-Blue}},
     {stata colorpalette tab Red-Green:{bf:Red-Green}},
     {stata colorpalette tab Green-Blue:{bf:Green-Blue}},
     {stata colorpalette tab Red-Blue:{bf:Red-Blue}},
@@ -1126,7 +1125,7 @@
     {stata colorpalette tab Temperature:{bf:Temperature}}
     {p_end}
 {p2col:{cmd:tol} [{it:scheme}]}color schemes by Paul Tol
-    ({browse "https://personal.sron.nl/~pault/":personal.sron.nl/~pault}),
+    ({browse "http://personal.sron.nl/~pault/":personal.sron.nl/~pault}),
     where {it:scheme} is as follows
     {p_end}
 {p2col:}qualitative: {stata colorpalette tol bright:{bf:bright}} (8),
@@ -1222,7 +1221,7 @@
     {stata colorpalette carto ag_Sunset:{bf:ag_Sunset}},
     {stata colorpalette carto BrwnYl:{bf:BrwnYl}}
     {p_end}
-{p2col:}diverging (2-7 color): {stata colorpalette carto ArmyRose:{bf:ArmyRose}},
+{p2col:}diverging (2-7): {stata colorpalette carto ArmyRose:{bf:ArmyRose}},
     {stata colorpalette carto Fall:{bf:Fall}},
     {stata colorpalette carto Geyser:{bf:Geyser}},
     {stata colorpalette carto Temps:{bf:Temps}},
@@ -1419,7 +1418,7 @@
 {p2colset 9 28 30 2}{...}
 {p2col:{it:viridis}}perceptually uniform colormaps from
 {browse "http://matplotlib.org/stable/tutorials/colors/colormaps.html":matplotlib.org}
-    (also see {browse "https://bids.github.io/colormap/":bids.github.io/colormap})
+    (also see {browse "http://bids.github.io/colormap/":bids.github.io/colormap})
     {p_end}
 {p2col:}sequential: {stata colorpalette viridis:{bf:viridis}},
     {stata colorpalette magma:{bf:magma}},
@@ -1457,7 +1456,7 @@
     {stata colorpalette matplotlib jet:{bf:jet}} (default), or
     {stata colorpalette matplotlib turbo:{bf:turbo}}
     {p_end}
-{p2col:{cmd:CET} [{it:map}]}perceptually uniform colormaps by {browse "https://arxiv.org/abs/1509.03700":Kovesi (2015)},
+{p2col:{cmd:CET} [{it:map}]}perceptually uniform colormaps by {browse "http://arxiv.org/abs/1509.03700":Kovesi (2015)},
     where {it:map} is as follows (see {browse "http://colorcet.com/gallery.html":colorcet.com/gallery.html} for an overview)
     {p_end}
 {p2col:}linear: {stata colorpalette CET L01:{bf:L01}},
@@ -1519,7 +1518,7 @@
     {stata colorpalette CET CBC2:{bf:CBC2}}
     {p_end}
 {p2col:{cmd:scico} [{it:map}]}perceptually uniform CVD-friendly colormaps by
-    {browse "https://www.fabiocrameri.ch/colourmaps/":Crameri (2018)},
+    {browse "http://www.fabiocrameri.ch/colourmaps/":Crameri (2018)},
     where {it:map} is as follows
     {p_end}
 {p2col:}sequential: {stata colorpalette scico batlow:{bf:batlow}} (default),
@@ -2172,7 +2171,7 @@
     larger (smaller) than the number of origin colors.
 
 {pstd}
-    Circular interpolation is used if {it:S}{cmd:.pclass()} is equal to 
+    Circular interpolation is used if {it:S}{cmd:.pclass()} is equal to
     {cmd:"circular"} or {cmd:"cyclic"}. In this case, arguments {it:range},
     {it:power}, {it:positions}, and {it:padded} will be ignored. For regular
     (noncircular) interpolation, which is applied if {it:S}{cmd:.pclass()}
@@ -2891,13 +2890,18 @@
 {pstd}
     To check whether {it:name} matches an existing palette you can type
 
-        {it:name} = {it:S}{cmd:.pexists(}{it:name}{cmd:)}
+        {it:name} = {it:S}{cmd:.pexists(}{it:name}[{cmd:,} {it:libname}]{cmd:)}
 
 {pstd}
     {it:name} will be set to the (expanded) name of the palette if a matching
     palette was found. If no matching palette is found, {it:name} will be set to
     empty string. See {help colrspace##palette:{it:S}{bf:.palette()}} for information
     on palettes.
+
+{pstd}
+    {it:libname} will be replaced by the name of the {cmd:ColrSpace} library
+    in which the palette was found. If no matching palette is found,
+    {it:libname} is left unchanged.
 
 {marker palettes}{...}
 {dlgtab:Obtain list of available palettes}
@@ -2929,14 +2933,14 @@
         {it:C} = {it:S}{cmd:.colipolate(}{it:C0}, {it:n}[{cmd:,} {it:range}{cmd:,} {it:power}{cmd:,} {it:positions}{cmd:,} {it:padded}]{cmd:)}
 
 {pstd}
-    for regular interpolation and 
+    for regular interpolation and
 
         {it:C} = {it:S}{cmd:.colipolate_c(}{it:C0}, {it:n}{cmd:)}
 
 {pstd}
-    for circular interpolation, where {it:C0} is an {it:n0} x {it:c} matrix of 
-    {it:n0} origin colors that are interpolated to {it:n} destination 
-    colors. Other arguments are as for 
+    for circular interpolation, where {it:C0} is an {it:n0} x {it:c} matrix of
+    {it:n0} origin colors that are interpolated to {it:n} destination
+    colors. Other arguments are as for
     {help colrspace##ipolate:{it:S}{bf:.ipolate()}}.
 
 {marker colrecycl}{...}
@@ -3398,7 +3402,7 @@
     Journal 3(3): 295-301.
     {p_end}
 {phang}
-    Kovesi, P. (2015). Good Colour Maps: How to Design Them. {browse "https://arxiv.org/abs/1509.03700":arXiv:1509.03700} [cs.GR].
+    Kovesi, P. (2015). Good Colour Maps: How to Design Them. {browse "http://arxiv.org/abs/1509.03700":arXiv:1509.03700} [cs.GR].
     {p_end}
 {phang}
     Lin, S., J. Fortuna, C. Kulkarni, M. Stone,
