@@ -345,7 +345,8 @@
 {p2col:{helpb colrspace##delta:{it:S}.delta()}}compute color differences{p_end}
 {p2col:{helpb colrspace##describe:{it:S}.describe()}}displays contents of {it:S}{p_end}
 {p2col:{helpb colrspace##select:{it:S}.drop()}}drop colors{p_end}
-{p2col:{helpb colrspace##colipolate:{it:S}.colipolate()}}helper function for interpolating{p_end}
+{p2col:{helpb colrspace##colipolate:{it:S}.colipolate()}}helper function for interpolation{p_end}
+{p2col:{helpb colrspace##colipolate:{it:S}.colipolate_c()}}helper function for circular interpolation{p_end}
 {p2col:{helpb colrspace##string:{it:S}.colors()}}string input/output (scalar){p_end}
 {p2col:{helpb colrspace##string:{it:S}.Colors()}}string input/output (vector){p_end}
 {p2col:{helpb colrspace##colrecycle:{it:S}.colrecycle()}}helper function for recycling{p_end}
@@ -2097,7 +2098,7 @@
 {pstd}
     To apply linear interpolation to the colors in {it:S}, type:
 
-        {it:S}{cmd:.}[{cmd:add_}]{cmd:ipolate}[{cmd:_added}]{cmd:(}{it:n}[{cmd:,} {it:space}{cmd:,} {it:range}{cmd:,} {it:power}{cmd:,} {it:positions}{cmd:,} {it:padded}{cmd:,} {it:cyclic}]{cmd:)}
+        {it:S}{cmd:.}[{cmd:add_}]{cmd:ipolate}[{cmd:_added}]{cmd:(}{it:n}[{cmd:,} {it:space}{cmd:,} {it:range}{cmd:,} {it:power}{cmd:,} {it:positions}{cmd:,} {it:padded}]{cmd:)}
 
 {pstd}
     Opacity values and intensity adjustment multipliers, if existing, will also be interpolated.
@@ -2170,16 +2171,13 @@
     more (less) than the origin colors, if the number of destination colors is
     larger (smaller) than the number of origin colors.
 
-{phang}
-    {it:cyclic}!=0 requests the use of cyclic interpolation. This is the default
-    if {it:S}{cmd:.pclass()} is equal to {cmd:"circular"} or {cmd:"cyclic"}; in
-    all other cases the default to use regular interpolation. Specify argument
-    {it:cyclic} to override the default behavior. Technically, cyclic
-    interpolation is implemented by appending a copy of the first color to the
-    end of the palette, then interpolating this augmented palette to {it:n}+1
-    colors, and then removing the last color. Note that specifying {it:range},
-    {it:positions}, or {it:padded}!=0 together with {it:cyclic}!=0 may lead to
-    awkward results.
+{pstd}
+    Circular interpolation is used if {it:S}{cmd:.pclass()} is equal to 
+    {cmd:"circular"} or {cmd:"cyclic"}. In this case, arguments {it:range},
+    {it:power}, {it:positions}, and {it:padded} will be ignored. For regular
+    (noncircular) interpolation, which is applied if {it:S}{cmd:.pclass()}
+    is different from {cmd:"circular"} or {cmd:"cyclic"}, these arguments
+    can be used to fine-tune the interpolation.
 
 {pstd}
     Examples:
@@ -2924,18 +2922,22 @@
 
 {pstd}
     In addition to {help colrspace##ipolate:{it:S}{bf:.ipolate()}}, {cmd:ColrSpace}
-    also provides an interpolation function that does not involve translation
-    between colorspaces and does not store any colors in {it:S}. This direct
-    interpolation function is
+    also provides interpolation functions that do not involve translation
+    between colorspaces and do not store any colors in {it:S}. These direct
+    interpolation functions are
 
-        {it:C} = {it:S}{cmd:.colipolate(}{it:C0}, {it:n}[{cmd:,} {it:range}{cmd:,} {it:power}{cmd:,} {it:positions}{cmd:,} {it:padded}{cmd:,} {it:cyclic}]{cmd:)}
+        {it:C} = {it:S}{cmd:.colipolate(}{it:C0}, {it:n}[{cmd:,} {it:range}{cmd:,} {it:power}{cmd:,} {it:positions}{cmd:,} {it:padded}]{cmd:)}
 
 {pstd}
-    where {it:C0} is an {it:n0} x {it:c} matrix of {it:n0} origin colors
-    that are interpolated to {it:n} destination colors. Other arguments are
-    as for {help colrspace##ipolate:{it:S}{bf:.ipolate()}} (except for
-    argument {it:cyclic}, which will always be off by default in
-    {it:S}{cmd:.colipolate()}).
+    for regular interpolation and 
+
+        {it:C} = {it:S}{cmd:.colipolate_c(}{it:C0}, {it:n}{cmd:)}
+
+{pstd}
+    for circular interpolation, where {it:C0} is an {it:n0} x {it:c} matrix of 
+    {it:n0} origin colors that are interpolated to {it:n} destination 
+    colors. Other arguments are as for 
+    {help colrspace##ipolate:{it:S}{bf:.ipolate()}}.
 
 {marker colrecycl}{...}
 {dlgtab:Recycling}

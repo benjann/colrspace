@@ -1,4 +1,4 @@
-*! version 1.1.0  01apr2022  Ben Jann
+*! version 1.1.1  01apr2022  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -147,6 +147,7 @@ class `MAIN' {
         `T'     source()      // set or return palette source
         `Bool'  isipolate()   // 1 if interpolated; 0 else
         `RM'    colipolate()  // interpolate columns
+        `RM'    colipolate_c() // interpolate columns (circular)
         `TM'    colrecycle()  // recycle columns
         `RM'    lsmap()       // create linear segmented colormap
         `RM'    clip()        // clip values
@@ -742,7 +743,7 @@ void `MAIN'::assert_size(`T' M, `RS' r, `RS' c)
 }
 
 `RM' `MAIN'::colipolate(`RM' C, `Int' n0, | `RV' range0, `RS' power, `RV' pos, 
-    `Bool' pad, `Bool' cyclic)
+    `Bool' pad)
 {
     `Bool' haspos
     `Int'  r, n
@@ -751,7 +752,6 @@ void `MAIN'::assert_size(`T' M, `RS' r, `RS' c)
     
     n = (n0<0 ? 0 : trunc(n0))
     if (args()<6) pad = `FALSE'
-    if (args()<7) cyclic = `FALSE'
     if (power<=0) {
         printf("{err}power = %g not allowed; must be strictly positive\n", power)
         exit(3498)
@@ -767,16 +767,26 @@ void `MAIN'::assert_size(`T' M, `RS' r, `RS' c)
         if (range==(0,1) & haspos==`FALSE') return(C) // no interpolation needed
         if (range==(1,0) & haspos==`FALSE') return(C[r::1,]) // reverse order
     }
-    if (cyclic) {
-        // wrap around: add first color at end during interpolation
-        _colipolate_fromto(r+1, n+1, range, power, (haspos ? pos : .),
-            pad, from=., to=.)
-        if (haspos) return(_colipolate_pos(C\C[1,.], from, to)[|1,1 \ n,.|])
-        return(_colipolate(C\C[1,.], from, to)[|1,1 \ n,.|])
-    }
     _colipolate_fromto(r, n, range, power, (haspos ? pos : .), pad, from=., to=.)
     if (haspos) return(_colipolate_pos(C, from, to))
     return(_colipolate(C, from, to))
+}
+
+`RM' `MAIN'::colipolate_c(`RM' C, `Int' n0)
+{   // circular (cyclic) interpolation
+    `Int'  r, n
+    `RC'   from, to
+
+    n = (n0<0 ? 0 : trunc(n0))
+    if (n>=.) return(C)                           // return unchanged C
+    if (n==0) return(J(0, cols(C), missingof(C))) // return void
+    r = rows(C)
+    if (r==0) return(J(n, cols(C), missingof(C))) // return missing
+    if (r==1) return(J(n, 1, C))                  // duplicate
+    if (r==n) return(C)
+    from = (0::r+1)/r :- 1/(2*r)
+    to   = (1::n)/n   :- 1/(2*n)
+    return(_colipolate(C[r,.]\C\C[1,.], from, to))
 }
 
 `RV' `MAIN'::_colipolate_setrange(`RV' range0)
@@ -2415,7 +2425,7 @@ end
 
 foreach f in recycle select drop order reverse shift ipolate mix intensify ///
     saturate luminate gray cvd {
-    mata void `MAIN'::`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
+    mata void `MAIN'::`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
     {
         S = &data1
         copydata()
@@ -2425,11 +2435,10 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
-        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
         replacedata()
     }
-    mata void `MAIN'::add_`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
+    mata void `MAIN'::add_`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
     {
         S = &data1
         copydata()
@@ -2439,11 +2448,10 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
-        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
         appenddata()
     }
-    mata void `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
+    mata void `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
     {
         S = &data1
         copyadded()
@@ -2453,11 +2461,10 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
-        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
         updatedata()
     }
-    mata void `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
+    mata void `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
     {
         S = &data1
         copyadded()
@@ -2467,8 +2474,7 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
-        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
+        else                _`f'(o1, o2, o3, o4, o5, o6)
         appenddata()
     }
 }
@@ -2578,7 +2584,7 @@ void `MAIN'::_reverse()
 void `MAIN'::_shift(`Int' k)
 {
     `Int'  n
-    `IntC' p, rest
+    `IntC' p
     
     if (k>=.) return // do nothing
     if (k==0) return // do nothing
@@ -2596,8 +2602,8 @@ end
 
 mata:
 
-void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos, 
-    `Bool' pad, `Bool' cyclic)
+void `MAIN'::_ipolate(`Int' n, | `SS' space0,
+    `RV' range, `RS' power, `RV' pos, `Bool' pad)
 {
     `Int'  jh
     `SS'   space, mask
@@ -2605,7 +2611,6 @@ void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos,
     `RM'   C
 
     if (args()<6) pad = `FALSE'
-    if (args()<7) cyclic = anyof(("cyclic","circular"), S->pclass)
     // parse space
     space = findkey(gettok(space0, mask=""), SPACES, "Jab")
     if (space=="") {
@@ -2629,7 +2634,9 @@ void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos,
     if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
     else                      I = J(S->n, 0, .)
     // interpolate
-    C = colipolate((C,A,I), n, range, power, pos, pad, cyclic)
+    if (anyof(("cyclic","circular"), S->pclass))
+         C = colipolate_c((C,A,I), n) // ignoring range, power, pos, pad
+    else C = colipolate((C,A,I), n, range, power, pos, pad)
     if (length(I)) {; I = C[,cols(C)]; C = C[,1..cols(C)-1]; }
     if (length(A)) {; A = C[,cols(C)]; C = C[,1..cols(C)-1]; }
     // convert back to RGB1
@@ -5098,8 +5105,9 @@ void `MAIN'::Palette_rgbmaps(`SS' pal, `RS' n, `RV' range, `Bool' shift, | `SS' 
                 RGB = RGB[|rows(RGB)/2+1,1 \ .,.|] \ RGB[|1,1 \ rows(RGB)/2,.|]
                 RGB = RGB[rows(RGB)::1,]
             }
-            rgb_set(colipolate(strtoreal(RGB), n, range, ., ., 0, 
-                anyof(("cyclic","circular"), S->pclass)))
+            if (anyof(("cyclic","circular"), S->pclass))
+                 rgb_set(colipolate_c(strtoreal(RGB), n))
+            else rgb_set(colipolate(strtoreal(RGB), n, range))
             return
         }
     }

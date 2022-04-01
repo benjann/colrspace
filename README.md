@@ -23,6 +23,11 @@ Installation from GitHub:
 
 Main changes:
 
+    01apr2022 (v 1.1.1)
+    - circular interpolation was not implemented correctly; this is fixed;
+      S.ipolate() now always determines the interpolation method based on the
+      values of S.pclass()
+
     01apr2022 (v 1.1.0)
     - ColrSpace now features many additional palettes and colormaps (e.g. 
       Wes Anderson palettes, palettes and colormaps from seaborn.pydata.org,
