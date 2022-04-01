@@ -2415,7 +2415,7 @@ end
 
 foreach f in recycle select drop order reverse shift ipolate mix intensify ///
     saturate luminate gray cvd {
-    mata void `MAIN'::`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    mata void `MAIN'::`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
     {
         S = &data1
         copydata()
@@ -2425,10 +2425,11 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else                _`f'(o1, o2, o3, o4, o5, o6)
+        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
+        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
         replacedata()
     }
-    mata void `MAIN'::add_`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    mata void `MAIN'::add_`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
     {
         S = &data1
         copydata()
@@ -2438,10 +2439,11 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else                _`f'(o1, o2, o3, o4, o5, o6)
+        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
+        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
         appenddata()
     }
-    mata void `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    mata void `MAIN'::`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
     {
         S = &data1
         copyadded()
@@ -2451,10 +2453,11 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else                _`f'(o1, o2, o3, o4, o5, o6)
+        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
+        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
         updatedata()
     }
-    mata void `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
+    mata void `MAIN'::add_`f'_added(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6, `T' o7)
     {
         S = &data1
         copyadded()
@@ -2464,7 +2467,8 @@ foreach f in recycle select drop order reverse shift ipolate mix intensify ///
         else if (args()==3) _`f'(o1, o2, o3)
         else if (args()==4) _`f'(o1, o2, o3, o4)
         else if (args()==5) _`f'(o1, o2, o3, o4, o5)
-        else                _`f'(o1, o2, o3, o4, o5, o6)
+        else if (args()==6) _`f'(o1, o2, o3, o4, o5, o6)
+        else                _`f'(o1, o2, o3, o4, o5, o6, o7)
         appenddata()
     }
 }
