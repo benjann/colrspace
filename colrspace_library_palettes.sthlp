@@ -1,4 +1,4 @@
-*! version 1.0.0  27may2020  Ben Jann
+*! version 1.0.1  24feb2022  Ben Jann
 * {smcl}
 * {title:ColrSpace palettes library}
 * 
@@ -1535,3 +1535,1174 @@ d:Color Theme Yellow from www.w3schools.com/w3css/w3css_color_themes.asp
 s:https://www.w3schools.com/lib/w3-theme-yellow.css
 P:#fffef3,#fffbd8,#fff7b1,#fff38b,#ffef64,#ffeb3b,#ffe81e,#fde400,#ddc700,#beab00,#9e8e00
 N:w3-yellow-l5,w3-yellow-l4,w3-yellow-l3,w3-yellow-l2,w3-yellow-l1,w3-yellow,w3-yellow-d1,w3-yellow-d2,w3-yellow-d3,w3-yellow-d4,w3-yellow-d5
+* {smcl}
+* {title:BottleRocket1}{asis}
+n:BottleRocket1
+c:qualitative
+d:Bottle Rocket (1996)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#A42820,#5F5647,#9B110E,#3F5151,#4E2A1E,#550307,#0C1707
+* {smcl}
+* {title:BottleRocket2}{asis}
+n:BottleRocket2
+c:qualitative
+d:Bottle Rocket (1996)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#FAD510,#CB2314,#273046,#354823,#1E1E1E
+* {smcl}
+* {title:Rushmore1}{asis}
+n:Rushmore1
+c:qualitative
+d:Rushmore (1998)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#E1BD6D,#EABE94,#0B775E,#35274A,#F2300F
+* {smcl}
+* {title:Royal1}{asis}
+n:Royal1
+c:qualitative
+d:The Royal Tenenbaums (2001)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#899DA4,#C93312,#FAEFD1,#DC863B
+* {smcl}
+* {title:Royal2}{asis}
+n:Royal2
+c:qualitative
+d:The Royal Tenenbaums (2001)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#9A8822,#F5CDB4,#F8AFA8,#FDDDA0,#74A089
+* {smcl}
+* {title:Zissou1}{asis}
+n:Zissou1
+c:diverging
+d:The Life Aquatic with Steve Zissou (2004)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#3B9AB2,#78B7C5,#EBCC2A,#E1AF00,#F21A00
+* {smcl}
+* {title:Darjeeling1}{asis}
+n:Darjeeling1
+c:qualitative
+d:The Darjeeling Limited (2007)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#FF0000,#00A08A,#F2AD00,#F98400,#5BBCD6
+* {smcl}
+* {title:Darjeeling2}{asis}
+n:Darjeeling2
+c:qualitative
+d:The Darjeeling Limited (2007)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#ECCBAE,#046C9A,#D69C4E,#ABDDDE,#000000
+* {smcl}
+* {title:Chevalier1}{asis}
+n:Chevalier1
+c:qualitative
+d:Hotel Chevalier (2007)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#446455,#FDD262,#D3DDDC,#C7B19C
+* {smcl}
+* {title:FantasticFox1}{asis}
+n:FantasticFox1
+c:qualitative
+d:Fantastic Mr. Fox (2009)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#DD8D29,#E2D200,#46ACC8,#E58601,#B40F20
+* {smcl}
+* {title:Moonrise1}{asis}
+n:Moonrise1
+c:qualitative
+d:Moonrise Kingdom (2012)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#F3DF6C,#CEAB07,#D5D5D3,#24281A
+* {smcl}
+* {title:Moonrise2}{asis}
+n:Moonrise2
+c:qualitative
+d:Moonrise Kingdom (2012)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#798E87,#C27D38,#CCC591,#29211F
+* {smcl}
+* {title:Moonrise3}{asis}
+n:Moonrise3
+c:qualitative
+d:Moonrise Kingdom (2012)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#85D4E3,#F4B5BD,#9C964A,#CDC08C,#FAD77B
+* {smcl}
+* {title:Cavalcanti1}{asis}
+n:Cavalcanti1
+c:qualitative
+d:Castello Cavalcanti (2013)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#D8B70A,#02401B,#A2A475,#81A88D,#972D15
+* {smcl}
+* {title:GrandBudapest1}{asis}
+n:GrandBudapest1
+c:qualitative
+d:The Grand Budapest Hotel (2014)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#F1BB7B,#FD6467,#5B1A18,#D67236
+* {smcl}
+* {title:GrandBudapest2}{asis}
+n:GrandBudapest2
+c:qualitative
+d:The Grand Budapest Hotel (2014)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#E6A0C4,#C6CDF7,#D8A499,#7294D4
+* {smcl}
+* {title:IsleofDogs1}{asis}
+n:IsleofDogs1
+c:qualitative
+d:The Isle of Dogs (2018)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#9986A5,#79402E,#CCBA72,#0F0D0E,#D9D0D3,#8D8680
+* {smcl}
+* {title:IsleofDogs2}{asis}
+n:IsleofDogs2
+c:qualitative
+d:The Isle of Dogs (2018)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#EAD3BF,#AA9486,#B6854D,#39312F,#1C1718
+* {smcl}
+* {title:FrenchDispatch1}{asis}
+n:FrenchDispatch1
+c:qualitative
+d:The French Dispatch (2021)
+s:colors.R from https://github.com/karthik/wesanderson, retrieved 23feb2022
+P:#90D4CC,#BD3027,#B0AFA2,#7FC0C6,#9D9C85
+* {smcl}
+* {title:sb deep}{asis}
+n:sb deep
+c:qualitative
+d:deep palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#4C72B0,#DD8452,#55A868,#C44E52,#8172B3,#937860,#DA8BC3,#8C8C8C,#CCB974,#64B5CD
+* {smcl}
+* {title:sb deep6}{asis}
+n:sb deep6
+c:qualitative
+d:deep6 palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#4C72B0,#55A868,#C44E52,#8172B3,#CCB974,#64B5CD
+* {smcl}
+* {title:sb muted}{asis}
+n:sb muted
+c:qualitative
+d:muted palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#4878D0,#EE854A,#6ACC64,#D65F5F,#956CB4,#8C613C,#DC7EC0,#797979,#D5BB67,#82C6E2
+* {smcl}
+* {title:sb muted6}{asis}
+n:sb muted6
+c:qualitative
+d:muted6 palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#4878D0,#6ACC64,#D65F5F,#956CB4,#D5BB67,#82C6E2
+* {smcl}
+* {title:sb pastel}{asis}
+n:sb pastel
+c:qualitative
+d:pastel palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#A1C9F4,#FFB482,#8DE5A1,#FF9F9B,#D0BBFF,#DEBB9B,#FAB0E4,#CFCFCF,#FFFEA3,#B9F2F0
+* {smcl}
+* {title:sb pastel6}{asis}
+n:sb pastel6
+c:qualitative
+d:pastel6 palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#A1C9F4,#8DE5A1,#FF9F9B,#D0BBFF,#FFFEA3,#B9F2F0
+* {smcl}
+* {title:sb bright}{asis}
+n:sb bright
+c:qualitative
+d:bright palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#023EFF,#FF7C00,#1AC938,#E8000B,#8B2BE2,#9F4800,#F14CC1,#A3A3A3,#FFC400,#00D7FF
+* {smcl}
+* {title:sb bright6}{asis}
+n:sb bright6
+c:qualitative
+d:bright6 palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#023EFF,#1AC938,#E8000B,#8B2BE2,#FFC400,#00D7FF
+* {smcl}
+* {title:sb dark}{asis}
+n:sb dark
+c:qualitative
+d:dark palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#001C7F,#B1400D,#12711C,#8C0800,#591E71,#592F0D,#A23582,#3C3C3C,#B8850A,#006374
+* {smcl}
+* {title:sb dark6}{asis}
+n:sb dark6
+c:qualitative
+d:dark6 palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#001C7F,#12711C,#8C0800,#591E71,#B8850A,#006374
+* {smcl}
+* {title:sb colorblind}{asis}
+n:sb colorblind
+c:qualitative
+d:colorblind palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#0173B2,#DE8F05,#029E73,#D55E00,#CC78BC,#CA9161,#FBAFE4,#949494,#ECE133,#56B4E9
+* {smcl}
+* {title:sb colorblind6}{asis}
+n:sb colorblind6
+c:qualitative
+d:colorblind6 palette from seaborn.pydata.org
+s:https://github.com/mwaskom/seaborn/blob/master/seaborn/palettes.py, retrieved 23feb2022
+P:#0173B2,#029E73,#D55E00,#CC78BC,#ECE133,#56B4E9
+* {smcl}
+* {title:tol bright}{asis}
+n:tol bright
+c:qualitative
+d:qualitative palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#4477AA,#EE6677,#228833,#CCBB44,#66CCEE,#AA3377,#BBBBBB,#000000
+N:blue,red,green,yellow,cyan,purple,grey,black
+* {smcl}
+* {title:tol high-contrast}{asis}
+n:tol high-contrast
+c:qualitative
+d:qualitative palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#004488,#DDAA33,#BB5566,#000000
+N:blue,yellow,red,black
+* {smcl}
+* {title:tol vibrant}{asis}
+n:tol vibrant
+c:qualitative
+d:qualitative palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#EE7733,#0077BB,#33BBEE,#EE3377,#CC3311,#009988,#BBBBBB,#000000
+N:orange,blue,cyan,magenta,red,teal,grey,black
+* {smcl}
+* {title:tol muted}{asis}
+n:tol muted
+c:qualitative
+d:qualitative palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#CC6677,#332288,#DDCC77,#117733,#88CCEE,#882255,#44AA99,#999933,#AA4499,#DDDDDD,#000000
+N:rose,indigo,sand,green,cyan,wine,teal,olive,purple,pale_grey,black
+* {smcl}
+* {title:tol medium-contrast}{asis}
+n:tol medium-contrast
+c:qualitative
+d:qualitative palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#6699CC,#004488,#EECC66,#994455,#997700,#EE99AA,#000000
+N:light_blue,dark_blue,light_yellow,dark_red,dark_yellow,light_red,black
+* {smcl}
+* {title:tol light}{asis}
+n:tol light
+c:qualitative
+d:qualitative palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#77AADD,#EE8866,#EEDD88,#FFAABB,#99DDFF,#44BB99,#BBCC33,#AAAA00,#DDDDDD,#000000
+N:light_blue,orange,light_yellow,pink,light_cyan,mint,pear,olive,pale_grey,black
+* {smcl}
+* {title:tol sunset}{asis}
+n:tol sunset
+c:diverging
+d:diverging palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#364B9A,#4A7BB7,#6EA6CD,#98CAE1,#C2E4EF,#EAECCC,#FEDA8B,#FDB366,#F67E4B,#DD3D2D,#A50026
+* {smcl}
+* {title:tol BuRd}{asis}
+n:tol BuRd
+c:diverging
+d:diverging palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#2166AC,#4393C3,#92C5DE,#D1E5F0,#F7F7F7,#FDDBC7,#F4A582,#D6604D,#B2182B
+* {smcl}
+* {title:tol PRGn}{asis}
+n:tol PRGn
+c:diverging
+d:diverging palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#762A83,#9970AB,#C2A5CF,#E7D4E8,#F7F7F7,#D9F0D3,#ACD39E,#5AAE61,#1B7837
+* {smcl}
+* {title:tol YlOrBr}{asis}
+n:tol YlOrBr
+c:sequential
+d:sequential palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#FFFFE5,#FFF7BC,#FEE391,#FEC44F,#FB9A29,#EC7014,#CC4C02,#993404,#662506
+* {smcl}
+* {title:tol iridescent}{asis}
+n:tol iridescent
+c:sequential
+d:sequential palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#FEFBE9,#FCF7D5,#F5F3C1,#EAF0B5,#DDECBF,#D0E7CA,#C2E3D2,#B5DDD8,#A8D8DC,#9BD2E1,#8DCBE4,#81C4E7,#7BBCE7,#7EB2E4,#88A5DD,#9398D2,#9B8AC4,#9D7DB2,#9A709E,#906388,#805770,#684957,#46353A
+* {smcl}
+* {title:tol PuRd}{asis}
+n:tol PuRd
+c:sequential
+d:rainbow palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#6F4C9B,#6059A9,#5568B8,#4E79C5,#4D8AC6,#4E96BC,#549EB3,#59A5A9,#60AB9E,#69B190,#77B77D,#8CBC68,#A6BE54,#BEBC48,#D1B541,#DDAA3C,#E49C39,#E78C35,#E67932,#E4632D,#DF4828,#DA2222
+* {smcl}
+* {title:tol PuBr}{asis}
+n:tol PuBr
+c:sequential
+d:rainbow palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#6F4C9B,#6059A9,#5568B8,#4E79C5,#4D8AC6,#4E96BC,#549EB3,#59A5A9,#60AB9E,#69B190,#77B77D,#8CBC68,#A6BE54,#BEBC48,#D1B541,#DDAA3C,#E49C39,#E78C35,#E67932,#E4632D,#DF4828,#DA2222,#B8221E,#95211B,#721E17,#521A13
+* {smcl}
+* {title:tol WhRd}{asis}
+n:tol WhRd
+c:sequential
+d:rainbow palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#E8ECFB,#DDD8EF,#D1C1E1,#C3A8D1,#B58FC2,#A778B4,#9B62A7,#8C4E99,#6F4C9B,#6059A9,#5568B8,#4E79C5,#4D8AC6,#4E96BC,#549EB3,#59A5A9,#60AB9E,#69B190,#77B77D,#8CBC68,#A6BE54,#BEBC48,#D1B541,#DDAA3C,#E49C39,#E78C35,#E67932,#E4632D,#DF4828,#DA2222
+* {smcl}
+* {title:tol WhBr}{asis}
+n:tol WhBr
+c:sequential
+d:rainbow palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P:#E8ECFB,#DDD8EF,#D1C1E1,#C3A8D1,#B58FC2,#A778B4,#9B62A7,#8C4E99,#6F4C9B,#6059A9,#5568B8,#4E79C5,#4D8AC6,#4E96BC,#549EB3,#59A5A9,#60AB9E,#69B190,#77B77D,#8CBC68,#A6BE54,#BEBC48,#D1B541,#DDAA3C,#E49C39,#E78C35,#E67932,#E4632D,#DF4828,#DA2222,#B8221E,#95211B,#721E17,#521A13
+* {smcl}
+* {title:tol rainbow}{asis}
+n:tol rainbow
+c:sequential
+d:rainbow palette by Paul Tol (https://personal.sron.nl/~pault/)
+s:https://personal.sron.nl/~pault/data/tol_colors.py, retrieved 30mar2022
+P1:#1965B0
+P2:#1965B0,#DC050C
+P3:#1965B0,#F7F056,#DC050C
+P4:#1965B0,#4EB265,#F7F056,#DC050C
+P5:#1965B0,#7BAFDE,#4EB265,#F7F056,#DC050C
+P6:#1965B0,#7BAFDE,#4EB265,#CAE0AB,#F7F056,#DC050C
+P7:#882E72,#1965B0,#7BAFDE,#4EB265,#CAE0AB,#F7F056,#DC050C
+P8:#882E72,#1965B0,#7BAFDE,#4EB265,#CAE0AB,#F7F056,#EE8026,#DC050C
+P9:#882E72,#1965B0,#7BAFDE,#4EB265,#CAE0AB,#F7F056,#EE8026,#DC050C,#72190E
+P10:#882E72,#1965B0,#7BAFDE,#4EB265,#CAE0AB,#F7F056,#F4A736,#E8601C,#DC050C,#72190E
+P11:#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#CAE0AB,#F7F056,#F4A736,#E8601C,#DC050C,#72190E
+P12:#D1BBD7,#AE76A3,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#CAE0AB,#F7F056,#F4A736,#E8601C,#DC050C
+P13:#D1BBD7,#AE76A3,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F4A736,#E8601C,#DC050C
+P14:#D1BBD7,#AE76A3,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F6C141,#F1932D,#E8601C,#DC050C
+P15:#D1BBD7,#AE76A3,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F6C141,#F1932D,#E8601C,#DC050C,#72190E
+P16:#D1BBD7,#BA8DB4,#AA6F9E,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F6C141,#F1932D,#E8601C,#DC050C,#72190E
+P17:#D1BBD7,#BA8DB4,#AA6F9E,#994F88,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F6C141,#F1932D,#E8601C,#DC050C,#72190E
+P18:#D1BBD7,#BA8DB4,#AA6F9E,#994F88,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F6C141,#F1932D,#E8601C,#DC050C,#A5170E,#72190E
+P19:#D9CCE3,#CAACCB,#BA8DB4,#AA6F9E,#994F88,#882E72,#1965B0,#5289C7,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F6C141,#F1932D,#E8601C,#DC050C,#A5170E,#72190E
+P20:#D9CCE3,#CAACCB,#BA8DB4,#AA6F9E,#994F88,#882E72,#1965B0,#437DBF,#6195CF,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F6C141,#F1932D,#E8601C,#DC050C,#A5170E,#72190E
+P21:#D9CCE3,#CAACCB,#BA8DB4,#AA6F9E,#994F88,#882E72,#1965B0,#437DBF,#6195CF,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F7CB45,#F4A736,#EE8026,#E65518,#DC050C,#A5170E,#72190E
+P22:#D9CCE3,#CAACCB,#BA8DB4,#AA6F9E,#994F88,#882E72,#1965B0,#437DBF,#6195CF,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F7CB45,#F4A736,#EE8026,#E65518,#DC050C,#A5170E,#72190E,#42150A
+P23:#E8ECFB,#D9CCE3,#CAACCB,#BA8DB4,#AA6F9E,#994F88,#882E72,#1965B0,#437DBF,#6195CF,#7BAFDE,#4EB265,#90C987,#CAE0AB,#F7F056,#F7CB45,#F4A736,#EE8026,#E65518,#DC050C,#A5170E,#72190E,#42150A
+* {smcl}
+* {title:carto Burg}{asis}
+n:carto Burg
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#ffc6c4,#672044
+P3:#ffc6c4,#cc607d,#672044
+P4:#ffc6c4,#e38191,#ad466c,#672044
+P5:#ffc6c4,#ee919b,#cc607d,#9e3963,#672044
+P6:#ffc6c4,#f29ca3,#da7489,#b95073,#93345d,#672044
+P7:#ffc6c4,#f4a3a8,#e38191,#cc607d,#ad466c,#8b3058,#672044
+* {smcl}
+* {title:carto BurgYl}{asis}
+n:carto BurgYl
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#fbe6c5,#70284a
+P3:#fbe6c5,#dc7176,#70284a
+P4:#fbe6c5,#ee8a82,#c8586c,#70284a
+P5:#fbe6c5,#f2a28a,#dc7176,#b24b65,#70284a
+P6:#fbe6c5,#f4b191,#e7807d,#d06270,#a44360,#70284a
+P7:#fbe6c5,#f5ba98,#ee8a82,#dc7176,#c8586c,#9c3f5d,#70284a
+* {smcl}
+* {title:carto RedOr}{asis}
+n:carto RedOr
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#f6d2a9,#b13f64
+P3:#f6d2a9,#ea8171,#b13f64
+P4:#f6d2a9,#f19c7c,#dd686c,#b13f64
+P5:#f6d2a9,#f3aa84,#ea8171,#d55d6a,#b13f64
+P6:#f6d2a9,#f4b28a,#ef9177,#e3726d,#cf5669,#b13f64
+P7:#f6d2a9,#f5b78e,#f19c7c,#ea8171,#dd686c,#ca5268,#b13f64
+* {smcl}
+* {title:carto OrYel}{asis}
+n:carto OrYel
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#ecda9a,#ee4d5a
+P3:#ecda9a,#f7945d,#ee4d5a
+P4:#ecda9a,#f3ad6a,#f97b57,#ee4d5a
+P5:#ecda9a,#f1b973,#f7945d,#f86f56,#ee4d5a
+P6:#ecda9a,#f0c079,#f5a363,#f98558,#f76856,#ee4d5a
+P7:#ecda9a,#efc47e,#f3ad6a,#f7945d,#f97b57,#f66356,#ee4d5a
+* {smcl}
+* {title:carto Peach}{asis}
+n:carto Peach
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#fde0c5,#eb4a40
+P3:#fde0c5,#f59e72,#eb4a40
+P4:#fde0c5,#f8b58b,#f2855d,#eb4a40
+P5:#fde0c5,#f9c098,#f59e72,#f17854,#eb4a40
+P6:#fde0c5,#fac7a1,#f7ac80,#f38f65,#f0704f,#eb4a40
+P7:#fde0c5,#facba6,#f8b58b,#f59e72,#f2855d,#ef6a4c,#eb4a40
+* {smcl}
+* {title:carto PinkYl}{asis}
+n:carto PinkYl
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#fef6b5,#e15383
+P3:#fef6b5,#ffa679,#e15383
+P4:#fef6b5,#ffc285,#fa8a76,#e15383
+P5:#fef6b5,#ffd08e,#ffa679,#f67b77,#e15383
+P6:#fef6b5,#ffd795,#ffb77f,#fd9576,#f37378,#e15383
+P7:#fef6b5,#ffdd9a,#ffc285,#ffa679,#fa8a76,#f16d7a,#e15383
+* {smcl}
+* {title:carto Mint}{asis}
+n:carto Mint
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#e4f1e1,#0d585f
+P3:#e4f1e1,#63a6a0,#0d585f
+P4:#e4f1e1,#89c0b6,#448c8a,#0d585f
+P5:#E4F1E1,#9CCDC1,#63A6A0,#337F7F,#0D585F
+P6:#e4f1e1,#abd4c7,#7ab5ad,#509693,#2c7778,#0d585f
+P7:#e4f1e1,#b4d9cc,#89c0b6,#63a6a0,#448c8a,#287274,#0d585f
+* {smcl}
+* {title:carto BluGrn}{asis}
+n:carto BluGrn
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#c4e6c3,#1d4f60
+P3:#c4e6c3,#4da284,#1d4f60
+P4:#c4e6c3,#6dbc90,#36877a,#1d4f60
+P5:#c4e6c3,#80c799,#4da284,#2d7974,#1d4f60
+P6:#c4e6c3,#8dce9f,#5fb28b,#3e927e,#297071,#1d4f60
+P7:#c4e6c3,#96d2a4,#6dbc90,#4da284,#36877a,#266b6e,#1d4f60
+* {smcl}
+* {title:carto DarkMint}{asis}
+n:carto DarkMint
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#d2fbd4,#123f5a
+P3:#d2fbd4,#559c9e,#123f5a
+P4:#d2fbd4,#7bbcb0,#3a7c89,#123f5a
+P5:#d2fbd4,#8eccb9,#559c9e,#2b6c7f,#123f5a
+P6:#d2fbd4,#9cd5be,#6cafa9,#458892,#266377,#123f5a
+P7:#d2fbd4,#a5dbc2,#7bbcb0,#559c9e,#3a7c89,#235d72,#123f5a
+* {smcl}
+* {title:carto Emrld}{asis}
+n:carto Emrld
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#d3f2a3,#074050
+P3:#d3f2a3,#4c9b82,#074050
+P4:#d3f2a3,#6cc08b,#217a79,#074050
+P5:#d3f2a3,#82d091,#4c9b82,#19696f,#074050
+P6:#d3f2a3,#8fda94,#60b187,#35877d,#145f69,#074050
+P7:#d3f2a3,#97e196,#6cc08b,#4c9b82,#217a79,#105965,#074050
+* {smcl}
+* {title:carto ag_GrnYl}{asis}
+n:carto ag_GrnYl
+c:sequential
+d:aggregation palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#245668,#EDEF5D
+P3:#245668,#39AB7E,#EDEF5D
+P4:#245668,#0D8F81,#6EC574,#EDEF5D
+P5:#245668,#04817E,#39AB7E,#8BD16D,#EDEF5D
+P6:#245668,#09787C,#1D9A81,#58BB79,#9DD869,#EDEF5D
+P7:#245668,#0F7279,#0D8F81,#39AB7E,#6EC574,#A9DC67,#EDEF5D
+* {smcl}
+* {title:carto BluYl}{asis}
+n:carto BluYl
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#f7feae,#045275
+P3:#f7feae,#46aea0,#045275
+P4:#f7feae,#7ccba2,#089099,#045275
+P5:#f7feae,#9bd8a4,#46aea0,#058092,#045275
+P6:#f7feae,#ace1a4,#68bfa1,#2a9c9c,#02778e,#045275
+P7:#f7feae,#b7e6a5,#7ccba2,#46aea0,#089099,#00718b,#045275
+* {smcl}
+* {title:carto Teal}{asis}
+n:carto Teal
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#d1eeea,#2a5674
+P3:#d1eeea,#68abb8,#2a5674
+P4:#d1eeea,#85c4c9,#4f90a6,#2a5674
+P5:#d1eeea,#96d0d1,#68abb8,#45829b,#2a5674
+P6:#d1eeea,#a1d7d6,#79bbc3,#599bae,#3f7994,#2a5674
+P7:#d1eeea,#a8dbd9,#85c4c9,#68abb8,#4f90a6,#3b738f,#2a5674
+* {smcl}
+* {title:carto TealGrn}{asis}
+n:carto TealGrn
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#b0f2bc,#257d98
+P3:#b0f2bc,#4cc8a3,#257d98
+P4:#b0f2bc,#67dba5,#38b2a3,#257d98
+P5:#b0f2bc,#77e2a8,#4cc8a3,#31a6a2,#257d98
+P6:#b0f2bc,#82e6aa,#5bd4a4,#3fbba3,#2e9ea1,#257d98
+P7:#b0f2bc,#89e8ac,#67dba5,#4cc8a3,#38b2a3,#2c98a0,#257d98
+* {smcl}
+* {title:carto Purp}{asis}
+n:carto Purp
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#f3e0f7,#63589f
+P3:#f3e0f7,#b998dd,#63589f
+P4:#f3e0f7,#d1afe8,#9f82ce,#63589f
+P5:#f3e0f7,#dbbaed,#b998dd,#9178c4,#63589f
+P6:#f3e0f7,#e0c2ef,#c8a5e4,#aa8bd4,#8871be,#63589f
+P7:#f3e0f7,#e4c7f1,#d1afe8,#b998dd,#9f82ce,#826dba,#63589f
+* {smcl}
+* {title:carto PurpOr}{asis}
+n:carto PurpOr
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#f9ddda,#573b88
+P3:#f9ddda,#ce78b3,#573b88
+P4:#f9ddda,#e597b9,#ad5fad,#573b88
+P5:#f9ddda,#eda8bd,#ce78b3,#9955a8,#573b88
+P6:#f9ddda,#f0b2c1,#dd8ab6,#bb69b0,#8c4fa4,#573b88
+P7:#f9ddda,#f2b9c4,#e597b9,#ce78b3,#ad5fad,#834ba0,#573b88
+* {smcl}
+* {title:carto Sunset}{asis}
+n:carto Sunset
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#f3e79b,#5c53a5
+P3:#f3e79b,#eb7f86,#5c53a5
+P4:#f3e79b,#f8a07e,#ce6693,#5c53a5
+P5:#f3e79b,#fab27f,#eb7f86,#b95e9a,#5c53a5
+P6:#f3e79b,#fabc82,#f59280,#dc6f8e,#ab5b9e,#5c53a5
+P7:#f3e79b,#fac484,#f8a07e,#eb7f86,#ce6693,#a059a0,#5c53a5
+* {smcl}
+* {title:carto Magenta}{asis}
+n:carto Magenta
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#f3cbd3,#6c2167
+P3:#f3cbd3,#ca699d,#6c2167
+P4:#f3cbd3,#dd88ac,#b14d8e,#6c2167
+P5:#f3cbd3,#e498b4,#ca699d,#a24186,#6c2167
+P6:#f3cbd3,#e7a2b9,#d67ba5,#bc5894,#983a81,#6c2167
+P7:#f3cbd3,#eaa9bd,#dd88ac,#ca699d,#b14d8e,#91357d,#6c2167
+* {smcl}
+* {title:carto SunsetDark}{asis}
+n:carto SunsetDark
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#fcde9c,#7c1d6f
+P3:#fcde9c,#e34f6f,#7c1d6f
+P4:#fcde9c,#f0746e,#dc3977,#7c1d6f
+P5:#fcde9c,#f58670,#e34f6f,#d72d7c,#7c1d6f
+P6:#fcde9c,#f89872,#ec666d,#df4273,#c5287b,#7c1d6f
+P7:#fcde9c,#faa476,#f0746e,#e34f6f,#dc3977,#b9257a,#7c1d6f
+* {smcl}
+* {title:carto ag_Sunset}{asis}
+n:carto ag_Sunset
+c:sequential
+d:aggregation palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#4b2991,#edd9a3
+P3:#4b2991,#ea4f88,#edd9a3
+P4:#4b2991,#c0369d,#fa7876,#edd9a3
+P5:#4b2991,#a52fa2,#ea4f88,#fa9074,#edd9a3
+P6:#4b2991,#932da3,#d43f96,#f7667c,#f89f77,#edd9a3
+P7:#4b2991,#872ca2,#c0369d,#ea4f88,#fa7876,#f6a97a,#edd9a3
+* {smcl}
+* {title:carto BrwnYl}{asis}
+n:carto BrwnYl
+c:sequential
+d:quantitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#ede5cf,#541f3f
+P3:#ede5cf,#c1766f,#541f3f
+P4:#ede5cf,#d39c83,#a65461,#541f3f
+P5:#ede5cf,#daaf91,#c1766f,#95455a,#541f3f
+P6:#ede5cf,#ddba9b,#cd8c7a,#b26166,#8a3c56,#541f3f
+P7:#ede5cf,#e0c2a2,#d39c83,#c1766f,#a65461,#813753,#541f3f
+* {smcl}
+* {title:carto ArmyRose}{asis}
+n:carto ArmyRose
+c:diverging
+d:diverging palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#929b4f,#db8195
+P3:#a3ad62,#fdfbe4,#df91a3
+P4:#929b4f,#d9dbaf,#f3d1ca,#db8195
+P5:#879043,#c1c68c,#fdfbe4,#ebb4b8,#d8758b
+P6:#7f883b,#b0b874,#e3e4be,#f6ddd1,#e4a0ac,#d66d85
+P7:#798234,#a3ad62,#d0d3a2,#fdfbe4,#f0c6c3,#df91a3,#d46780
+* {smcl}
+* {title:carto Fall}{asis}
+n:carto Fall
+c:diverging
+d:diverging palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#3d5941,#ca562c
+P3:#3d5941,#f6edbd,#ca562c
+P4:#3d5941,#b5b991,#edbb8a,#ca562c
+P5:#3d5941,#96a07c,#f6edbd,#e6a272,#ca562c
+P6:#3d5941,#839170,#cecea2,#f1cf9e,#e19464,#ca562c
+P7:#3d5941,#778868,#b5b991,#f6edbd,#edbb8a,#de8a5a,#ca562c
+* {smcl}
+* {title:carto Geyser}{asis}
+n:carto Geyser
+c:diverging
+d:diverging palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#008080,#ca562c
+P3:#008080,#f6edbd,#ca562c
+P4:#008080,#b4c8a8,#edbb8a,#ca562c
+P5:#008080,#92b69e,#f6edbd,#e6a272,#ca562c
+P6:#008080,#7eab98,#ced7b1,#f1cf9e,#e19464,#ca562c
+P7:#008080,#70a494,#b4c8a8,#f6edbd,#edbb8a,#de8a5a,#ca562c
+* {smcl}
+* {title:carto Temps}{asis}
+n:carto Temps
+c:diverging
+d:diverging palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#009392,#cf597e
+P3:#009392,#e9e29c,#cf597e
+P4:#009392,#9ccb86,#eeb479,#cf597e
+P5:#009392,#71be83,#e9e29c,#ed9c72,#cf597e
+P6:#009392,#52b684,#bcd48c,#edc783,#eb8d71,#cf597e
+P7:#009392,#39b185,#9ccb86,#e9e29c,#eeb479,#e88471,#cf597e
+* {smcl}
+* {title:carto TealRose}{asis}
+n:carto TealRose
+c:diverging
+d:diverging palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#009392,#d0587e
+P3:#009392,#f1eac8,#d0587e
+P4:#009392,#91b8aa,#f1eac8,#dfa0a0,#d0587e
+P5:#009392,#91b8aa,#f1eac8,#dfa0a0,#d0587e
+P6:#009392,#72aaa1,#b1c7b3,#e5b9ad,#d98994,#d0587e
+P7:#009392,#72aaa1,#b1c7b3,#f1eac8,#e5b9ad,#d98994,#d0587e
+* {smcl}
+* {title:carto Tropic}{asis}
+n:carto Tropic
+c:diverging
+d:diverging palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#009B9E,#C75DAB
+P3:#009B9E,#F1F1F1,#C75DAB
+P4:#009B9E,#A7D3D4,#E4C1D9,#C75DAB
+P5:#009B9E,#7CC5C6,#F1F1F1,#DDA9CD,#C75DAB
+P6:#009B9E,#5DBCBE,#C6DFDF,#E9D4E2,#D99BC6,#C75DAB
+P7:#009B9E,#42B7B9,#A7D3D4,#F1F1F1,#E4C1D9,#D691C1,#C75DAB
+* {smcl}
+* {title:carto Earth}{asis}
+n:carto Earth
+c:diverging
+d:diverging palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#A16928,#2887a1
+P3:#A16928,#edeac2,#2887a1
+P4:#A16928,#d6bd8d,#b5c8b8,#2887a1
+P5:#A16928,#caa873,#edeac2,#98b7b2,#2887a1
+P6:#A16928,#c29b64,#e0cfa2,#cbd5bc,#85adaf,#2887a1
+P7:#A16928,#bd925a,#d6bd8d,#edeac2,#b5c8b8,#79a7ac,#2887a1
+* {smcl}
+* {title:carto Antique}{asis}
+n:carto Antique
+c:qualitative
+d:qualitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#855C75,#D9AF6B,#7C7C7C
+P3:#855C75,#D9AF6B,#AF6458,#7C7C7C
+P4:#855C75,#D9AF6B,#AF6458,#736F4C,#7C7C7C
+P5:#855C75,#D9AF6B,#AF6458,#736F4C,#526A83,#7C7C7C
+P6:#855C75,#D9AF6B,#AF6458,#736F4C,#526A83,#625377,#7C7C7C
+P7:#855C75,#D9AF6B,#AF6458,#736F4C,#526A83,#625377,#68855C,#7C7C7C
+P8:#855C75,#D9AF6B,#AF6458,#736F4C,#526A83,#625377,#68855C,#9C9C5E,#7C7C7C
+P9:#855C75,#D9AF6B,#AF6458,#736F4C,#526A83,#625377,#68855C,#9C9C5E,#A06177,#7C7C7C
+P10:#855C75,#D9AF6B,#AF6458,#736F4C,#526A83,#625377,#68855C,#9C9C5E,#A06177,#8C785D,#7C7C7C
+P11:#855C75,#D9AF6B,#AF6458,#736F4C,#526A83,#625377,#68855C,#9C9C5E,#A06177,#8C785D,#467378,#7C7C7C
+* {smcl}
+* {title:carto Bold}{asis}
+n:carto Bold
+c:qualitative
+d:qualitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#7F3C8D,#11A579,#A5AA99
+P3:#7F3C8D,#11A579,#3969AC,#A5AA99
+P4:#7F3C8D,#11A579,#3969AC,#F2B701,#A5AA99
+P5:#7F3C8D,#11A579,#3969AC,#F2B701,#E73F74,#A5AA99
+P6:#7F3C8D,#11A579,#3969AC,#F2B701,#E73F74,#80BA5A,#A5AA99
+P7:#7F3C8D,#11A579,#3969AC,#F2B701,#E73F74,#80BA5A,#E68310,#A5AA99
+P8:#7F3C8D,#11A579,#3969AC,#F2B701,#E73F74,#80BA5A,#E68310,#008695,#A5AA99
+P9:#7F3C8D,#11A579,#3969AC,#F2B701,#E73F74,#80BA5A,#E68310,#008695,#CF1C90,#A5AA99
+P10:#7F3C8D,#11A579,#3969AC,#F2B701,#E73F74,#80BA5A,#E68310,#008695,#CF1C90,#f97b72,#A5AA99
+P11:#7F3C8D,#11A579,#3969AC,#F2B701,#E73F74,#80BA5A,#E68310,#008695,#CF1C90,#f97b72,#4b4b8f,#A5AA99
+* {smcl}
+* {title:carto Pastel}{asis}
+n:carto Pastel
+c:qualitative
+d:qualitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#66C5CC,#F6CF71,#B3B3B3
+P3:#66C5CC,#F6CF71,#F89C74,#B3B3B3
+P4:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#B3B3B3
+P5:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#B3B3B3
+P6:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#B3B3B3
+P7:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#FE88B1,#B3B3B3
+P8:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#FE88B1,#C9DB74,#B3B3B3
+P9:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#FE88B1,#C9DB74,#8BE0A4,#B3B3B3
+P10:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#FE88B1,#C9DB74,#8BE0A4,#B497E7,#B3B3B3
+P11:#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#FE88B1,#C9DB74,#8BE0A4,#B497E7,#D3B484,#B3B3B3
+* {smcl}
+* {title:carto Prism}{asis}
+n:carto Prism
+c:qualitative
+d:qualitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#5F4690,#1D6996,#666666
+P3:#5F4690,#1D6996,#38A6A5,#666666
+P4:#5F4690,#1D6996,#38A6A5,#0F8554,#666666
+P5:#5F4690,#1D6996,#38A6A5,#0F8554,#73AF48,#666666
+P6:#5F4690,#1D6996,#38A6A5,#0F8554,#73AF48,#EDAD08,#666666
+P7:#5F4690,#1D6996,#38A6A5,#0F8554,#73AF48,#EDAD08,#E17C05,#666666
+P8:#5F4690,#1D6996,#38A6A5,#0F8554,#73AF48,#EDAD08,#E17C05,#CC503E,#666666
+P9:#5F4690,#1D6996,#38A6A5,#0F8554,#73AF48,#EDAD08,#E17C05,#CC503E,#94346E,#666666
+P10:#5F4690,#1D6996,#38A6A5,#0F8554,#73AF48,#EDAD08,#E17C05,#CC503E,#94346E,#6F4070,#666666
+P11:#5F4690,#1D6996,#38A6A5,#0F8554,#73AF48,#EDAD08,#E17C05,#CC503E,#94346E,#6F4070,#994E95,#666666
+* {smcl}
+* {title:carto Safe}{asis}
+n:carto Safe
+c:qualitative
+d:qualitative, colorblind palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#88CCEE,#CC6677,#888888
+P3:#88CCEE,#CC6677,#DDCC77,#888888
+P4:#88CCEE,#CC6677,#DDCC77,#117733,#888888
+P5:#88CCEE,#CC6677,#DDCC77,#117733,#332288,#888888
+P6:#88CCEE,#CC6677,#DDCC77,#117733,#332288,#AA4499,#888888
+P7:#88CCEE,#CC6677,#DDCC77,#117733,#332288,#AA4499,#44AA99,#888888
+P8:#88CCEE,#CC6677,#DDCC77,#117733,#332288,#AA4499,#44AA99,#999933,#888888
+P9:#88CCEE,#CC6677,#DDCC77,#117733,#332288,#AA4499,#44AA99,#999933,#882255,#888888
+P10:#88CCEE,#CC6677,#DDCC77,#117733,#332288,#AA4499,#44AA99,#999933,#882255,#661100,#888888
+P11:#88CCEE,#CC6677,#DDCC77,#117733,#332288,#AA4499,#44AA99,#999933,#882255,#661100,#6699CC,#888888
+* {smcl}
+* {title:carto Vivid}{asis}
+n:carto Vivid
+c:qualitative
+d:qualitative palette from carto.com/carto-colors
+s:https://github.com/CartoDB/CartoColor/blob/master/cartocolor.js, retrieved 31mar2022
+P2:#E58606,#5D69B1,#A5AA99
+P3:#E58606,#5D69B1,#52BCA3,#A5AA99
+P4:#E58606,#5D69B1,#52BCA3,#99C945,#A5AA99
+P5:#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#A5AA99
+P6:#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#A5AA99
+P7:#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#DAA51B,#A5AA99
+P8:#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#DAA51B,#2F8AC4,#A5AA99
+P9:#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#DAA51B,#2F8AC4,#764E9F,#A5AA99
+P10:#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#DAA51B,#2F8AC4,#764E9F,#ED645A,#A5AA99
+P11:#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#DAA51B,#2F8AC4,#764E9F,#ED645A,#CC3A8E,#A5AA99
+* {smcl}
+* {title:tab 10}{asis}
+n:tab 10
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#4E79A7,#F28E2B,#E15759,#76B7B2,#59A14F,#EDC948,#B07AA1,#FF9DA7,#9C755F,#BAB0AC
+N:Blue,Orange,Red,Light Teal,Green,Yellow,Purple,Pink,Brown,Light Gray
+* {smcl}
+* {title:tab 20}{asis}
+n:tab 20
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#4E79A7,#A0CBE8,#F28E2B,#FFBE7D,#59A14F,#8CD17D,#B6992D,#F1CE63,#499894,#86BCB6,#E15759,#FF9D9A,#79706E,#BAB0AC,#D37295,#FABFD2,#B07AA1,#D4A6C8,#9D7660,#D7B5A6
+N:Blue,Light Blue,Orange,Light Orange,Green,Light Green,Yellow-Green,Yellow,Teal,Light Teal,Red,Pink,Dark Gray,Light Gray,Pink,Light Pink,Purple,Light Purple,Brown,Light Orange
+* {smcl}
+* {title:tab Color Blind}{asis}
+n:tab Color Blind
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#1170aa,#fc7d0b,#a3acb9,#57606c,#5fa2ce,#c85200,#7b848f,#a3cce9,#ffbc79,#c8d0d9
+N:Blue,Orange,Light Gray,Dark Gray,Blue,Brown,Gray,Light Blue,Light Orange,Very Light Gray
+* {smcl}
+* {title:tab Seattle Grays}{asis}
+n:tab Seattle Grays
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#767f8b,#b3b7b8,#5c6068,#d3d3d3,#989ca3
+N:gray,Light Gray,Dark Gray,Light Gray,Gray
+* {smcl}
+* {title:tab Traffic}{asis}
+n:tab Traffic
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#b60a1c,#e39802,#309143,#e03531,#f0bd27,#51b364,#ff684c,#ffda66,#8ace7e
+N:Red,Yellow,Green,Red,Yellow,Green,Red,Yellow,Light Green
+* {smcl}
+* {title:tab Miller Stone}{asis}
+n:tab Miller Stone
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#4f6980,#849db1,#a2ceaa,#638b66,#bfbb60,#f47942,#fbb04e,#b66353,#d7ce9f,#b9aa97,#7e756d
+N:Blue,Blue,Light Green,Green,Yellow-Green,Orange,Orange,Brown,Light Yellow,Light Brown,Gray
+* {smcl}
+* {title:tab Superfishel Stone}{asis}
+n:tab Superfishel Stone
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#6388b4,#ffae34,#ef6f6a,#8cc2ca,#55ad89,#c3bc3f,#bb7693,#baa094,#a9b5ae,#767676
+N:Blue,Orange,Red,Light Blue,Teal,Yellow-Green,Pink,Light Brown,Light Gray,Dark Gray
+* {smcl}
+* {title:tab Nuriel Stone}{asis}
+n:tab Nuriel Stone
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#8175aa,#6fb899,#31a1b3,#ccb22b,#a39fc9,#94d0c0,#959c9e,#027b8e,#9f8f12
+N:Purple,Light Teal,Blue,Yellow-Green,Light Purple,Light Teal,Gray,Blue,Yellow-Green
+* {smcl}
+* {title:tab Jewel Bright}{asis}
+n:tab Jewel Bright
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#eb1e2c,#fd6f30,#f9a729,#f9d23c,#5fbb68,#64cdcc,#91dcea,#a4a4d5,#bbc9e5
+N:Red,Orange,Orange,Yellow,Green,Light Teal,Light Blue,Light Blue,Very Light Blue
+* {smcl}
+* {title:tab Summer}{asis}
+n:tab Summer
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#bfb202,#b9ca5d,#cf3e53,#f1788d,#00a2b3,#97cfd0,#f3a546,#f7c480
+N:Yellow-Green,Yellow-Green,Red,Red,Blue,Light Blue,Orange,Light Orange
+* {smcl}
+* {title:tab Winter}{asis}
+n:tab Winter
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#90728f,#b9a0b4,#9d983d,#cecb76,#e15759,#ff9888,#6b6b6b,#bab2ae,#aa8780,#dab6af
+N:Gray,Light Gray,Yellow-Green,Light Yellow-Green,Red,Red,Dark Gray,Light Gray,Brown,Light Pink
+* {smcl}
+* {title:tab Green-Orange-Teal}{asis}
+n:tab Green-Orange-Teal
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#4e9f50,#87d180,#ef8a0c,#fcc66d,#3ca8bc,#98d9e4,#94a323,#c3ce3d,#a08400,#f7d42a,#26897e,#8dbfa8
+N:Green,Light Green,Orange,Light Orange,Blue,Light Blue,Yellow-Green,Yellow-Green,Yellow-Green,Yellow,Teal,Light Teal
+* {smcl}
+* {title:tab Red-Blue-Brown}{asis}
+n:tab Red-Blue-Brown
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#466f9d,#91b3d7,#ed444a,#feb5a2,#9d7660,#d7b5a6,#3896c4,#a0d4ee,#ba7e45,#39b87f,#c8133b,#ea8783
+N:Blue,Light Blue,Red,Pink,Brown,Light Orange,Blue,Light Blue,Brown,Light Orange,Red,Red
+* {smcl}
+* {title:tab Purple-Pink-Gray}{asis}
+n:tab Purple-Pink-Gray
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#8074a8,#c6c1f0,#c46487,#ffbed1,#9c9290,#c5bfbe,#9b93c9,#ddb5d5,#7c7270,#f498b6,#b173a0,#c799bc
+N:Purple,Light Purple,Pink,Pink,Gray,Light Gray,Light Purple,Light Purple,Dark Gray,Pink,Purple,Light Purple
+* {smcl}
+* {title:tab Hue Circle}{asis}
+n:tab Hue Circle
+c:qualitative
+d:qualitative palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#1ba3c6,#2cb5c0,#30bcad,#21B087,#33a65c,#57a337,#a2b627,#d5bb21,#f8b620,#f89217,#f06719,#e03426,#f64971,#fc719e,#eb73b3,#ce69be,#a26dc2,#7873c0,#4f7cba
+N:Blue,Blue,Teal,Teal,Green,Green,Yellow-Green,Yellow,Yellow,Orange,Orange,Red,Red,Pink,Pink,Purple,Purple,Purple,Blue
+* {smcl}
+* {title:tab Blue-Green}{asis}
+n:tab Blue-Green
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#feffd9,#f2fabf,#dff3b2,#c4eab1,#94d6b7,#69c5be,#41b7c4
+* {smcl}
+* {title:tab Blue Light}{asis}
+n:tab Blue Light
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#e5e5e5,#e0e3e8,#dbe1ea,#d5dfec,#d0dcef,#cadaf1,#c4d8f3
+* {smcl}
+* {title:tab Orange Light}{asis}
+n:tab Orange Light
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#e5e5e5,#ebe1d9,#f0ddcd,#f5d9c2,#f9d4b6,#fdd0aa,#ffcc9e
+* {smcl}
+* {title:tab Blue}{asis}
+n:tab Blue
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#b9ddf1,#afd6ed,#a5cfe9,#9bc7e4,#92c0df,#89b8da,#80b0d5,#79aacf,#72a3c9,#6a9bc3,#6394be,#5b8cb8,#5485b2,#4e7fac,#4878a6,#437a9f,#3d6a98,#376491,#305d8a,#2a5783
+* {smcl}
+* {title:tab Orange}{asis}
+n:tab Orange
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#ffc685,#fcbe75,#f9b665,#f7ae54,#f5a645,#f59c3c,#f49234,#f2882d,#f07e27,#ee7422,#e96b20,#e36420,#db5e20,#d25921,#ca5422,#c14f22,#b84b23,#af4623,#a64122,#9e3d22
+* {smcl}
+* {title:tab Green}{asis}
+n:tab Green
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#b3e0a6,#a5db96,#98d687,#8ed07f,#85ca77,#7dc370,#75bc69,#6eb663,#67af5c,#61a956,#59a253,#519c51,#49964f,#428f4d,#398949,#308344,#2b7c40,#27763d,#256f3d,#24693d
+* {smcl}
+* {title:tab Red}{asis}
+n:tab Red
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#ffbeb2,#feb4a6,#fdab9b,#fca290,#fb9984,#fa8f79,#f9856e,#f77b66,#f5715d,#f36754,#f05c4d,#ec5049,#e74545,#e13b42,#da323f,#d3293d,#ca223c,#c11a3b,#b8163a,#ae123a
+* {smcl}
+* {title:tab Purple}{asis}
+n:tab Purple
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#eec9e5,#eac1df,#e6b9d9,#e0b2d2,#daabcb,#d5a4c4,#cf9dbe,#ca96b8,#c48fb2,#be89ac,#b882a6,#b27ba1,#aa759d,#a27099,#9a6a96,#926591,#8c5f86,#865986,#81537f,#7c4d79
+* {smcl}
+* {title:tab Brown}{asis}
+n:tab Brown
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#eedbbd,#ecd2ad,#ebc994,#eac085,#e8b777,#e5ae6c,#e2a562,#de9d5a,#d99455,#d38c54,#ce8451,#c9784d,#c47247,#c16941,#bd6036,#b85636,#b34d34,#ad4433,#a63d32,#9f3632
+* {smcl}
+* {title:tab Gray}{asis}
+n:tab Gray
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#d5d5d5,#cdcecd,#c5c7c6,#bcbfbe,#b4b7b7,#acb0b1,#a4a9ab,#9ca3a4,#939c9e,#8b9598,#848e93,#7c878d,#758087,#6e7a81,#67737c,#616c77,#5b6570,#555f6a,#4f5864,#49525e
+* {smcl}
+* {title:tab Gray Warm}{asis}
+n:tab Gray Warm
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#dcd4d0,#d4ccc8,#cdc4c0,#c5bdb9,#beb6b2,#b7afab,#b0a7a4,#a9a09d,#a29996,#9b938f,#948c88,#8d8481,#867e7b,#807774,#79706e,#736967,#6c6260,#665c51,#5f5654,#59504e
+* {smcl}
+* {title:tab Blue-Teal}{asis}
+n:tab Blue-Teal
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#bce4d8,#aedcd5,#a1d5d2,#95cecf,#89c8cc,#7ec1ca,#72bac6,#66b2c2,#59acbe,#4ba5ba,#419eb6,#3b96b2,#358ead,#3586a7,#347ea1,#32779b,#316f96,#2f6790,#2d608a,#2c5985
+* {smcl}
+* {title:tab Orange-Gold}{asis}
+n:tab Orange-Gold
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#f4d166,#f6c760,#f8bc58,#f8b252,#f7a84a,#f69e41,#f49538,#f38b2f,#f28026,#f0751e,#eb6c1c,#e4641e,#de5d1f,#d75521,#cf4f22,#c64a22,#bc4623,#b24223,#a83e24,#9e3a26
+* {smcl}
+* {title:tab Green-Gold}{asis}
+n:tab Green-Gold
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#f4d166,#e3cd62,#d3c95f,#c3c55d,#b2c25b,#a3bd5a,#93b958,#84b457,#76af56,#67a956,#5aa355,#4f9e53,#479751,#40914f,#3a8a4d,#34844a,#2d7d45,#257740,#1c713b,#146c36
+* {smcl}
+* {title:tab Red-Gold}{asis}
+n:tab Red-Gold
+c:sequential
+d:sequential palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#f4d166,#f5c75f,#f6bc58,#f7b254,#f9a750,#fa9d4f,#fa9d4f,#fb934d,#f7894b,#f47f4a,#f0774a,#eb6349,#e66549,#e15c48,#dc5447,#d64c45,#d04344,#ca3a42,#c43141,#bd273f,#b71d3e
+* {smcl}
+* {title:tab Orange-Blue}{asis}
+n:tab Orange-Blue
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#9e3d22,#d45b21,#f69035,#d9d5c9,#77acd3,#4f81af,#2b5c8a
+* {smcl}
+* {title:tab Red-Green}{asis}
+n:tab Red-Green
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#a3123a,#e33f43,#f8816b,#ced7c3,#73ba67,#44914e,#24693d
+* {smcl}
+* {title:tab Green-Blue}{asis}
+n:tab Green-Blue
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#24693d,#45934d,#75bc69,#c9dad2,#77a9cf,#4e7fab,#2a5783
+* {smcl}
+* {title:tab Red-Blue}{asis}
+n:tab Red-Blue
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#a90c38,#e03b42,#f87f69,#dfd4d1,#7eaed3,#5383af,#2e5a87
+* {smcl}
+* {title:tab Red-Black}{asis}
+n:tab Red-Black
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#ae123a,#e33e43,#f8816b,#d9d9d9,#a0a7a8,#707c83,#49525e
+* {smcl}
+* {title:tab Gold-Purple}{asis}
+n:tab Gold-Purple
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#ad9024,#c1a33b,#d4b95e,#e3d8cf,#d4a3c3,#c189b0,#ac7299
+* {smcl}
+* {title:tab Red-Green-Gold}{asis}
+n:tab Red-Green-Gold
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#be2a3e,#e25f48,#f88f4d,#f4d166,#90b960,#4b9b5f,#22763f
+* {smcl}
+* {title:tab Sunset-Sunrise}{asis}
+n:tab Sunset-Sunrise
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#33608c,#9768a5,#e7718a,#f6ba57,#ed7846,#d54c45,#b81840
+* {smcl}
+* {title:tab Orange-Blue-White}{asis}
+n:tab Orange-Blue-White
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#9e3d22,#e36621,#fcad52,#ffffff,#95c5e1,#5b8fbc,#2b5c8a
+* {smcl}
+* {title:tab Red-Green-White}{asis}
+n:tab Red-Green-White
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#ae123a,#ee574d,#fdac9e,#ffffff,#91d183,#539e52,#24693d
+* {smcl}
+* {title:tab Green-Blue-White}{asis}
+n:tab Green-Blue-White
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#24693d,#529c51,#8fd180,#ffffff,#95c1dd,#598ab5,#2a5783
+* {smcl}
+* {title:tab Red-Blue-White}{asis}
+n:tab Red-Blue-White
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#a90c38,#ec534b,#feaa9a,#ffffff,#9ac4e1,#5c8db8,#2e5a87
+* {smcl}
+* {title:tab Red-Black-White}{asis}
+n:tab Red-Black-White
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#ae123a,#ee574d,#fdac9d,#ffffff,#bdc0bf,#7d888d,#49525e
+* {smcl}
+* {title:tab Orange-Blue Light}{asis}
+n:tab Orange-Blue Light
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#ffcc9e,#f9d4b6,#f0dccd,#e5e5e5,#dae1ea,#cfdcef,#c4d8f3
+* {smcl}
+* {title:tab Temperature}{asis}
+n:tab Temperature
+c:diverging
+d:diverging palette from Tableau 10
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#529985,#6c9e6e,#99b059,#dbcf47,#ebc24b,#e3a14f,#c26b51
+* {smcl}
+* {title:pals alphabet}{asis}
+n:pals alphabet
+c:qualitative
+d:qualitative palette from pals package in R (kwstat.github.io/pals)
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#F0A0FF,#0075DC,#993F00,#4C005C,#191919,#005C31,#2BCE48,#FFCC99,#808080,#94FFB5,#8F7C00,#9DCC00,#C20088,#003380,#FFA405,#FFA8BB,#426600,#FF0010,#5EF1F2,#00998F,#E0FF66,#740AFF,#990000,#FFFF80, #FFE100,#FF5005
+N:amethyst,blue,caramel,damson,ebony,forest,green,honeydew,iron,jade,khaki,lime,magenta,navy,orange,pink,quagmire,red,sky,turquoise,uranium,violet,wine,xanthin,yellow,zinnia
+* {smcl}
+* {title:pals alphabet2}{asis}
+n:pals alphabet2
+c:qualitative
+d:qualitative palette from pals package in R (kwstat.github.io/pals)
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#AA0DFE,#3283FE,#85660D,#782AB6,#565656,#1C8356,#16FF32,#F7E1A0,#E2E2E2,#1CBE4F,#C4451C,#DEA0FD,#FE00FA,#325A9B,#FEAF16,#F8A19F,#90AD1C,#F6222E,#1CFFCE,#2ED9FF,#B10DA1,#C075A6,#FC1CBF,#B00068,#FBE426,#FA0087
+N:amethyst,blue,caramel,damson,ebony,forest,green,honey,iron,jade,kingcrab,lavender,magenta,navy,orange,pink,quagmire,red,sea,turquoise,ultraviolet,violet,wine,xanthin,yellow,zinnia
+* {smcl}
+* {title:pals cols25}{asis}
+n:pals cols25
+c:qualitative
+d:qualitative palette from pals package in R (kwstat.github.io/pals)
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#1F78C8,#ff0000,#33a02c,#6A33C2,#ff7f00,#565656,#FFD700,#a6cee3,#FB6496,#b2df8a,#CAB2D6,#FDBF6F,#999999,#EEE685,#C8308C,#FF83FA,#C814FA,#0000FF,#36648B,#00E2E5,#00FF00,#778B00,#BEBE00,#8B3B00,#A52A3C
+* {smcl}
+* {title:pals polychrome}{asis}
+n:pals polychrome
+c:qualitative
+d:qualitative palette from pals package in R (kwstat.github.io/pals)
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:#5A5156,#E4E1E3,#F6222E,#FE00FA,#16FF32,#3283FE,#FEAF16,#B00068,#1CFFCE,#90AD1C,#2ED9FF,#DEA0FD,#AA0DFE,#F8A19F,#325A9B,#C4451C,#1C8356,#85660D,#B10DA1,#FBE426,#1CBE4F,#FA0087,#FC1CBF,#F7E1A0,#C075A6,#782AB6,#AAF400,#BDCDFF,#822E1C,#B5EFB5,#7ED7D1,#1C7F93,#D85FF7,#683B79,#66B0FF,#3B00FB
+N:Dark_Purplish_Gray,Purplish_White,Vivid_Red,Vivid_Purple,Vivid_Yellowish_Green,Strong_Purplish_Blue,Vivid_Orange_Yellow,Vivid_Purplish_Red,Brilliant_Green,Vivid_Yellow_Green,Vivid_Blue,Brilliant_Purple,Vivid_Violet,Strong_Pink,Strong_Blue,Strong_Reddish_Orange,Vivid_Green,Light_Olive_Brown,Vivid_Reddish_Purple,Vivid_Greenish_Yellow,Vivid_Yellowish_Green,Vivid_Red,Vivid_Purplish_Red,Pale_Yellow,Strong_Reddish_Purple,Vivid_Violet,Vivid_Yellow_Green,Very_Light_Blue,Strong_Reddish_Brown,Very_Light_Yellowish_Green,Very_Light_Bluish_Green,Deep_Greenish_Blue,Vivid_Purple,Deep_Purple,Brilliant_Blue,Vivid_Violet
+* {smcl}
+* {title:pals glasbey}{asis}
+n:pals glasbey
+c:qualitative
+d:qualitative palette from pals package in R (kwstat.github.io/pals)
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:0 0 255,255 0 0,0 255 0,0 0 51,255 0 182,0 83 0,255 211 0,0 159 255,154 77 66,0 255 190,120 63 193,31 150 152,255 172 253,177 204 113,241 8 92,254 143 66,221 0 255,32 26 1,114 0 85,118 108 149,2 173 36,200 255 0,136 108 0,255 183 159,133 133 103,161 3 0,20 249 255,0 71 158,220 94 147,147 212 255,0 76 255,242 243 24
+* {smcl}
+* {title:pals kelly}{asis}
+n:pals kelly
+c:qualitative
+d:qualitative palette from pals package in R (kwstat.github.io/pals)
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:242 243 244,34 34 34,243 195 0,135 86 146,243 132 0,161 202 241,190 0 50,194 178 128,132 132 130,0 136 86,230 143 172,0 103 165,249 147 121,96 78 151,246 166 0,179 68 108,220 211 0,136 45 23,141 182 0,101 69 34,226 88 34,43 61 38
+* {smcl}
+* {title:pals watlington}{asis}
+n:pals watlington
+c:qualitative
+d:qualitative palette from pals package in R (kwstat.github.io/pals)
+s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
+P:0 0 0,87 87 87,173 35 35,42 75 215,29 105 20,129 74 25,129 38 192,160 160 160,129 197 122,157 175 255,41 208 208,255 146 51,255 238 51,233 222 187,255 205 243,242 243 244

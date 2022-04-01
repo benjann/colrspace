@@ -1,4 +1,4 @@
-*! version 1.0.9  06jun20200  Ben Jann
+*! version 1.1.0  01apr2022  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -13,7 +13,7 @@
 * {help colrspace_source##set:Set or retrieve colors}
 * {help colrspace_source##opacity:Set or retrieve opacity and intensity}
 * {help colrspace_source##modify:Color modification}
-* {help colrspace_source##order:- recycle, select, order}
+* {help colrspace_source##order:- recycle, select, drop, order, shift}
 * {help colrspace_source##ipolate:- interpolate, mix}
 * {help colrspace_source##intens:- intensify, saturate, luminate}
 * {help colrspace_source##gray:- grayscale conversion}
@@ -83,7 +83,7 @@ mata:
 struct `DATA' {
     // meta data
     `SS'    name          // name of color collection
-    `SS'    pclass        // class: qualitative, sequential, diverging
+    `SS'    pclass        // class: qualitative/categorical, sequential, diverging
     `SS'    note          // description of color collection
     `SS'    source        // source of color collection
     // colors
@@ -261,14 +261,17 @@ class `MAIN' {
         void    opacity_set(), alpha_set(), intensity_set()
         void    _alpha(), _intensity()
 
-    // Recycle, select, and order
+    // Recycle, select, shift, order, drop
     public:
         void    recycle(), add_recycle(), recycle_added(), add_recycle_added()
         void    select(), add_select(), select_added(), add_select_added()
+        void    drop(), add_drop(), drop_added(), add_drop_added()
         void    order(), add_order(), order_added(), add_order_added()
         void    reverse(), add_reverse(), reverse_added(), add_reverse_added()
+        void    shift(), add_shift(), shift_added(), add_shift_added()
     private:
-        void    _recycle(), _select(), __select(), _order(), _reverse()
+        void    _recycle(), _select(), __select(), _drop(), _order(),
+                _reverse(), _shift()
 
     // Color interpolation and mixing
     public:
@@ -309,7 +312,7 @@ class `MAIN' {
         `RC'    contrast(), contrast_added(), delta(), delta_added()
     private:
         `RC'    _contrast(), _delta()
-        `RC'    delta_jab(), delta_euclid()
+        `RC'    delta_jab(), delta_E94(), delta_E2000(), delta_euclid()
 
     // Translation between color spaces (without storing the colors)
     public:
@@ -378,9 +381,9 @@ class `MAIN' {
         void    paletteindex()
         `Bool'  Palette()
         `SC'    Palette_read()
-        void    Palette_palettes(), Palette_namedcolors(), Palette_matplotlib(),
-                Palette_generators(), Palette_internal(), Palette_htmlcolors(),
-                Palette_spmap()
+        void    Palette_palettes(), Palette_namedcolors(), Palette_lsmaps(),
+                Palette_generators(), Palette_rgbmaps(), Palette_internal(),
+                Palette_htmlcolors(), Palette_spmap()
     
     // Color generators
     private:
@@ -739,7 +742,7 @@ void `MAIN'::assert_size(`T' M, `RS' r, `RS' c)
 }
 
 `RM' `MAIN'::colipolate(`RM' C, `Int' n0, | `RV' range0, `RS' power, `RV' pos, 
-    `Bool' pad)
+    `Bool' pad, `Bool' cyclic)
 {
     `Bool' haspos
     `Int'  r, n
@@ -748,6 +751,7 @@ void `MAIN'::assert_size(`T' M, `RS' r, `RS' c)
     
     n = (n0<0 ? 0 : trunc(n0))
     if (args()<6) pad = `FALSE'
+    if (args()<7) cyclic = `FALSE'
     if (power<=0) {
         printf("{err}power = %g not allowed; must be strictly positive\n", power)
         exit(3498)
@@ -762,6 +766,13 @@ void `MAIN'::assert_size(`T' M, `RS' r, `RS' c)
     if (r==n) {
         if (range==(0,1) & haspos==`FALSE') return(C) // no interpolation needed
         if (range==(1,0) & haspos==`FALSE') return(C[r::1,]) // reverse order
+    }
+    if (cyclic) {
+        // wrap around: add first color at end during interpolation
+        _colipolate_fromto(r+1, n+1, range, power, (haspos ? pos : .),
+            pad, from=., to=.)
+        if (haspos) return(_colipolate_pos(C\C[1,.], from, to)[|1,1 \ n,.|])
+        return(_colipolate(C\C[1,.], from, to)[|1,1 \ n,.|])
     }
     _colipolate_fromto(r, n, range, power, (haspos ? pos : .), pad, from=., to=.)
     if (haspos) return(_colipolate_pos(C, from, to))
@@ -2402,8 +2413,8 @@ end
 * {marker modify}{bf:Color modification} {hline}
 * {asis}
 
-foreach f in recycle select order reverse ipolate mix intensify saturate ///
-    luminate gray cvd {
+foreach f in recycle select drop order reverse shift ipolate mix intensify ///
+    saturate luminate gray cvd {
     mata void `MAIN'::`f'(| `T' o1, `T' o2, `T' o3, `T' o4, `T' o5, `T' o6)
     {
         S = &data1
@@ -2459,7 +2470,7 @@ foreach f in recycle select order reverse ipolate mix intensify saturate ///
 }
 
 * {smcl}
-* {marker order}{bf:- recycle, select, order} {hline}
+* {marker order}{bf:- recycle, select, drop, order, shift} {hline}
 * {asis}
 
 mata:
@@ -2517,6 +2528,22 @@ void `MAIN'::__select(`IntM' p)
     S->stok      = S->stok[p]
 }
 
+void `MAIN'::_drop(`IntV' p0)
+{
+    `Int'  n
+    `IntC' p, k
+    
+    n = S->n
+    p = p0
+    if (cols(p)!=1) _transpose(p)
+    p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(n:+1:+p)
+    p = ::select(p, p:>=1 :& p:<=n)       // may return 0x0
+    if (length(p)==0) return              // nothing to drop
+    k = J(n,1,1); k[p] = J(length(p),1,0) // tag elements to be kept
+    p = selectindex(k)
+    __select(p)
+}
+
 void `MAIN'::_order(`IntV' p0)
 {
     `Int'  n
@@ -2544,6 +2571,19 @@ void `MAIN'::_reverse()
     __select(n::1)
 }
 
+void `MAIN'::_shift(`Int' k)
+{
+    `Int'  n
+    `IntC' p, rest
+    
+    if (k>=.) return // do nothing
+    if (k==0) return // do nothing
+    n = S->n
+    p = (1::n) :- trunc(k)
+    p = mod(p:-1, n) :+ 1
+    __select(p)
+}
+
 end
 
 * {smcl}
@@ -2553,7 +2593,7 @@ end
 mata:
 
 void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos, 
-    `Bool' pad)
+    `Bool' pad, `Bool' cyclic)
 {
     `Int'  jh
     `SS'   space, mask
@@ -2561,6 +2601,7 @@ void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos,
     `RM'   C
 
     if (args()<6) pad = `FALSE'
+    if (args()<7) cyclic = anyof(("cyclic","circular"), S->pclass)
     // parse space
     space = findkey(gettok(space0, mask=""), SPACES, "Jab")
     if (space=="") {
@@ -2584,7 +2625,7 @@ void `MAIN'::_ipolate(`Int' n, | `SS' space0, `RV' range, `RS' power, `RV' pos,
     if (any(S->intensity:<.)) I = editmissing(S->intensity, 1)
     else                      I = J(S->n, 0, .)
     // interpolate
-    C = colipolate((C,A,I), n, range, power, pos, pad)
+    C = colipolate((C,A,I), n, range, power, pos, pad, cyclic)
     if (length(I)) {; I = C[,cols(C)]; C = C[,1..cols(C)-1]; }
     if (length(A)) {; A = C[,cols(C)]; C = C[,1..cols(C)-1]; }
     // convert back to RGB1
@@ -3199,6 +3240,7 @@ mata:
 // delta(): compute color differences
 // sources:
 // - https://en.wikipedia.org/wiki/Color_difference
+// - http://www.brucelindbloom.com/
 // - Luo, M.R., C. Li (2013). CIECAM02 and its recent developments. P 19-58 in: 
 //   C. Fernandez-Maloigne (ed). Advanced color image processing and analysis. 
 //   New York: Springer. https://doi.org/10.1007/978-1-4419-6190-7_2
@@ -3232,9 +3274,9 @@ mata:
 
     if (args()<3) noclip = `FALSE'
     // parse method 
-    method = findkey(gettok(method0, coefs), ("E76", "RGB", "RGB1", "lRGB", 
-        "XYZ", "XYZ1", "xyY1", "Lab", "LCh", "Luv", "HCL", "JCh", "JMh",
-        "Jab")', ("Jab"))
+    method = findkey(gettok(method0, coefs), ("E76", "E94", "E2000",
+        "RGB", "RGB1", "lRGB", "XYZ", "XYZ1", "xyY1", "Lab", "LCh", "Luv",
+        "HCL", "JCh", "JMh", "Jab")', ("Jab"))
     if (method=="") {
         display("{err}method '" + method0 + "' not allowed")
         exit(3498)
@@ -3247,8 +3289,8 @@ mata:
         exit(3498)
     }
     else {
-        if (method=="E76") space = "Lab"
-        else               space = method
+        if (anyof(("E76","E94","E2000"), method)) space = "Lab"
+        else                                      space = method
     }
     // determine positions
     if ((n = S->n)<1) return(J(0,1,.))
@@ -3262,7 +3304,9 @@ mata:
     if (noclip==`TRUE') C = _get(space)
     else                C = convert(clip(_get("lRGB"), 0, 1), "lRGB", space)
     // compute differences
-    if (method=="Jab") return(delta_jab(C, P, coefs))
+    if (method=="Jab")        return(delta_jab(C, P, coefs))
+    else if (method=="E94")   return(delta_E94(C, P))
+    else if (method=="E2000") return(delta_E2000(C, P))
     return(delta_euclid(C, P))
 }
 
@@ -3284,7 +3328,92 @@ mata:
         if (p1<1 | p1>n) continue
         if (p2<1 | p2>n) continue
         a = C[p1,]; b = C[p2,]
-        D[i] = sqrt(((a[1]-b[1])/KL):^2 + (a[2]-b[2]):^2 + (a[3]-b[3]):^2)
+        D[i] = sqrt(((a[1]-b[1])/KL)^2 + (a[2]-b[2])^2 + (a[3]-b[3])^2)
+    }
+    return(D)
+}
+
+`RC' `MAIN'::delta_E94(`RM' Lab, `IntM' P)
+{   // see http://www.brucelindbloom.com/index.html?Eqn_DeltaE_CIE94.html
+    // (but using symmetric variant as in Hunt 2004:670)
+    `Int'  i, n, p1, p2
+    `Int'  dL, dC, dH2, KL, KC, KH, K1, K2, SL, SC, SH, C1, C2
+    `RR'   Lab1, Lab2
+    `RC'   D
+
+    KL = 1    // textile: 2
+    KC = 1
+    KH = 1
+    K1 = .045 // textile: .048
+    K2 = .015 // textile: .014
+    SL = 1
+    n = rows(Lab)
+    D = J(i = rows(P), 1, .)
+    for (; i; i--) {
+        p1 = P[i,1]; p2 = P[i,2]
+        if (p1<0) p1 = n + 1 + p1
+        if (p2<0) p2 = n + 1 + p2
+        if (p1<1 | p1>n) continue
+        if (p2<1 | p2>n) continue
+        Lab1 = Lab[p1,]; Lab2 = Lab[p2,]
+        C1  = sqrt(sum(Lab1[(2,3)]:^2))
+        C2  = sqrt(sum(Lab2[(2,3)]:^2))
+        SC  = 1 + K1 * sqrt(C1*C2) // asymmetic: 1 + K1 * C1
+        SH  = 1 + K2 * sqrt(C1*C2) // asymmetic: 1 + K2 * C1
+        dL  = Lab1[1] - Lab2[1]
+        dC  = C1 - C2
+        dH2 = sum((Lab1[(2,3)]-Lab2[(2,3)]):^2) - dC^2
+        dL  = dL  / (KL*SL)
+        dC  = dC  / (KC*SC)
+        dH2 = dH2 / (KH*SH)^2
+        D[i] = sqrt(dL^2 + dC^2 + dH2)
+    }
+    return(D)
+}
+
+`RC' `MAIN'::delta_E2000(`RM' Lab, `IntM' P)
+{   // see http://www.brucelindbloom.com/Eqn_DeltaE_CIE2000.html
+    // (need to work in radians: radian = degree * pi() / 180)
+    `Int'  i, n, p1, p2
+    `RS'   dL, dC, dH, Lbar, Cbar, Hbar, G, a1, a2, C1, C2, h1, h2, T, dh, RT
+    `RS'   KL, KC, KH
+    `RR'   Lab1, Lab2
+    `RC'   D
+
+    KL = KC = KH = 1
+    n = rows(Lab)
+    D = J(i = rows(P), 1, .)
+    for (; i; i--) {
+        p1 = P[i,1]; p2 = P[i,2]
+        if (p1<0) p1 = n + 1 + p1
+        if (p2<0) p2 = n + 1 + p2
+        if (p1<1 | p1>n) continue
+        if (p2<1 | p2>n) continue
+        Lab1 = Lab[p1,]; Lab2 = Lab[p2,]
+        Lbar = (Lab1[1] + Lab2[1]) / 2
+        Cbar = (sqrt(sum(Lab1[(2,3)]:^2)) + sqrt(sum(Lab2[(2,3)]:^2))) / 2
+        G    = (1 - sqrt(Cbar^7 / (Cbar^7 + 25^7))) / 2
+        a1   = Lab1[2] * (1 + G)
+        a2   = Lab2[2] * (1 + G)
+        C1   = sqrt(a1^2 + Lab1[3]^2)
+        C2   = sqrt(a2^2 + Lab2[3]^2)
+        Cbar = (C1 + C2) / 2
+        h1   = mod(atan2(a1, Lab1[3]), 2*pi()) // Mata's atan2() is reverse
+        h2   = mod(atan2(a2, Lab2[3]), 2*pi()) // Mata's atan2() is reverse
+        Hbar = (h1 + h2)/2 + (abs(h1-h2)>pi() ? pi() : 0)
+        T    = 1 - 0.17*cos(Hbar - pi()/6)    + 0.24*cos(2*Hbar) + 
+                   0.32*cos(3*Hbar + pi()/30) - 0.20*cos(4*Hbar - 63*pi()/180)
+        dh   = h2 - h1
+        dh   = dh - (abs(dh)>pi() ? sign(dh)*2*pi() : 0)
+        dL   = Lab2[1] - Lab1[1]
+        dC   = C2 - C1
+        dH   = 2 * sqrt(C1*C2) * sin(dh/2)
+        dL = dL / (KL * (1 + 0.015*(Lbar-50)^2/sqrt(20 + (Lbar-50)^2)))
+        dC = dC / (KC * (1 + 0.045*Cbar))
+        dH = dH / (KH * (1 + 0.015*Cbar*T))
+        RT = -2*sqrt(Cbar^7/(Cbar^7 + 25^7)) * 
+             sin(exp(-((Hbar*180/pi() - 275)/25)^2)*pi()/3)
+        D[i] = sqrt(dL^2 + dC^2 + dH^2 + RT*dC*dH)
     }
     return(D)
 }
@@ -3304,7 +3433,7 @@ mata:
         if (p1<1 | p1>n) continue
         if (p2<1 | p2>n) continue
         a = C[p1,]; b = C[p2,]
-        D[i] = sqrt(((a[1]-b[1])):^2 + (a[2]-b[2]):^2 + (a[3]-b[3]):^2)
+        D[i] = sqrt(((a[1]-b[1]))^2 + (a[2]-b[2])^2 + (a[3]-b[3])^2)
     }
     return(D)
 }
@@ -4543,12 +4672,13 @@ mata:
     if (i==0) return(J(0,2,""))
     _sort(keys, 1)
     src = J(i, 1, "")
-    SRC = ("palettes","namedcolors","matplotlib","generators","internal/alias")
+    SRC = ("palettes", "namedcolors", "lsmaps", "generators", "rgbmaps")
     for (;i;i--) {
         t = palettes.get(keys[i])
         if (isstring(t)) continue
-        if (t<=5) src[i] = SRC[t]
-        else      src[i] = SRC[mod(t,5)] + "_personal"
+        if (t==99)     src[i] = "internal/alias"
+        else if (t<10) src[i] = SRC[t]
+        else           src[i] = SRC[t-10] + "_personal"
     }
     keys = ::select(keys, src:!="")
     src  = ::select(src, src:!="")
@@ -4586,21 +4716,24 @@ void `MAIN'::paletteindex() // create palette index
     `RS'  fh
     `SM'  EOF
     `TS'  t
+    
     //   t = 1         palette from palette library
     //   t = 2         color group from namedcolors library
-    //   t = 3         colormap from matplotlib library
+    //   t = 3         colormap from lsmaps library
     //   t = 4         color generator from generators library
-    //   t = 5         internal palette/alias
-    //   t = 6         palette from personal palette library
-    //   t = 7         color group from personal namedcolors library
-    //   t = 8         colormap from personal matplotlib library
-    //   t = 9         color generator from personal generators library
+    //   t = 5         colormap from rgbmaps library
+    //   t = 11        palette from personal palette library
+    //   t = 12        color group from personal namedcolors library
+    //   t = 13        colormap from personal lsmaps library
+    //   t = 14        color generator from personal generators library
+    //   t = 15        colormap from personal rgbmaps library
+    //   t = 99        internal palette/alias
     //   t = <string>  pure alias
     
     EOF = J(0, 0, "")
     tn = "n:"
-    libraries = ("palettes", "namedcolors", "matplotlib", "generators")
-    for (t=1; t<=4; t++) {
+    libraries = ("palettes", "namedcolors", "lsmaps", "generators", "rgbmaps")
+    for (t=1; t<=5; t++) {
         lib = "colrspace_library_" + libraries[t] + ".sthlp"
         fn = findfile(lib)
         if (fn=="") {
@@ -4612,7 +4745,6 @@ void `MAIN'::paletteindex() // create palette index
             if (substr(line,1,2)!=tn) continue // not a palette name
             nm = strtrim(substr(line,3,.))
             if (nm=="") continue // palette name is empty
-            if (t==3) nm = libraries[3] + " " + nm
             palettes.put(nm, t)
             if (t==2) {
                 if (substr(nm,1,4)=="HTML") { // create alias
@@ -4631,40 +4763,45 @@ void `MAIN'::paletteindex() // create palette index
             if (substr(line,1,2)!=tn) continue // not a palette name
             nm = strtrim(substr(line,3,.))
             if (nm=="") continue // palette name is empty
-            if (t==3) nm = libraries[3] + " " + nm // matplotlib
-            palettes.put(nm, t+5)
+            palettes.put(nm, t+10)
         }
         fclose(fh)
     }
-    t = 5
-    palettes.put("HTML"                       , t)
-    palettes.put("HTML redorange"             , t)
-    palettes.put("webcolors"                  , t)
-    palettes.put("webcolors redorange"        , t)
-    palettes.put("viridis"                    , t)
-    palettes.put("magma"                      , t)
-    palettes.put("inferno"                    , t)
-    palettes.put("plasma"                     , t)
-    palettes.put("cividis"                    , t)
-    palettes.put("twilight"                   , t)
-    palettes.put("twilight shifted"           , t)
-    palettes.put("matplotlib twilight shifted", t)
+    t = 99
+    palettes.put("okabe"                      , t)
+    palettes.put("tab10"                      , t)
+    palettes.put("tab20"                      , t)
+    palettes.put("tab20b"                     , t)
+    palettes.put("tab20c"                     , t)
     palettes.put("spmap blues"                , t)
     palettes.put("spmap greens"               , t)
     palettes.put("spmap greys"                , t)
     palettes.put("spmap reds"                 , t)
     palettes.put("spmap rainbow"              , t)
+    palettes.put("HTML"                       , t)
+    palettes.put("HTML redorange"             , t)
+    palettes.put("webcolors"                  , t)
+    palettes.put("webcolors redorange"        , t)
+    palettes.put("twilight shifted"           , t)
+    palettes.put("sb"        , "sb deep")
+    palettes.put("sb6"       , "sb deep6")
+    palettes.put("sb"        , "sb deep")
+    palettes.put("pals"      , "pals kelly")
+    palettes.put("tol"       , "tol muted")
+    palettes.put("carto"     , "carto bold")
+    palettes.put("ptol"      , "ptol qualitative")
+    palettes.put("lin"       , "lin carcolor")
+    palettes.put("sfso"      , "sfso blue")
+    palettes.put("sfso cmyk" , "sfso blue cmyk")
+    palettes.put("w3"        , "w3 default")
+    palettes.put("matplotlib", "matplotlib jet")
+    palettes.put("CET"       , "CET L20")
+    palettes.put("scico"     , "scico batlow")
     palettes.put("HCL"       , "HCL qualitative")
     palettes.put("LCh"       , "LCh qualitative")
     palettes.put("JMh"       , "JMh qualitative")
     palettes.put("HSV"       , "HSV qualitative")
     palettes.put("HSL"       , "HSL qualitative")
-    palettes.put("w3"        , "w3 default")
-    palettes.put("ptol"      , "ptol qualitative")
-    palettes.put("lin"       , "lin carcolor")
-    palettes.put("sfso"      , "sfso blue")
-    palettes.put("sfso cmyk" , "sfso blue cmyk")
-    palettes.put("matplotlib", "matplotlib jet")
 }
 
 void `MAIN'::palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
@@ -4714,15 +4851,17 @@ void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
     
     // read colors
     n = (n0<. ? (n0<0 ? 0 : trunc(n0)) : 15)
-    if      (t==1) Palette_palettes(pal, n)
-    else if (t==2) Palette_namedcolors(pal)
-    else if (t==3) Palette_matplotlib(pal, n, o1, 0) // o1: range
-    else if (t==4) Palette_generators(pal, n, o1, o2, o3, o4) // o#; h, c, l, p
-    else if (t==5) Palette_internal(pal, n, o1)   // o1: range
-    else if (t==6) Palette_palettes(pal, n, "_personal")
-    else if (t==7) Palette_namedcolors(pal, "_personal")
-    else if (t==8) Palette_matplotlib(pal, n, o1, 0, "_personal")
-    else if (t==9) Palette_generators(pal, n, o1, o2, o3, o4, "_personal")
+    if      (t==99) Palette_internal(pal, n, o1)   // o1: range
+    else if (t==1)  Palette_palettes(pal, n)
+    else if (t==2)  Palette_namedcolors(pal)
+    else if (t==3)  Palette_lsmaps(pal, n, o1) // o1: range
+    else if (t==4)  Palette_generators(pal, n, o1, o2, o3, o4) // o#; h, c, l, p
+    else if (t==5)  Palette_rgbmaps(pal, n, o1, 0) // o1: range
+    else if (t==11) Palette_palettes(pal, n, "_personal")
+    else if (t==12) Palette_namedcolors(pal, "_personal")
+    else if (t==13) Palette_lsmaps(pal, n, o1, "_personal")
+    else if (t==14) Palette_generators(pal, n, o1, o2, o3, o4, "_personal")
+    else if (t==15) Palette_rgbmaps(pal, n, o1, 0, "_personal") // o1: range
     else return(0)
     S->name = pal
     
@@ -4731,7 +4870,7 @@ void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
         if (n!=(S->n)) { // only if number of returned colors is unequal
             // the number of requested colors; this is only possible for 
             // palettes that have the -noexpand- (o1) argument
-            if ((S->pclass)=="qualitative") {
+            if (anyof(("qualitative","categorical"), S->pclass)) {
                 if (n<(S->n)) _recycle(n) // select first n colors
                 else if (length(o1)) { // noexpand argument specified
                     if (o1==0) _recycle(n)
@@ -4897,16 +5036,15 @@ void `MAIN'::Palette_namedcolors(`SS' pal0, | `SS' personal)
     Names_set(P[,2])
 }
 
-void `MAIN'::Palette_matplotlib(`SS' pal, `RS' n, `RV' range, `Bool' shift, | `SS' personal)
-{   // get palette from matplotlib library
+void `MAIN'::Palette_lsmaps(`SS' pal, `RS' n, `RV' range, | `SS' personal)
+{   // get palette from lsmaps library
     `Int'  i, j, r
     `SS'   t, tc, td, ts, tr
     `SC'   f, R, G, B
-    `SM'   RGB
     `IntR' rr
     
     // read palette from library
-    f = Palette_read(substr(pal,strpos(pal, " ")+1, .), "matplotlib"+personal)
+    f = Palette_read(pal, "lsmaps"+personal)
     r = rows(f)
     
     // process palette
@@ -4918,35 +5056,48 @@ void `MAIN'::Palette_matplotlib(`SS' pal, `RS' n, `RV' range, `Bool' shift, | `S
         else if (t==ts) S->source = strtrim(substr(f[i],3,.))
         else if (t==tr) {
             rr = strtoreal(tokens(substr(f[i],3,.)))
-            if (length(rr)==1) {
-                RGB = J(rr,3,"")
-                for (j=1;j<=rr;j++) RGB[j,] = tokens(f[++i])
-            }
-            else if (length(rr)==3) {
-                R = J(rr[1],3,"")
-                for (j=1;j<=rr[1];j++) R[j,] = tokens(f[++i])
-                G = J(rr[2],3,"")
-                for (j=1;j<=rr[2];j++) G[j,] = tokens(f[++i])
-                B = J(rr[3],3,"")
-                for (j=1;j<=rr[3];j++) B[j,] = tokens(f[++i])
-            }
-            else {
-                display("{err}invalid colormap definition")
-                exit(error(499))
-            }
-            break
+            R = J(rr[1],3,"")
+            for (j=1;j<=rr[1];j++) R[j,] = tokens(f[++i])
+            G = J(rr[2],3,"")
+            for (j=1;j<=rr[2];j++) G[j,] = tokens(f[++i])
+            B = J(rr[3],3,"")
+            for (j=1;j<=rr[3];j++) B[j,] = tokens(f[++i])
+            rgb_set(lsmap(strtoreal(R), strtoreal(G), strtoreal(B), n, range))
+            return
         }
     }
-    if (length(rr)==1) { // listed colormaps
-        if (args()<4) shift = 0
-        if (shift) {
-            RGB = RGB[|rows(RGB)/2+1,1 \ .,.|] \ RGB[|1,1 \ rows(RGB)/2,.|]
-            RGB = RGB[rows(RGB)::1,]
+}
+
+void `MAIN'::Palette_rgbmaps(`SS' pal, `RS' n, `RV' range, `Bool' shift, | `SS' personal)
+{   // get palette from rgbmaps library
+    `Int'  i, j, r, rr
+    `SS'   t, tc, td, ts, tr
+    `SC'   f
+    `SM'   RGB
+    
+    // read palette from library
+    f = Palette_read(pal, "rgbmaps"+personal)
+    r = rows(f)
+    
+    // process palette
+    tc = "c:"; td = "d:"; ts = "s:"; tr = "r:"
+    for (i=1;i<=r;i++) {
+        t = substr(f[i],1,2)
+        if      (t==tc) S->pclass = strtrim(substr(f[i],3,.))
+        else if (t==td) S->note   = strtrim(substr(f[i],3,.))
+        else if (t==ts) S->source = strtrim(substr(f[i],3,.))
+        else if (t==tr) {
+            rr = strtoreal(tokens(substr(f[i],3,.)))
+            RGB = J(rr,3,"")
+            for (j=1;j<=rr;j++) RGB[j,] = tokens(f[++i])
+            if (shift) {
+                RGB = RGB[|rows(RGB)/2+1,1 \ .,.|] \ RGB[|1,1 \ rows(RGB)/2,.|]
+                RGB = RGB[rows(RGB)::1,]
+            }
+            rgb_set(colipolate(strtoreal(RGB), n, range, ., ., 0, 
+                anyof(("cyclic","circular"), S->pclass)))
+            return
         }
-        rgb_set(colipolate(strtoreal(RGB), n, range))
-    }
-    else { // segmented colormaps
-        rgb_set(lsmap(strtoreal(R), strtoreal(G), strtoreal(B), n, range))
     }
 }
 
@@ -5004,23 +5155,26 @@ void `MAIN'::Palette_generators(`SS' pal, `RS' n, `RV' h, `RV' c, `RV' l, `RV' p
 
 void `MAIN'::Palette_internal(`SS' pal, `RS' n, | `RV' range)
 {   // get internal palette or alias
-    if      (pal=="HTML")                Palette_htmlcolors()
-    else if (pal=="HTML redorange")      Palette_htmlcolors(("red", "orange"))
-    else if (pal=="webcolors")           Palette_htmlcolors()
-    else if (pal=="webcolors redorange") Palette_htmlcolors(("red", "orange"))
-    else if (pal=="viridis")             Palette_matplotlib("matplotlib viridis", n, range, 0)
-    else if (pal=="magma")               Palette_matplotlib("matplotlib magma", n, range, 0)
-    else if (pal=="inferno")             Palette_matplotlib("matplotlib inferno", n, range, 0)
-    else if (pal=="plasma")              Palette_matplotlib("matplotlib plasma", n, range, 0)
-    else if (pal=="cividis")             Palette_matplotlib("matplotlib cividis", n, range, 0)
-    else if (pal=="twilight")            Palette_matplotlib("matplotlib twilight", n, range, 0)
-    else if (pal=="twilight shifted")    Palette_matplotlib("matplotlib twilight", n, range, 1)
-    else if (pal=="matplotlib twilight shifted") Palette_matplotlib("matplotlib twilight", n, range, 1)
+    if (pal=="okabe") {
+        Palette_palettes("cblind", n)
+        // remove gray and update note
+        _select((1,3..S->n))
+        S->note = substr(S->note,1,strpos(S->note,",")-1)
+    }
+    else if (pal=="tab10")               Palette_palettes("d3 10", n)
+    else if (pal=="tab20")               Palette_palettes("d3 20", n)
+    else if (pal=="tab20b")              Palette_palettes("d3 20b", n)
+    else if (pal=="tab20c")              Palette_palettes("d3 20c", n)
     else if (pal=="spmap blues")         Palette_spmap("blues", n)
     else if (pal=="spmap greens")        Palette_spmap("greens", n)
     else if (pal=="spmap greys")         Palette_spmap("greys", n)
     else if (pal=="spmap reds")          Palette_spmap("reds", n)
     else if (pal=="spmap rainbow")       Palette_spmap("rainbow", n)
+    else if (pal=="HTML")                Palette_htmlcolors()
+    else if (pal=="HTML redorange")      Palette_htmlcolors(("red", "orange"))
+    else if (pal=="webcolors")           Palette_htmlcolors()
+    else if (pal=="webcolors redorange") Palette_htmlcolors(("red", "orange"))
+    else if (pal=="twilight shifted")    Palette_rgbmaps("twilight", n, range, 1)
 }
 
 void `MAIN'::Palette_htmlcolors(| `SV' keys)

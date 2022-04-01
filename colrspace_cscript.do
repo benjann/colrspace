@@ -1465,8 +1465,67 @@ S.Colors("red" \ "rgba 0 0 0 .5"); S.mix("lrgb"); assert(S.get("rgba")==(180,0,0
 end
 
 
+/*----------------------------------------------------------------------------*/
+// comparison of S.delta_E74() and S.delta_E2000() against values obtained
+// from calculator at http://www.brucelindbloom.com/; conform that results of
+// S.delta_E94() did not change (cannot use www.brucelindbloom.com for reference
+// values because S.delta_E94() uses symmetric definition)
+mata:
+S = ColrSpace()
+Lab = (50, 0,   0) \
+      (50, 0,   0) \ 
+      (50, 0,   5) \
+      (50, -10, 0) \
+      (50, -10, 5) \
+      (40, 5, -10) \
+      (40, 5, -80)
+Test = (0,         0,          0       ) \
+       (5,         5,          4.494382) \
+       (10,        10,        11.204951) \
+       (11.180340, 11.180340, 11.648765) \
+       (15,        15,        13.593348) \
+       (80.777472, 80.777472, 30.119354)
+S.set(Lab, "Lab")
+P = J(rows(Lab)-1,1,1),(2::rows(Lab))
+Res = (S.delta(P, "E76",1), S.delta(P, "E94",1), S.delta(P, "E2000",1))
+almostequal(Res, Test, 1e-7)
+end
+
+mata:
+S = ColrSpace()
+RGB = (204, 121, 167) \
+      (  0,   0,   0) \ 
+      (255, 255, 255) \
+      (152, 152, 152) \
+      (230, 159,   0) \
+      ( 86, 180, 233) \
+      (  9, 158, 115) \
+      (249, 225, 66)
+Lab = round(S.convert(RGB, "RGB", "Lab"),.0001)
+Lab
+Test = ( 72.963815, 62.697553, 53.114976) \
+       ( 55.801419, 41.485699, 35.799968) \
+       ( 39.998507, 14.392549, 23.778606) \
+       ( 88.595495, 52.661342, 49.005910) \
+       ( 56.716195, 36.080034, 45.505375) \
+       ( 87.120758, 54.407586, 63.261221) \
+       (102.030625, 64.841626, 60.850893)
+// E94-Values from brucelindbloom have different definition; use own values
+// (i.e. only confirm that results did not change)
+Test2 = 72.96381517855268 \
+        55.80141745559246 \
+        39.99850734889985 \
+        46.05573378437322 \
+        36.60386839328375 \
+        52.71783851063115 \
+        58.17817062281278
+S.set(Lab, "Lab")
+P = J(rows(Lab)-1,1,1),(2::rows(Lab))
+Res = (S.delta(P, "E76"), S.delta(P, "E94"), S.delta(P, "E2000"))
+almostequal(Res[,(1,3)], Test[,(1,3)], 1e-7)
+virtuallyequal(Res[,2], Test2)
+end
+
+
 capture noisily log close
 exit
-
-
-

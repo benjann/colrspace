@@ -23,7 +23,24 @@ Installation from GitHub:
 
 Main changes:
 
-    06jun2020
+    01apr2022 (v 1.1.0)
+    - ColrSpace now features many additional palettes and colormaps (e.g. 
+      Wes Anderson palettes, palettes and colormaps from seaborn.pydata.org,
+      Tableau 10 palettes, newer palettes Paul Tol, palettes from Carto, colormaps
+      by Peter Kovesi, colormaps by Fabio Crameri); ColrSpace now provides some 500
+      predefined palettes and colormaps
+    - support for cyclic palettes has been added (and the twilight colormap
+      is now correctly classified as "cyclic")
+    - new S.shift() function (shift positions of colors, wrapping around at end;
+      particularly useful for cyclic paletts)
+    - new S.drop() function (drop individual colors; more convenient than S.select()
+      in some situations)
+    - S.delta() now additionally supports color difference definitions "E94"
+      (1994 CIELAB Delta E definition) and "E2000" (2000 CIELAB Delta E definition)
+    - the system of palette library files has been revised; new library files
+      library_lsmaps and library_rgbmaps are now used in place of library_matplotlib
+
+    06jun2020 (v 1.0.9)
     - support for "_personal" library files added
     
     28may2020
