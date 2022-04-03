@@ -23,7 +23,10 @@ Installation from GitHub:
 
 Main changes:
 
-    01apr2022 (v 1.1.2 )
+    02apr2022 (v 1.1.3)
+    - S.shift() in (-1,1) now applies a proportional shift
+
+    01apr2022 (v 1.1.2)
     - S.pexists() now has a second argument to return the library name
     - library_rbgmaps was incomplete; this is fixed
     - sb6 is now a palette with an own name, not a pure alias

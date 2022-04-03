@@ -1,5 +1,5 @@
 {smcl}
-{* 01apr2022}{...}
+{* 02apr2022}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 {hline}
@@ -2046,12 +2046,15 @@
 
 {pstd}
     To shift the positions of colors up or down, wrapping positions around at
-    the top and bottom, type:
+    the top and bottom, type
 
         {it:S}{cmd:.}[{cmd:add_}]{cmd:shift}[{cmd:_added}]{cmd:(}{it:k}{cmd:)}
 
 {pstd}
-    where {it:k} is an integer specifying the size of the shift. Specify
+    where {it:k} specifies the size of the shift. If {it:k} is in (-1,1),
+    the colors are shifted by trunc({it:k}*n) positions, where n is the total
+    number of colors (proportional shift); if
+    abs({it:k})>=1, the colors are shifted by trunc({it:k}) positions. Specify
     {it:k}>0 ({it:k}<0) for a shift in upward (downward)
     direction. {it:S}{cmd:.shift()} operates on all existing colors; use
     {it:S}{cmd:.shift_added()} if you only want to manipulate the colors

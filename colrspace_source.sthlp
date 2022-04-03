@@ -1,4 +1,4 @@
-*! version 1.1.2  01apr2022  Ben Jann
+*! version 1.1.3  02apr2022  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -2589,7 +2589,7 @@ void `MAIN'::_shift(`Int' k)
     if (k>=.) return // do nothing
     if (k==0) return // do nothing
     n = S->n
-    p = (1::n) :- trunc(k)
+    p = (1::n) :- trunc(abs(k)>=1 ? k : k*n)
     p = mod(p:-1, n) :+ 1
     __select(p)
 }
