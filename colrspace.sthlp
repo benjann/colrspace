@@ -1,5 +1,5 @@
 {smcl}
-{* 02apr2022}{...}
+{* 09apr2022}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 {hline}
@@ -318,7 +318,7 @@
     syntax; for example {cmd:"RGBA 26 71 111 0.7"} is equivalent to
     {cmd:"RGB 26 71 111%70"} or {cmd:"26 71 111%70"} (see the section on
     {help colrspace##string:String input/output} below). A further alternative
-    is to manage opacity using {it:S}{cmd:.opacify()} or {it:S}{cmd:.alpha()} (see
+    is to manage opacity using {it:S}{cmd:.opacity()} or {it:S}{cmd:.alpha()} (see
     {help colrspace##opint:Set/retrieve opacity and intensity}).
 
 {marker RGBA1}{...}
@@ -511,9 +511,6 @@
 
         {it:name} = {it:S}{cmd:.name()}
 
-{pstd}
-    Function {help colrspace##palette:{it:S}{bf:.palette()}} automatically assigns a name.
-
 {marker pclass}{...}
 {dlgtab:Class}
 
@@ -529,9 +526,6 @@
 
         {it:class} = {it:S}{cmd:.pclass()}
 
-{pstd}
-    Function {help colrspace##palette:{it:S}{bf:.palette()}} automatically assigns a class.
-
 {marker note}{...}
 {dlgtab:Description}
 
@@ -545,9 +539,6 @@
 
         {it:note} = {it:S}{cmd:.note()}
 
-{pstd}
-    Function {help colrspace##palette:{it:S}{bf:.palette()}} automatically assigns a description.
-
 {marker source}{...}
 {dlgtab:Source}
 
@@ -560,9 +551,6 @@
     where {it:source} is a string scalar. To retrieve the source, type
 
         {it:source} = {it:S}{cmd:.source()}
-
-{pstd}
-    Function {help colrspace##palette:{it:S}{bf:.palette()}} a source.
 
 {marker isipolate}{...}
 {dlgtab:Interpolation status}
@@ -631,7 +619,7 @@
 
 {marker strinput}{...}
 {p2colset 9 28 30 2}{...}
-{p2col:{it:name}}a color name; this included official Stata's color names as
+{p2col:{it:name}}a color name; this includes official Stata's color names as
     listed in {help colorstyle##colorstyle:{it:colorstyle}}, possible user additions
     provided through style files, as well as a large collection of {help colrspace##colorlist:named colors}
     provided by {cmd:ColrSpace}{p_end}
@@ -1124,8 +1112,10 @@
     {stata colorpalette tab Orange-Blue Light:{bf:Orange-Blue Light}},
     {stata colorpalette tab Temperature:{bf:Temperature}}
     {p_end}
-{p2col:{cmd:tol} [{it:scheme}]}color schemes by Paul Tol
-    ({browse "http://personal.sron.nl/~pault/":personal.sron.nl/~pault}),
+{p2col:{cmd:tol} [{it:scheme}]}color schemes by Paul Tol 
+    ({browse "http://personal.sron.nl/~pault/":personal.sron.nl/~pault}; 
+    using definitions from {browse "http://personal.sron.nl/~pault/data/tol_colors.py":tol_colors.py},
+    which may deviate from {browse "http://personal.sron.nl/~pault/":personal.sron.nl/~pault}),
     where {it:scheme} is as follows
     {p_end}
 {p2col:}qualitative: {stata colorpalette tol bright:{bf:bright}} (8),
@@ -1386,7 +1376,7 @@
 {dlgtab:Colormaps}
 
 {pstd}
-    Colormaps are palettes whose colors are obained by
+    Colormaps are palettes whose colors are obtained by
     {help colrspace##lsmap:linear segmentation} around anchor points or by
     interpolation from a dense grid of RGB values. The syntax for colormaps is
 
@@ -1408,8 +1398,9 @@
      the colormap to be used, with {it:lb} and {it:ub} within [0,1] (values
      smaller than 0 or larger than 1 will be interpreted as 0 or 1, respectively). The
      default is {cmd:(0,1)}. This default can also be selected by typing
-     {cmd:.} (missing). If {it:lb} is larger then {it:ub}, the colors are
-     retrieved in reverse order.
+     {cmd:.} (missing). If {it:lb} is larger than {it:ub}, the colors are
+     retrieved in reverse order. Argument {it:range} has not effect for
+     cyclic (circular) colormaps.
 
 {marker colormapslist}{...}
 {pstd}
@@ -1440,7 +1431,7 @@
 {p2col:}diverging: {stata colorpalette vlag:{bf:vlag}},
     {stata colorpalette icefire:{bf:icefire}}
     {p_end}
-{p2col:{cmd:matplotlib} [{it:map}]}selected colormaps from
+{p2col:{cmd:matplotlib} [{it:map}]}further colormaps from
     {browse "http://matplotlib.orghttp://matplotlib.org/stable/tutorials/colors/colormaps.html":matplotlib.org}
     ({browse "http://dx.doi.org/10.1109/MCSE.2007.55":Hunter 2007}),
     where {it:map} is
@@ -1509,7 +1500,7 @@
     {stata colorpalette CET C4:{bf:C4}},
     {stata colorpalette CET C5:{bf:C5}},
     {stata colorpalette CET C6:{bf:C6}},
-    {stata colorpalette CET C7:{bf:C7}},
+    {stata colorpalette CET C7:{bf:C7}}
     {p_end}
 {p2col:}CVD-friendly: {stata colorpalette CET CBD1:{bf:CBD1}},
     {stata colorpalette CET CBL1:{bf:CBL1}},
@@ -1828,8 +1819,8 @@
         {it:S}{cmd:.}[{cmd:add_}]{cmd:opacity}[{cmd:_added}]{cmd:(}{it:opacity}[{cmd:,} {it:noreplace}]{cmd:)}
 
 {pstd}
-    {it:S}{cmd:.opacity()} sets opacify for all existing colors; use
-    {it:S}{cmd:.opacity_added()} if you only want to set opacify for the
+    {it:S}{cmd:.opacity()} sets opacity for all existing colors; use
+    {it:S}{cmd:.opacity_added()} if you only want to set opacity for the
     colors that have been added last. Furthermore, use
     {it:S}{cmd:.add_opacity()} or {it:S}{cmd:.add_opacity_added()}
     to leave the existing colors unchanged and append a copy of the colors with the
@@ -1858,7 +1849,7 @@
 {pstd}
     where {it:alpha} contains opacity values specified as proportions in [0,1].
 
-{dlgtab:Retrieving opacity}
+{dlgtab:Retrieve opacity}
 
 {pstd}
     To retrieve a real colvector containing the opacity values (as percentages)
@@ -1881,7 +1872,7 @@
     to retrieve opacity values as proportions.
 
 {marker intensity}{...}
-{dlgtab:Setting intensity}
+{dlgtab:Set intensity}
 
 {pstd}
     To set the intensity adjustment multipliers of the colors in {it:S}, type
@@ -1909,7 +1900,7 @@
 {phang}
     {it:noreplace}!=0 specifies that existing intensity adjustment multipliers should not be
     replaced. By default, {it:S}{cmd:.intensity()} resets the intensity multipliers for all colors
-    irrespective of whether they already have an intensity multipliers or not.
+    irrespective of whether they already have an intensity multiplier or not.
 
 {pstd}
     Note that {it:S}{cmd:.intensity()} does not manipulate the stored
@@ -1920,7 +1911,7 @@
     an intensity multiplier, you can use function
     {helpb colrspace##intensify:{it:S}.intensify()}.
 
-{dlgtab:Retrieving intensity}
+{dlgtab:Retrieve intensity}
 
 {pstd}
     To retrieve a real colvector containing the intensity adjustment
@@ -2008,7 +1999,7 @@
     where {it:p} is a real vector of the positions of the colors to be dropped
     (permutation vector). Positive numbers refer to colors from the start;
     negative numbers refer to colors from the end (numbers out of range will
-    ignored). {it:S}{cmd:.select()} operates on all existing colors; use
+    ignored). {it:S}{cmd:.drop()} operates on all existing colors; use
     {it:S}{cmd:.drop_added()} if you only want to manipulate the colors added
     last. Furthermore, use {it:S}{cmd:.add_drop()} or
     {it:S}{cmd:.add_drop_added()} to leave the existing colors unchanged and
@@ -2062,7 +2053,6 @@
     {it:S}{cmd:.add_shift_added()} to leave the existing colors unchanged and
     append the shifted colors.
 
-
 {pstd}
     Examples:
 
@@ -2073,7 +2063,7 @@
 
         . {stata "mata: S = ColrSpace()"}
         . {stata `"mata: S.colors("black red yellow blue green")"'}
-        . {stata "mata: S.order(-2)"}       {it:(drop second last)}
+        . {stata "mata: S.drop(-2)"}       {it:(drop second last)}
         . {stata "mata: S.colors()"}
 
         . {stata "mata: S = ColrSpace()"}
@@ -2120,14 +2110,14 @@
     {it:space} selects the color space in which the colors are
     interpolated. {it:space} can be {cmd:"RGB"}, {cmd:"lRGB"}, {cmd:"HSV"},
     {cmd:"HSL"}, {cmd:"CMYK"}, {cmd:"XYZ"},
-    {cmd:"xyY"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv",}
+    {cmd:"xyY"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv"},
     {cmd:"HCL"}, {cmd:"CAM02} [{help colrspace##CAM02:{it:mask}}]{cmd:"},
     {cmd:"JMh} [{it:{help colrspace##JMh:coefs}}]{cmd:"}, or
     {cmd:"Jab} [{it:{help colrspace##JMh:coefs}}]{cmd:"}
     (lowercase spelling allowed). The default is
-    {cmd:"Jab}. This default can also be selected by typing {cmd:""}. When
+    {cmd:"Jab"}. This default can also be selected by typing {cmd:""}. When
     interpolating from one hue to the next (relevant for {cmd:"HSV"},
-    {cmd:"HSL"}, {cmd:"LCh"}, {cmd:"HCL"}, {cmd:"JMh}, and {cmd:"CAM02"} when
+    {cmd:"HSL"}, {cmd:"LCh"}, {cmd:"HCL"}, {cmd:"JMh"}, and {cmd:"CAM02"} when
     {it:mask} contains {cmd:h}), {it:S}{cmd:.ipolate()} will travel around the
     color wheel in the direction in which the two hues are closer to each other
     (based on the original order of colors in {it:S}; the rule may be violated
@@ -2229,13 +2219,13 @@
     {it:space} selects the color space in which the colors are
     mixed. {it:space} can be {cmd:"RGB"}, {cmd:"lRGB"}, {cmd:"HSV"},
     {cmd:"HSL"}, {cmd:"CMYK"}, {cmd:"XYZ"},
-    {cmd:"xyY"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv",}
+    {cmd:"xyY"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv"},
     {cmd:"HCL"}, {cmd:"CAM02} [{help colrspace##CAM02:{it:mask}}]{cmd:"},
     {cmd:"JMh} [{it:{help colrspace##JMh:coefs}}]{cmd:"}, or
     {cmd:"Jab} [{it:{help colrspace##JMh:coefs}}]{cmd:"}
     (lowercase spelling allowed). The default is {cmd:"Jab"}. This default can
     also be selected by typing {cmd:""}. When mixing hues (relevant for
-    {cmd:"HSV"}, {cmd:"HSL"}, {cmd:"LCh"}, {cmd:"HCL"}, {cmd:"JMh}, and
+    {cmd:"HSV"}, {cmd:"HSL"}, {cmd:"LCh"}, {cmd:"HCL"}, {cmd:"JMh"}, and
     {cmd:"CAM02"} when {it:mask} contains {cmd:h}), {it:S}{cmd:.mix()} will
     compute the mean of angles as described at
     {browse "http://en.wikipedia.org/wiki/Mean_of_circular_quantities":Wikipedia (2018e)}
@@ -2395,7 +2385,7 @@
     CIECAM02 JCh, J' in case of J'M'h or J'a'b'), and then converting the
     colors back (after resetting negative luminance values to zero). Results
     will be identical between {cmd:"Lab"} and {cmd:"LCh"}, between {cmd:"Luv"}
-    as {cmd:"HCL"}, and between {cmd:"JMh"} and {cmd:"Jab"}.
+    and {cmd:"HCL"}, and between {cmd:"JMh"} and {cmd:"Jab"}.
 
 {phang}
     {it:level}!=0 specifies that {it:d} provides luminance levels, not addends. In
@@ -2562,18 +2552,19 @@
 {p2col:{cmd:E76}}1976 CIELAB Delta E definition (euclidean distance
     in the CIE L*a*b* color space)
 {p_end}
-{p2col:{cmd:E94}}1994 CIELAB Delta E definition (based on description by
+{p2col:{cmd:E94}}1994 CIELAB Delta E definition (based on the description by
     {browse "http://www.brucelindbloom.com/Eqn_DeltaE_CIE94.html":Lindbloom 2017b},
-    but using modification by {browse "http://doi.org/10.1002/0470024275":Hunt 2004:670} to avoid asymmetry)
+    but using a modification to make the differences symmetric as suggested
+    by {browse "http://doi.org/10.1002/0470024275":Hunt 2004:670} to avoid asymmetry)
 {p_end}
-{p2col:{cmd:E2000}}2000 CIELAB Delta E definition (based on description given by
+{p2col:{cmd:E2000}}2000 CIELAB Delta E definition (based on the description given by
     {browse "http://www.brucelindbloom.com/Eqn_DeltaE_CIE2000.html":Lindbloom 2017c})
 {p_end}
 {p2col:{it:space}}compute the differences as euclidean distances in the
     respective color space, where {it:space} may be {cmd:RGB}, {cmd:RGB1},
     {cmd:lRGB}, {cmd:XYZ}, {cmd:XYZ1},
     {cmd:xyY1}, {cmd:Lab}, {cmd:LCh}, {cmd:Luv}, {cmd:HCL},
-    {cmd:JCh} (J, C, and h of CIECAM02), or
+    {cmd:JCh} (CIECAM02 JCh), or
     {cmd:JMh}{space 1}[{it:{help colrspace##JMh:coefs}}]
 {p_end}
 
@@ -2709,7 +2700,7 @@
     {it:space} is a string scalar specifying the color space of {it:C}. It can
     be {cmd:"HEX"}, {cmd:"RGB"}, {cmd:"RGB1"}, {cmd:"lRGB"}, {cmd:"HSV"},
     {cmd:"HSL"}, {cmd:"CMYK"}, {cmd:"CMYK1"}, {cmd:"XYZ"}, {cmd:"XYZ1"},
-    {cmd:"xyY"}, {cmd:"xyY1"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv",}
+    {cmd:"xyY"}, {cmd:"xyY1"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv"},
     {cmd:"HCL"}, {cmd:"CAM02} [{help colrspace##CAM02:{it:mask}}]{cmd:"},
     {cmd:"JMh} [{it:{help colrspace##JMh:coefs}}]{cmd:"},
     {cmd:"Jab} [{it:{help colrspace##JMh:coefs}}]{cmd:"}, {cmd:"RGBA"}, or {cmd:"RGBA1"}
@@ -2749,7 +2740,7 @@
     where {it:space} is a string scalar specifying the color space. It can
     be {cmd:"HEX"}, {cmd:"RGB"}, {cmd:"RGB1"}, {cmd:"lRGB"}, {cmd:"HSV"},
     {cmd:"HSL"}, {cmd:"CMYK"}, {cmd:"CMYK1"}, {cmd:"XYZ"}, {cmd:"XYZ1"},
-    {cmd:"xyY"}, {cmd:"xyY1"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv",}
+    {cmd:"xyY"}, {cmd:"xyY1"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv"},
     {cmd:"HCL"}, {cmd:"CAM02} [{help colrspace##CAM02:{it:mask}}]{cmd:"},
     {cmd:"JMh} [{it:{help colrspace##JMh:coefs}}]{cmd:"},
     {cmd:"Jab} [{it:{help colrspace##JMh:coefs}}]{cmd:"}, {cmd:"RGBA"}, or {cmd:"RGBA1"}
@@ -2807,7 +2798,7 @@
     and {it:to} is a destination color space. {it:from} and {it:to} can be
     {cmd:"HEX"}, {cmd:"RGB"}, {cmd:"RGB1"}, {cmd:"lRGB"}, {cmd:"HSV"},
     {cmd:"HSL"}, {cmd:"CMYK"}, {cmd:"CMYK1"}, {cmd:"XYZ"}, {cmd:"XYZ1"},
-    {cmd:"xyY"}, {cmd:"xyY1"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv",}
+    {cmd:"xyY"}, {cmd:"xyY1"}, {cmd:"Lab"}, {cmd:"LCh"}, {cmd:"Luv"},
     {cmd:"HCL"}, {cmd:"CAM02} [{help colrspace##CAM02:{it:mask}}]{cmd:"},
     {cmd:"JMh} [{it:{help colrspace##JMh:coefs}}]{cmd:"}, or
     {cmd:"Jab} [{it:{help colrspace##JMh:coefs}}]{cmd:"}
@@ -2833,7 +2824,7 @@
 
 {pstd}
     {it:S}{cmd:.convert()} can also be used for grayscale conversion or
-    color vision deficiency simulation (see below). The syntax is
+    color vision deficiency simulation. The syntax is
 
         {it:C} = {it:S}{cmd:.convert(}{it:C0}{cmd:,} {it:from}{cmd:,} {cmd:"gray"}[{cmd:,} {it:p}{cmd:,} {it:method}]{cmd:)}
 
@@ -2904,7 +2895,7 @@
 {pstd}
     {it:libname} will be replaced by the name of the {cmd:ColrSpace} library
     in which the palette was found. If no matching palette is found,
-    {it:libname} is left unchanged.
+    {it:libname} will be left unchanged.
 
 {marker palettes}{...}
 {dlgtab:Obtain list of available palettes}
@@ -3307,7 +3298,7 @@
     To retrieve the predefined transformation matrices on which chromatic adaption is based,
     type
 
-        {it:M} = {it:S}{cmd:.tmatrix(}{it:name}{cmd:)}
+        {it:M} = {it:S}{cmd:.tmatrix(}[{it:name}]{cmd:)}
 
 {pstd}
     where {it:name} is {cmd:"Bfd"}, {cmd:"identity"},
