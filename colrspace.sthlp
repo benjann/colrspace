@@ -1,7 +1,9 @@
 {smcl}
-{* 09apr2022}{...}
+{* 11apr2022}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
+({browse "http://ideas.repec.org/p/bss/wpaper/42.html":PDF manual}){...}
+{right:{browse "http://repec.sowi.unibe.ch/stata/palettes/"}}
 {hline}
 
 {title:Title}
@@ -3542,8 +3544,17 @@
     Thanks for citing this software as
 
 {pmore}
-    Jann, B. (2019). colrspace: Stata module providing a class-based color management system in Mata. Available from
+    Jann, B. (2019). colrspace: Stata module providing a class-based color
+    management system in Mata. Available from
     {browse "http://ideas.repec.org/c/boc/bocode/s458597.html"}.
+
+{pstd}
+    or
+
+{pmore}
+    Jann, Ben (2022). ColrSpace: A Mata class for color management. University
+    of Bern Social Sciences Working Papers No. 42. Available from
+    {browse "http://ideas.repec.org/p/bss/wpaper/42.html"}. 
 
 
 {marker alsosee}{...}
