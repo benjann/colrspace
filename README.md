@@ -23,6 +23,10 @@ Installation from GitHub:
 
 Main changes:
 
+    17apr2022
+    - colrspace_library_rgbmaps: palette -matplotlib turbo- had a wrong name
+      (just -turbo- instead of -matplotlib turbo-); this is fixed
+
     02apr2022 (v 1.1.3)
     - S.shift() in (-1,1) now applies a proportional shift
 

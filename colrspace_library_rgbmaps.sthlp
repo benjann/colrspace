@@ -1,4 +1,4 @@
-*! version 1.0.0  29mar2022  Ben Jann
+*! version 1.0.1  17apr2022  Ben Jann
 * {smcl}
 * {title:ColrSpace rgbmaps library}
 * 
@@ -1850,8 +1850,8 @@ r:510
 .88554714811952384 .84987174283631584 .88336206121170946
 .88571155122845646 .85002186115856315 .88572538990087124
 * {smcl}
-* {title:turbo}{asis}
-n:turbo
+* {title:matplotlib turbo}{asis}
+n:matplotlib turbo
 c:sequential
 d:turbo colormap from matplotlib.org
 s:https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/_cm_listed.py
