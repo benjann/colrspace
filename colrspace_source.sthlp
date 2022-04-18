@@ -1,4 +1,4 @@
-*! version 1.1.3  02apr2022  Ben Jann
+*! version 1.1.4  18apr2022  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -5225,6 +5225,9 @@ void `MAIN'::Palette_htmlcolors(| `SV' keys)
             I = I \ S->info
         }
         p = ::order(N,1)  // sort colors by name
+        C = C[p,]; N = N[p]; I = I[p]
+        // remove doubles
+        p = selectindex(N :!= (N[|2\.|] \ N[1]))
         C = C[p,]; N = N[p]; I = I[p]
     }
     rgb_set(C)

@@ -23,6 +23,9 @@ Installation from GitHub:
 
 Main changes:
 
+    18apr2022 (v 1.1.4)
+    - palette HTML contained duplicates; this is fixed
+
     17apr2022
     - colrspace_library_rgbmaps: palette -matplotlib turbo- had a wrong name
       (just -turbo- instead of -matplotlib turbo-); this is fixed
