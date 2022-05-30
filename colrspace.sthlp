@@ -1184,7 +1184,7 @@
     {p_end}
 {p2col:{cmd:carto} [{it:scheme}]}color schemes from {browse "http://carto.com/carto-colors/":carto.com/carto-colors}
     {p_end}
-{p2col:}qualitative (2-11): {stata colorpalette carto Antique:{bf:Antique}},
+{p2col:}qualitative (3-12): {stata colorpalette carto Antique:{bf:Antique}},
     {stata colorpalette carto Bold:{bf:Bold}} (default),
     {stata colorpalette carto Pastel:{bf:Pastel}},
     {stata colorpalette carto Prism:{bf:Prism}},
