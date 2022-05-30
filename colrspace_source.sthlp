@@ -1,4 +1,4 @@
-*! version 1.1.4  18apr2022  Ben Jann
+*! version 1.1.5  30may2022  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -4791,7 +4791,6 @@ void `MAIN'::paletteindex() // create palette index
     palettes.put("tab20"                      , t)
     palettes.put("tab20b"                     , t)
     palettes.put("tab20c"                     , t)
-    palettes.put("sb6"                        , t)
     palettes.put("spmap blues"                , t)
     palettes.put("spmap greens"               , t)
     palettes.put("spmap greys"                , t)
@@ -4803,6 +4802,7 @@ void `MAIN'::paletteindex() // create palette index
     palettes.put("webcolors redorange"        , t)
     palettes.put("twilight shifted"           , t)
     palettes.put("sb"        , "sb deep")
+    palettes.put("sb6"       , "sb deep6")
     palettes.put("pals"      , "pals kelly")
     palettes.put("tol"       , "tol muted")
     palettes.put("carto"     , "carto bold")
@@ -5183,7 +5183,6 @@ void `MAIN'::Palette_internal(`SS' pal, `RS' n, | `RV' range)
     else if (pal=="tab20")               Palette_palettes("d3 20", n)
     else if (pal=="tab20b")              Palette_palettes("d3 20b", n)
     else if (pal=="tab20c")              Palette_palettes("d3 20c", n)
-    else if (pal=="sb6")                 Palette_palettes("sb deep6", n)
     else if (pal=="spmap blues")         Palette_spmap("blues", n)
     else if (pal=="spmap greens")        Palette_spmap("greens", n)
     else if (pal=="spmap greys")         Palette_spmap("greys", n)

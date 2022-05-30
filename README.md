@@ -23,6 +23,11 @@ Installation from GitHub:
 
 Main changes:
 
+    30may2022 (v 1.1.5)
+    - the -pals- collection no longer has the -pals- prefix (e.g. -pals alphabet- is
+      now provided as -alphabet-)
+    - sb6 is now a simple alias for sb deep6, not a palette with an own name
+
     18apr2022 (v 1.1.4)
     - palette HTML contained duplicates; this is fixed
 

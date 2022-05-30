@@ -1,4 +1,4 @@
-*! version 1.0.1  24feb2022  Ben Jann
+*! version 1.0.2  30may2022  Ben Jann
 * {smcl}
 * {title:ColrSpace palettes library}
 * 
@@ -2655,53 +2655,53 @@ d:diverging palette from Tableau 10
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:#529985,#6c9e6e,#99b059,#dbcf47,#ebc24b,#e3a14f,#c26b51
 * {smcl}
-* {title:pals alphabet}{asis}
-n:pals alphabet
+* {title:alphabet}{asis}
+n:alphabet
 c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:#F0A0FF,#0075DC,#993F00,#4C005C,#191919,#005C31,#2BCE48,#FFCC99,#808080,#94FFB5,#8F7C00,#9DCC00,#C20088,#003380,#FFA405,#FFA8BB,#426600,#FF0010,#5EF1F2,#00998F,#E0FF66,#740AFF,#990000,#FFFF80, #FFE100,#FF5005
 N:amethyst,blue,caramel,damson,ebony,forest,green,honeydew,iron,jade,khaki,lime,magenta,navy,orange,pink,quagmire,red,sky,turquoise,uranium,violet,wine,xanthin,yellow,zinnia
 * {smcl}
-* {title:pals alphabet2}{asis}
-n:pals alphabet2
+* {title:alphabet2}{asis}
+n:alphabet2
 c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:#AA0DFE,#3283FE,#85660D,#782AB6,#565656,#1C8356,#16FF32,#F7E1A0,#E2E2E2,#1CBE4F,#C4451C,#DEA0FD,#FE00FA,#325A9B,#FEAF16,#F8A19F,#90AD1C,#F6222E,#1CFFCE,#2ED9FF,#B10DA1,#C075A6,#FC1CBF,#B00068,#FBE426,#FA0087
 N:amethyst,blue,caramel,damson,ebony,forest,green,honey,iron,jade,kingcrab,lavender,magenta,navy,orange,pink,quagmire,red,sea,turquoise,ultraviolet,violet,wine,xanthin,yellow,zinnia
 * {smcl}
-* {title:pals cols25}{asis}
-n:pals cols25
+* {title:cols25}{asis}
+n:cols25
 c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:#1F78C8,#ff0000,#33a02c,#6A33C2,#ff7f00,#565656,#FFD700,#a6cee3,#FB6496,#b2df8a,#CAB2D6,#FDBF6F,#999999,#EEE685,#C8308C,#FF83FA,#C814FA,#0000FF,#36648B,#00E2E5,#00FF00,#778B00,#BEBE00,#8B3B00,#A52A3C
 * {smcl}
-* {title:pals polychrome}{asis}
-n:pals polychrome
+* {title:polychrome}{asis}
+n:polychrome
 c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:#5A5156,#E4E1E3,#F6222E,#FE00FA,#16FF32,#3283FE,#FEAF16,#B00068,#1CFFCE,#90AD1C,#2ED9FF,#DEA0FD,#AA0DFE,#F8A19F,#325A9B,#C4451C,#1C8356,#85660D,#B10DA1,#FBE426,#1CBE4F,#FA0087,#FC1CBF,#F7E1A0,#C075A6,#782AB6,#AAF400,#BDCDFF,#822E1C,#B5EFB5,#7ED7D1,#1C7F93,#D85FF7,#683B79,#66B0FF,#3B00FB
 N:Dark_Purplish_Gray,Purplish_White,Vivid_Red,Vivid_Purple,Vivid_Yellowish_Green,Strong_Purplish_Blue,Vivid_Orange_Yellow,Vivid_Purplish_Red,Brilliant_Green,Vivid_Yellow_Green,Vivid_Blue,Brilliant_Purple,Vivid_Violet,Strong_Pink,Strong_Blue,Strong_Reddish_Orange,Vivid_Green,Light_Olive_Brown,Vivid_Reddish_Purple,Vivid_Greenish_Yellow,Vivid_Yellowish_Green,Vivid_Red,Vivid_Purplish_Red,Pale_Yellow,Strong_Reddish_Purple,Vivid_Violet,Vivid_Yellow_Green,Very_Light_Blue,Strong_Reddish_Brown,Very_Light_Yellowish_Green,Very_Light_Bluish_Green,Deep_Greenish_Blue,Vivid_Purple,Deep_Purple,Brilliant_Blue,Vivid_Violet
 * {smcl}
-* {title:pals glasbey}{asis}
-n:pals glasbey
+* {title:glasbey}{asis}
+n:glasbey
 c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:0 0 255,255 0 0,0 255 0,0 0 51,255 0 182,0 83 0,255 211 0,0 159 255,154 77 66,0 255 190,120 63 193,31 150 152,255 172 253,177 204 113,241 8 92,254 143 66,221 0 255,32 26 1,114 0 85,118 108 149,2 173 36,200 255 0,136 108 0,255 183 159,133 133 103,161 3 0,20 249 255,0 71 158,220 94 147,147 212 255,0 76 255,242 243 24
 * {smcl}
-* {title:pals kelly}{asis}
-n:pals kelly
+* {title:kelly}{asis}
+n:kelly
 c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:242 243 244,34 34 34,243 195 0,135 86 146,243 132 0,161 202 241,190 0 50,194 178 128,132 132 130,0 136 86,230 143 172,0 103 165,249 147 121,96 78 151,246 166 0,179 68 108,220 211 0,136 45 23,141 182 0,101 69 34,226 88 34,43 61 38
 * {smcl}
-* {title:pals watlington}{asis}
-n:pals watlington
+* {title:watlington}{asis}
+n:watlington
 c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
