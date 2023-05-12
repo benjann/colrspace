@@ -1,4 +1,4 @@
-*! version 1.1.5  30may2022  Ben Jann
+*! version 1.1.6  12may2023  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -66,6 +66,7 @@ local TM     transmorphic matrix
 local PV     pointer vector
 local PS     pointer scalar
 local PData  pointer (`Data') scalar
+local PAA    pointer (`AA') scalar
 // boolean
 local Bool   real scalar
 local BoolC  real colvector
@@ -367,7 +368,7 @@ class `MAIN' {
     public:
         `SM'    namedcolors()
     private:
-        `AA'    namedcolors
+        `PAA'   namedcolors
         void    namedcolorindex()
         `Bool'  _namedcolorindex()
     
@@ -377,9 +378,9 @@ class `MAIN' {
         `SM'    palettes()
         void    palette(), add_palette()
     private:
-        `AA'    palettes
+       `PAA'    palettes
         `Int'   parse_palette()
-        void    paletteindex()
+        void    paletteindex(), _paletteindex()
         `Bool'  Palette()
         `SC'    Palette_read()
         void    Palette_palettes(), Palette_namedcolors(), Palette_lsmaps(),
@@ -404,7 +405,6 @@ mata:
 void `MAIN'::new()
 {
     clear()
-    clearindex()
     clearsettings()
     SPACES   = ("CMYK1", "RGB1", "lRGB", "HSV", "HSL", "XYZ", "xyY", 
                 "Lab", "LCh", "Luv", "HCL", "CAM02", "JMh", "Jab")'
@@ -430,10 +430,10 @@ void `MAIN'::clear()
 
 void `MAIN'::clearindex()
 {
-    palettes.clear()
-    palettes.notfound(0)
-    namedcolors.clear()
-    namedcolors.notfound("")
+    palettes = NULL
+    rmexternal("ColrSpace_paletteindex")
+    namedcolors = NULL
+    rmexternal("ColrSpace_namedcolorindex")
 }
 
 void `MAIN'::clearsettings()
@@ -1925,8 +1925,8 @@ void `MAIN'::Colors_set(`SV' C)
 
 `Bool' `MAIN'::isnamedcolor(`SS' s) // check for exact match, including case
 {
-    if (namedcolors.N()==0) namedcolorindex()
-    return(namedcolors.exists(s))
+    if (namedcolors==NULL) namedcolorindex()
+    return(namedcolors->exists(s))
 }
 
 `SS' `MAIN'::parse_namedcolor(`SS' s0)
@@ -1934,12 +1934,12 @@ void `MAIN'::Colors_set(`SV' C)
     `SS'  s, c
     
     // namedcolors already filled-in because isnamedcolor() has been called
-    c = namedcolors.get(s0) // only finds exact match, including case
+    c = namedcolors->get(s0) // only finds exact match, including case
     if (c=="") {
-        s = findkey(s0, namedcolors.keys()) // ignore case and allow abbreviation
+        s = findkey(s0, namedcolors->keys()) // ignore case and allow abbreviation
         if (s!="") {
             s0 = s
-            c = namedcolors.get(s0)
+            c = namedcolors->get(s0)
         }
     }
     return(c)
@@ -4596,8 +4596,8 @@ mata:
     `Int' i
     `SC'  keys, hex
     
-    if (namedcolors.N()==0) namedcolorindex()
-    keys = namedcolors.keys()
+    if (namedcolors==NULL) namedcolorindex()
+    keys = namedcolors->keys()
     if (pattern!="") {
         if (args()<2) strict = 0
         if (strict) keys = ::select(keys, strmatch(keys, pattern))
@@ -4606,17 +4606,32 @@ mata:
     _sort(keys, 1)
     i = rows(keys)
     hex = J(i,1,"")
-    for (i=rows(keys); i; i--) hex[i] = namedcolors.get(keys[i])
+    for (i=rows(keys); i; i--) hex[i] = namedcolors->get(keys[i])
     return((keys,hex))
 }
 
 void `MAIN'::namedcolorindex()
 {
+    `Bool' brk
+    
+    namedcolors = findexternal("ColrSpace_namedcolorindex")
+    if (namedcolors!=NULL) {
+        if (classname(*namedcolors)=="AssociativeArray") return
+        namedcolors = NULL
+        rmexternal("ColrSpace_namedcolorindex")
+    }
+    brk = setbreakintr(0)
+    namedcolors = crexternal("ColrSpace_namedcolorindex")
+    *namedcolors = AssociativeArray()
+    namedcolors->notfound("")
     if (_namedcolorindex("namedcolors")) {
+        namedcolors = NULL
+        rmexternal("ColrSpace_namedcolorindex")
         display("{err}colrspace_library_namedcolors.sthlp not found")
         exit(error(601))
     }
     (void) _namedcolorindex("namedcolors_personal")
+    (void) setbreakintr(brk)
 }
 
 `Bool' `MAIN'::_namedcolorindex(`SS' lib)
@@ -4638,7 +4653,7 @@ void `MAIN'::namedcolorindex()
         c = substr(line,1,l-1)
         nm = strtrim(substr(line,l,.))
         if (nm=="") continue // color name is missing
-        namedcolors.put(nm, c)
+        namedcolors->put(nm, c)
     }
     fclose(fh)
     return(0)
@@ -4658,7 +4673,7 @@ mata:
     `SS'  pal
     `SR'  SRC
     
-    if (palettes.N()==0) paletteindex()
+    if (palettes==NULL) paletteindex()
     pal = pal0
     t = parse_palette(pal)
     if (t) {
@@ -4679,8 +4694,8 @@ mata:
     `SR'  SRC
     `TV'  t
     
-    if (palettes.N()==0) paletteindex()
-    keys = palettes.keys()
+    if (palettes==NULL) paletteindex()
+    keys = palettes->keys()
     if (pattern!="") {
         if (args()<2) strict = 0
         if (strict) keys = ::select(keys, strmatch(keys, pattern))
@@ -4692,7 +4707,7 @@ mata:
     src = J(i, 1, "")
     SRC = ("palettes", "namedcolors", "lsmaps", "generators", "rgbmaps")
     for (;i;i--) {
-        t = palettes.get(keys[i])
+        t = palettes->get(keys[i])
         if (isstring(t)) continue
         if (t==99)     src[i] = "internal/alias"
         else if (t<10) src[i] = SRC[t]
@@ -4708,26 +4723,44 @@ mata:
     `SS' p
     `TV' t
     
-    t = palettes.get(p0) // only finds exact match, including case
+    t = palettes->get(p0) // only finds exact match, including case
     if (isstring(t)) {
         p0 = t
-        t = palettes.get(p0)
+        t = palettes->get(p0)
     }
     if (t==0) {
-        p = findkey(p0, palettes.keys(), "s2") // ignore case and allow abbreviation
+        p = findkey(p0, palettes->keys(), "s2") // ignore case and allow abbreviation
         if (p!="") {
             p0 = p
-            t = palettes.get(p0)
+            t = palettes->get(p0)
             if (isstring(t)) {
                 p0 = t
-                t = palettes.get(p0)
+                t = palettes->get(p0)
             }
         }
     }
     return(t)
 }
 
-void `MAIN'::paletteindex() // create palette index
+void `MAIN'::paletteindex()
+{
+    `Bool' brk
+    
+    palettes = findexternal("ColrSpace_paletteindex")
+    if (palettes!=NULL) {
+        if (classname(*palettes)=="AssociativeArray") return
+        palettes = NULL
+        rmexternal("ColrSpace_paletteindex")
+    }
+    brk = setbreakintr(0)
+    palettes = crexternal("ColrSpace_paletteindex")
+    *palettes = AssociativeArray()
+    palettes->notfound(0)
+    _paletteindex()
+    (void) setbreakintr(brk)
+}
+
+void `MAIN'::_paletteindex() // create palette index
 {
     `SS'  lib, fn, line, nm, tn
     `SR'  libraries
@@ -4763,11 +4796,11 @@ void `MAIN'::paletteindex() // create palette index
             if (substr(line,1,2)!=tn) continue // not a palette name
             nm = strtrim(substr(line,3,.))
             if (nm=="") continue // palette name is empty
-            palettes.put(nm, t)
+            palettes->put(nm, t)
             if (t==2) {
                 if (substr(nm,1,4)=="HTML") { // create alias
                     nm = "webcolors" + substr(nm,5,.)
-                    palettes.put(nm, t)
+                    palettes->put(nm, t)
                 }
             }
         }
@@ -4781,44 +4814,44 @@ void `MAIN'::paletteindex() // create palette index
             if (substr(line,1,2)!=tn) continue // not a palette name
             nm = strtrim(substr(line,3,.))
             if (nm=="") continue // palette name is empty
-            palettes.put(nm, t+10)
+            palettes->put(nm, t+10)
         }
         fclose(fh)
     }
     t = 99
-    palettes.put("okabe"                      , t)
-    palettes.put("tab10"                      , t)
-    palettes.put("tab20"                      , t)
-    palettes.put("tab20b"                     , t)
-    palettes.put("tab20c"                     , t)
-    palettes.put("spmap blues"                , t)
-    palettes.put("spmap greens"               , t)
-    palettes.put("spmap greys"                , t)
-    palettes.put("spmap reds"                 , t)
-    palettes.put("spmap rainbow"              , t)
-    palettes.put("HTML"                       , t)
-    palettes.put("HTML redorange"             , t)
-    palettes.put("webcolors"                  , t)
-    palettes.put("webcolors redorange"        , t)
-    palettes.put("twilight shifted"           , t)
-    palettes.put("sb"        , "sb deep")
-    palettes.put("sb6"       , "sb deep6")
-    palettes.put("pals"      , "pals kelly")
-    palettes.put("tol"       , "tol muted")
-    palettes.put("carto"     , "carto bold")
-    palettes.put("ptol"      , "ptol qualitative")
-    palettes.put("lin"       , "lin carcolor")
-    palettes.put("sfso"      , "sfso blue")
-    palettes.put("sfso cmyk" , "sfso blue cmyk")
-    palettes.put("w3"        , "w3 default")
-    palettes.put("matplotlib", "matplotlib jet")
-    palettes.put("CET"       , "CET L20")
-    palettes.put("scico"     , "scico batlow")
-    palettes.put("HCL"       , "HCL qualitative")
-    palettes.put("LCh"       , "LCh qualitative")
-    palettes.put("JMh"       , "JMh qualitative")
-    palettes.put("HSV"       , "HSV qualitative")
-    palettes.put("HSL"       , "HSL qualitative")
+    palettes->put("okabe"                      , t)
+    palettes->put("tab10"                      , t)
+    palettes->put("tab20"                      , t)
+    palettes->put("tab20b"                     , t)
+    palettes->put("tab20c"                     , t)
+    palettes->put("spmap blues"                , t)
+    palettes->put("spmap greens"               , t)
+    palettes->put("spmap greys"                , t)
+    palettes->put("spmap reds"                 , t)
+    palettes->put("spmap rainbow"              , t)
+    palettes->put("HTML"                       , t)
+    palettes->put("HTML redorange"             , t)
+    palettes->put("webcolors"                  , t)
+    palettes->put("webcolors redorange"        , t)
+    palettes->put("twilight shifted"           , t)
+    palettes->put("sb"        , "sb deep")
+    palettes->put("sb6"       , "sb deep6")
+    palettes->put("pals"      , "pals kelly")
+    palettes->put("tol"       , "tol muted")
+    palettes->put("carto"     , "carto bold")
+    palettes->put("ptol"      , "ptol qualitative")
+    palettes->put("lin"       , "lin carcolor")
+    palettes->put("sfso"      , "sfso blue")
+    palettes->put("sfso cmyk" , "sfso blue cmyk")
+    palettes->put("w3"        , "w3 default")
+    palettes->put("matplotlib", "matplotlib jet")
+    palettes->put("CET"       , "CET L20")
+    palettes->put("scico"     , "scico batlow")
+    palettes->put("HCL"       , "HCL qualitative")
+    palettes->put("LCh"       , "LCh qualitative")
+    palettes->put("JMh"       , "JMh qualitative")
+    palettes->put("HSV"       , "HSV qualitative")
+    palettes->put("HSL"       , "HSL qualitative")
 }
 
 void `MAIN'::palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
@@ -4861,7 +4894,7 @@ void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
     `SS'  pal
     
     // find palette
-    if (palettes.N()==0) paletteindex()
+    if (palettes==NULL) paletteindex()
     pal = pal0
     t = parse_palette(pal)
     if (t==0) return(0)
@@ -5213,11 +5246,11 @@ void `MAIN'::Palette_htmlcolors(| `SV' keys)
         }
     }
     else {
-        keys = palettes.keys()
+        keys = palettes->keys()
         keys = ::select(keys, substr(keys,1,4):=="HTML")
         k = length(keys)
         for (i=1;i<=k;i++) {
-            if (palettes.get(keys[i])!=2) continue // palette is not from namedcolors library
+            if (palettes->get(keys[i])!=2) continue // palette is not from namedcolors library
             Palette_namedcolors(keys[i])
             C = C \ S->RGB
             N = N \ S->names

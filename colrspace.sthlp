@@ -1,5 +1,5 @@
 {smcl}
-{* 30may2022}{...}
+{* 12may2023}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 ({browse "http://ideas.repec.org/p/bss/wpaper/42.html":PDF manual}){...}
@@ -340,7 +340,7 @@
 {p2col:{helpb colrspace##opint:{it:S}.alpha()}}set/retrieve opacity{p_end}
 {p2col:{helpb colrspace##chadapt:{it:S}.chadapt()}}set chromatic adaption method{p_end}
 {p2col:{helpb colrspace##clear:{it:S}.clear()}}remove all colors and meta data{p_end}
-{p2col:{helpb colrspace##clearindex:{it:S}.clearindex()}}clear internal look-up tables{p_end}
+{p2col:{helpb colrspace##clearindex:{it:S}.clearindex()}}clear external look-up tables{p_end}
 {p2col:{helpb colrspace##settings:{it:S}.clearsettings()}}clear color space settings{p_end}
 {p2col:{helpb colrspace##clip:{it:S}.clip()}}helper function for clipping{p_end}
 {p2col:{helpb colrspace##contrast:{it:S}.contrast()}}compute contrast ratios{p_end}
@@ -446,27 +446,42 @@
         {it:S}{cmd:.clear()}
 
 {pstd}
-    This will remove all colors and meta data from {it:S}.
+    This will remove all colors from {it:S}.
 
 {pstd}
-    Color space settings are not affected {it:S}{cmd:.clear()}. Use
+    Color space settings are not affected by {it:S}{cmd:.clear()}. Use
     {help colrspace##settings:{it:S}{bf:.clearsettings()}} if you want to reset the
     color space settings.
 
+{pstd}
+    The external look-up tables are not affected by {it:S}{cmd:.clear()}. Use
+    {help colrspace##clearindex:{it:S}{bf:.clearindex()}} if you want to clear the
+    look-up tables.
+
 {marker clearindex}{...}
-{dlgtab:Clear internal look-up tables}
+{dlgtab:Clear external look-up tables}
 
 {pstd}
     Some of the functions below make use of look-up tables for palette names
-    and named colors. {cmd:ColrSpace} stores these tables in {it:S}
-    for reasons of efficiency. To remove these tables, type
+    and named colors. {cmd:ColrSpace} stores these tables as external global
+    objects for reasons of efficiency (the names of the external globals are
+    {bf:ColrSpace_paletteindex} and {cmd:ColrSpace_namedcolorindex}). To
+    ulink these objects from {it:S} and remove them from memory, type
 
         {it:S}{cmd:.clearindex()}
 
 {pstd}
-    This frees a little bit of memory, which may be relevant if you intend to
-    create a lot of {cmd:ColrSpace} objects. The tables will be rebuilt
-    automatically if a function is called that makes use of them.
+    The tables will be rebuilt automatically if a function is called that
+    makes use of them.
+
+{pstd}
+    Note that the memory consumed by the look-up tables will only be freed if
+    there are no other {cmd:ColrSpace} objects in memory that are linked to
+    them. That is, {it:S}{cmd:.clearindex()} removes the links to the look-up
+    tables in {it:S} and also drops the external globals, but it does not clear
+    the links that may exist in other {cmd:ColrSpace} objects. If
+    the tables are rebuilt, these other {cmd:ColrSpace} objects will remain linked
+    to the old copy of the tables.
 
 
 {marker meta}{...}
