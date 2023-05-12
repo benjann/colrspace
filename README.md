@@ -23,6 +23,12 @@ Installation from GitHub:
 
 Main changes:
 
+    12may2023 (v 1.1.6)
+    - the index of named colors and the index of palettes are now stored as
+      external objects "ColrSpace_paletteindex" and "ColrSpace_namedcolorindex" so
+      that they only need to be constructed once in a Stata session; this increases
+      speed and reduces memory footprint if working with multiple ColrSpace objects
+
     30may2022 (v 1.1.5)
     - the qualitative carto palettes were not sensitive to the number of
       requested colors; this is fixed
