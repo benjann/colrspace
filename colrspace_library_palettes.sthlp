@@ -1,4 +1,4 @@
-*! version 1.0.2  30may2022  Ben Jann
+*! version 1.0.3  17may2024  Ben Jann
 * {smcl}
 * {title:ColrSpace palettes library}
 * 
@@ -2706,3 +2706,9 @@ c:qualitative
 d:qualitative palette from pals package in R (kwstat.github.io/pals)
 s:https://raw.githubusercontent.com/jrnold/ggthemes/main/data-raw/theme-data/tableau.yml, retrieved 31mar2022
 P:0 0 0,87 87 87,173 35 35,42 75 215,29 105 20,129 74 25,129 38 192,160 160 160,129 197 122,157 175 255,41 208 208,255 146 51,255 238 51,233 222 187,255 205 243,242 243 244
+* {smcl}
+* {title:stc}{asis}
+n:st
+c:qualitative
+d:colors used for p1 to p15 in Stata's stcolor scheme
+P:stc1,stc2,stc3,stc4,stc5,stc6,stc7,stc8,stc9,stc10,stc11,stc12,stc13,stc14,stc15

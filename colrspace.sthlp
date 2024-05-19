@@ -1,5 +1,5 @@
 {smcl}
-{* 12may2023}{...}
+{* 18may2024}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 ({browse "http://ideas.repec.org/p/bss/wpaper/42.html":PDF manual}){...}
@@ -361,7 +361,8 @@
 {p2col:{helpb colrspace##info:{it:S}.info()}}color description input/output (scalar){p_end}
 {p2col:{helpb colrspace##info:{it:S}.Info()}}color description input/output (vector){p_end}
 {p2col:{helpb colrspace##intensify:{it:S}.intensify()}}adjust color intensity{p_end}
-{p2col:{helpb colrspace##intensity:{it:S}.intensity()}}set/retrieve intensity adjustment{p_end}
+{p2col:{helpb colrspace##intensify:{it:S}.Intensify()}}apply existing intensity multipliers{p_end}
+{p2col:{helpb colrspace##intensity:{it:S}.intensity()}}set/retrieve intensity multipliers{p_end}
 {p2col:{helpb colrspace##ipolate:{it:S}.ipolate()}}interpolate colors{p_end}
 {p2col:{helpb colrspace##isipolate:{it:S}.isipolate()}}whether interpolation has been applied{p_end}
 {p2col:{helpb colrspace##lsmap:{it:S}.lsmap()}}helper function to create linear segmented colormaps{p_end}
@@ -462,7 +463,7 @@
 {dlgtab:Clear external look-up tables}
 
 {pstd}
-    Some of the functions below make use of look-up tables for palette names
+    Some of the functions below make use of look-up tables for palettes
     and named colors. {cmd:ColrSpace} stores these tables as external global
     objects for reasons of efficiency (the names of the external globals are
     {bf:ColrSpace_paletteindex} and {cmd:ColrSpace_namedcolorindex}). To
@@ -978,8 +979,9 @@
     where
 
 {phang}
-    {it:name} selects the palette; see {help colrspace##palettelist:below} for available names. Default
-    is {cmd:s2}; this default can also be selected by typing {cmd:""}.
+    {it:name} selects the palette; see {help colrspace##palettelist:below} for
+    available names. Default is {cmd:st} in Stata 18 or above and
+    {cmd:s2} in Stata 17 or below; the default can also be selected by typing {cmd:""}.
 
 {phang}
     {it:n} is the number of colors to be retrieved from the palette. Many
@@ -1024,7 +1026,8 @@
     installed):
 
 {p2colset 9 25 27 2}{...}
-{p2col:{stata colorpalette s2:{bf:s2}}}15 qualitative colors as in Stata's {helpb scheme s2:s2color} scheme{p_end}
+{p2col:{stata colorpalette st:{bf:st}}}15 qualitative colors as in Stata's {helpb scheme st:stcolor} scheme (default in Stata 18 or above){p_end}
+{p2col:{stata colorpalette s2:{bf:s2}}}15 qualitative colors as in Stata's {helpb scheme s2:s2color} scheme (default in Stata 17 or below){p_end}
 {p2col:{stata colorpalette s1:{bf:s1}}}15 qualitative colors as in Stata's {helpb scheme s1:s1color} scheme{p_end}
 {p2col:{stata colorpalette s1r:{bf:s1r}}}15 qualitative colors as in Stata's {helpb scheme s1:s1rcolor} scheme{p_end}
 {p2col:{stata colorpalette economist:{bf:economist}}}15 qualitative colors as in Stata's {helpb scheme economist:economist} scheme{p_end}
@@ -1129,8 +1132,8 @@
     {stata colorpalette tab Orange-Blue Light:{bf:Orange-Blue Light}},
     {stata colorpalette tab Temperature:{bf:Temperature}}
     {p_end}
-{p2col:{cmd:tol} [{it:scheme}]}color schemes by Paul Tol 
-    ({browse "http://personal.sron.nl/~pault/":personal.sron.nl/~pault}; 
+{p2col:{cmd:tol} [{it:scheme}]}color schemes by Paul Tol
+    ({browse "http://personal.sron.nl/~pault/":personal.sron.nl/~pault};
     using definitions from {browse "http://personal.sron.nl/~pault/data/tol_colors.py":tol_colors.py},
     which may deviate from {browse "http://personal.sron.nl/~pault/":personal.sron.nl/~pault}),
     where {it:scheme} is as follows
@@ -2314,6 +2317,22 @@
         . {stata `"mata: S.intensify((., .5))"'}
         . {stata "colorpalette mata(S), rows(2)"}
 
+{pstd}
+    If intensity multipliers have been set by
+    {helpb colrspace##string:{it:S}.colors()} or
+    {helpb colrspace##intensity:{it:S}.intensity()}, you can type
+
+        {it:S}{cmd:.}[{cmd:add_}]{cmd:Intensify}[{cmd:_added}]{cmd:()}
+
+{pstd}
+    (note the capital I) to adjust the colors by these multipliers and
+    then clear the information on intensity multipliers. {it:S}{cmd:.Intensify()}
+    operates on all existing colors; use
+    {it:S}{cmd:.Intensify_added()} if you only want to manipulate the colors
+    added last. Furthermore, use {it:S}{cmd:.add_Intensify()} or
+    {it:S}{cmd:.add_Intensify_added()} to leave the existing colors unchanged and
+    append the manipulated colors.
+
 {marker saturate}{...}
 {dlgtab:Saturate}
 
@@ -2457,6 +2476,10 @@
     and then converting the colors back.
 
 {pstd}
+    Opacity settings and intensity adjustment multipliers are ignored when
+    converting the colors.
+
+{pstd}
     Example:
 
         . {stata "mata: A = ColrSpace()"}
@@ -2514,6 +2537,10 @@
     retrieved as follows:
 
         {it:M} = {it:S}{cmd:.cvd_M(}[{it:p}{cmd:,} {it:method}]{cmd:)}
+
+{pstd}
+    Opacity settings and intensity adjustment multipliers are ignored when
+    converting the colors.
 
 {pstd}
     Example:
@@ -3561,7 +3588,7 @@
 {phang}
     Jann, B. 2022. ColrSpace: A Mata class for color management. University
     of Bern Social Sciences Working Papers No. 42. Available from
-    {browse "http://ideas.repec.org/p/bss/wpaper/42.html"}. 
+    {browse "http://ideas.repec.org/p/bss/wpaper/42.html"}.
     {p_end}
 {phang}
     Jann, B. 2019. colrspace: Stata module providing a class-based color
