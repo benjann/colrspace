@@ -23,6 +23,30 @@ Installation from GitHub:
 
 Main changes:
 
+    19may2024 (v 1.1.7)
+    - palette -st- added (15 colors as in Stata 18's stcolor scheme); -st- (rather
+      than -s2-) is now the default palette in Stata 18
+    - clones of Stata 18 colors stc1-stc15 added to named colors (so that they are
+      available in Stata 17 or below); these colors are not documented and not
+      listed by S.namedcolors()
+    - colors read from color-<name>.style are now added to the index of named
+      colors (so that they only need to be read once per Stata session)
+    - modifying colors using S.<fcn>_added() did not work as intended: for
+      opacity and intensity it affected all colors instead of just the colors
+      added last, for the other functions it behaved like S.add_<fcn>_added();
+      this is fixed
+    - new function S.Intensify() (with capital I) to apply the stored intensity
+      multipliers to the colors (and clear the multipliers)
+    - S.colors() now supports special keywords as input that are allowed in
+      colorstyle specifications (e.g. "fg", "bg", "=", "." etc.); RGB code (0,0,0)
+      is used internally, but S.colors() will return the keywords as long as the
+      colors are not modified (undocumented)
+    - S.colors() now supports opacity and intensity operators without color; RGB
+      code (0,0,0) is used internally, but S.colors() will return the operators
+      without color as long as colors are not modified (undocumented)
+    - palette source is now added to "ColrSpace_paletteindex" if a palette is read
+      form disk (i.e. each palette will be read at most once per Stata session)
+
     12may2023 (v 1.1.6)
     - the index of named colors and the index of palettes are now stored as
       external objects "ColrSpace_paletteindex" and "ColrSpace_namedcolorindex" so
