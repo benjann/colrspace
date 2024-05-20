@@ -1,4 +1,4 @@
-*! version 1.1.8  20may2024  Ben Jann
+*! version 1.1.9  20may2024  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -1747,6 +1747,16 @@ void `MAIN'::Colors_set(`SV' C)
         }
         else {
             if (tok=="_NULL_") return(i)
+            if (substr(tok,1,2)=="..") {
+                if (i<n)  return(1) // ".." and "..." only allowed at end
+                if (n==1) return(1)
+            }
+            else if (substr(tok,1,1)=="=") {
+                if (i==1) return(1) // "=" not allowed as first element
+                C[i] = C[i-1] // copy previous color
+                i--
+                continue
+            }
             info[i] = tok
             if ((tok = tokenget(t))=="") continue
         }
@@ -4676,7 +4686,6 @@ void `MAIN'::namedcolorindex()
     namedcolors->put("foreground", ("#000000","1"))
     namedcolors->put("bg",         ("#000000","1"))
     namedcolors->put("background", ("#000000","1"))
-    namedcolors->put("=",          ("#000000","1"))
     namedcolors->put(".",          ("#000000","1"))
     namedcolors->put("..",         ("#000000","1"))
     namedcolors->put("...",        ("#000000","1"))

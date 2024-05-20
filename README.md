@@ -23,6 +23,11 @@ Installation from GitHub:
 
 Main changes:
 
+    20may2024 (v 1.1.9)
+    - S.colors() now allows ".." and "..." only as last element
+    - S.colors() now disallows "=" as first element
+    - S.colors() now substitutes "=" by the last color
+
     20may2024 (v 1.1.8)
     - the behavior of argument -noexpand- in S.palette() slightly changed; if the
       number of requested colors is smaller then the minimum number of colors
