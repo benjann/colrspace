@@ -1,5 +1,5 @@
 {smcl}
-{* 18may2024}{...}
+{* 20may2024}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 ({browse "http://ideas.repec.org/p/bss/wpaper/42.html":PDF manual}){...}
@@ -999,16 +999,14 @@
     {help colrspace##ipolate:{it:S}{bf:.ipolate()}}.
 
 {phang}
-    {it:noexpand}!=0 prevents
-    recycling or interpolating colors if {it:n}, the number of
-    requested colors, is larger (smaller) than the maximum (minimum) number of
-    colors defined by a palette. That is, if {it:noexpand}!=0 is specified, the
-    resulting number of colors in {it:S} may be different from the requested number
-    of colors. Exception: {it:noexpand}!=0 does not suppress "recycling"
-    qualitative palettes if {it:n} is smaller than the (minimum) number of colors
-    defined by the palette. In this case, the first {it:n} colors of the palette
-    are retrieved irrespective of whether {it:noexpand}!=0 has been specified or
-    not.
+    {it:noexpand}!=0 prevents recycling or interpolating colors if {it:n}, the
+    number of requested colors, is larger than the maximum number of colors
+    defined by a palette. That is, if {it:noexpand}!=0 is specified, the
+    resulting number of colors in {it:S} may be smaller than the requested number
+    of colors. If {it:n} is smaller than the minimum number of colors
+    defined by a palette, {it:noexpand}!=0 causes the first {it:n} colors
+    to be selected (for qualitative palettes this corresponds to the default
+    behavior; for other palettes the default would be to interpolate).
 
 {pstd}
     Example:

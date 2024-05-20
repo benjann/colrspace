@@ -1,4 +1,4 @@
-*! version 1.1.7  19may2024  Ben Jann
+*! version 1.1.8  20may2024  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -839,7 +839,7 @@ void `MAIN'::_colipolate_fromto(`Int' r, `Int' n, `RV' range, `RS' power,
     if (all(a:<b)) return(_colipolate(C0, from0, to)) // strictly ascending
     if (all(a:>b)) return(_colipolate(C0, from0, to)) // strictly descending
     p = ::order(from0, 1)
-    from = from0[p]; C = C0[p,]
+    from = from0[p,]; C = C0[p,]
     a = from[|1 \ rows(from)-1|]; b = from[|2 \ rows(from)|]
     if (any(a:==b)==0) return(_colipolate(C, from, to)) // no doubles
     _colipolate_collapse(C, from)
@@ -1871,8 +1871,8 @@ void `MAIN'::Colors_set(`SV' C)
         if (t=="") continue
         if (convert_parse(tok, t, 0)) return(i)
         p = ::select(1::r, type:==t)
-        RGB[p,] = convert(RGB[p,], t, "RGB1")
-        type[p] = J(length(p), 1, "")
+        RGB[p,]  = convert(RGB[p,], t, "RGB1")
+        type[p,] = J(length(p), 1, "")
     }
     // done
     return(0)
@@ -2229,7 +2229,7 @@ void `MAIN'::__set(`T' C, `SS' space, `Bool' reset, | `IntV' p0)
         if (reset) rgb_reset(convert(C[,(1,2,3)], s, "RGB1"), p)
         else       rgb_set(convert(C[,(1,2,3)], s, "RGB1"))
         if (reset) {
-            if (length(p)) S->alpha[p] = C[,4]
+            if (length(p)) S->alpha[p,] = C[,4]
             else           S->alpha = C[,4]
         }
         else S->alpha = C[,4]
@@ -2278,16 +2278,16 @@ void `MAIN'::rgb_reset(`RM' rgb, | `IntV' p)
         return
     }
     assert_size(rgb, length(p), 3)
-    S->RGB[p,]  = rgb
-    S->names[p] = J(length(p), 1, "")
-    S->info[p]  = J(length(p), 1, "")
-    S->stok[p]  = J(length(p), 1, `FALSE')
+    S->RGB[p,]   = rgb
+    S->names[p,] = J(length(p), 1, "")
+    S->info[p,]  = J(length(p), 1, "")
+    S->stok[p,]  = J(length(p), 1, `FALSE')
 }
 
 void `MAIN'::info_reset(`SS' c, `T' C, | `SS' fmt, `IntV' p)
 {
-    if (length(p)==0) S->info    = _info_reset(c, C, fmt)
-    else              S->info[p] = _info_reset(c, C, fmt)
+    if (length(p)==0) S->info     = _info_reset(c, C, fmt)
+    else              S->info[p,] = _info_reset(c, C, fmt)
 }
 
 `SC' `MAIN'::_info_reset(`SS' c, `T' C, `SS' fmt)
@@ -2558,11 +2558,11 @@ void `MAIN'::__select(`IntM' p)
     }
     S->n         = n
     S->RGB       = S->RGB[p,]
-    S->alpha     = S->alpha[p]
-    S->intensity = S->intensity[p]
-    S->names     = S->names[p]
+    S->alpha     = S->alpha[p,]
+    S->intensity = S->intensity[p,]
+    S->names     = S->names[p,]
     S->info      = S->info[p,]
-    S->stok      = S->stok[p]
+    S->stok      = S->stok[p,]
 }
 
 void `MAIN'::_drop(`IntV' p0)
@@ -2574,9 +2574,9 @@ void `MAIN'::_drop(`IntV' p0)
     p = p0
     if (cols(p)!=1) _transpose(p)
     p = (sign(p):!=-1):*p :+ (sign(p):==-1):*(n:+1:+p)
-    p = ::select(p, p:>=1 :& p:<=n)       // may return 0x0
-    if (length(p)==0) return              // nothing to drop
-    k = J(n,1,1); k[p] = J(length(p),1,0) // tag elements to be kept
+    p = ::select(p, p:>=1 :& p:<=n)        // may return 0x0
+    if (length(p)==0) return               // nothing to drop
+    k = J(n,1,1); k[p,] = J(length(p),1,0) // tag elements to be kept
     p = selectindex(k)
     __select(p)
 }
@@ -2593,7 +2593,7 @@ void `MAIN'::_order(`IntV' p0)
     p = ::select(p, p:>=1 :& p:<=n)
     if (length(p)==0) return
     rest = 1::n
-    rest[p] = J(length(p), 1, .)
+    rest[p,] = J(length(p), 1, .)
     rest = ::select(rest, rest:<.)
     if (length(rest)) p = p \ rest
     __select(p)
@@ -4998,6 +4998,7 @@ void `MAIN'::add_palette(| `SS' pal, `RS' n, `RV' o1, `RV' o2, `RV' o3, `RV' o4)
             }
             else if (length(o1)) { // noexpand argument specified
                 if (o1==0) _ipolate(n)
+                else if (n<(S->n)) _recycle(n) // select first n colors
             }
             else _ipolate(n)
         }
@@ -5342,10 +5343,10 @@ void `MAIN'::Palette_htmlcolors(| `SV' keys)
             I = I \ S->info
         }
         p = ::order(N,1)  // sort colors by name
-        C = C[p,]; N = N[p]; I = I[p]
+        C = C[p,]; N = N[p,]; I = I[p,]
         // remove doubles
         p = selectindex(N :!= (N[|2\.|] \ N[1]))
-        C = C[p,]; N = N[p]; I = I[p]
+        C = C[p,]; N = N[p,]; I = I[p,]
     }
     rgb_set(C)
     S->names = N

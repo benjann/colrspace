@@ -23,6 +23,15 @@ Installation from GitHub:
 
 Main changes:
 
+    20may2024 (v 1.1.8)
+    - the behavior of argument -noexpand- in S.palette() slightly changed; if the
+      number of requested colors is smaller then the minimum number of colors
+      defined in a palette, noexpand!=0 now always causes the first few colors to
+      be selected; the old behavior was to apply such selection only in case
+      of qualitative palettes
+    - S.select() and S.order() sometimes failed if S contained only a single
+      color; this is fixed
+
     19may2024 (v 1.1.7)
     - palette -st- added (15 colors as in Stata 18's stcolor scheme); -st- (rather
       than -s2-) is now the default palette in Stata 18
