@@ -1,4 +1,4 @@
-*! version 1.1.9  20may2024  Ben Jann
+*! version 1.2.0  21may2024  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -38,7 +38,8 @@ local DATA   `MAIN'_DATA
 local Data   struct `DATA' scalar
 local CAM02  `MAIN'_CAM02
 local Cam02  struct `CAM02' scalar
-local AA     class AssociativeArray scalar
+local DICT   ColrSpace_AA
+local Dict   class `DICT' scalar
 // real
 local RS     real scalar
 local RR     real rowvector
@@ -66,20 +67,53 @@ local TM     transmorphic matrix
 local PV     pointer vector
 local PS     pointer scalar
 local PData  pointer (`Data') scalar
-local PAA    pointer (`AA') scalar
+local PDict  pointer (`Dict') scalar
 // boolean
 local Bool   real scalar
 local BoolC  real colvector
 local TRUE   1
 local FALSE  0
-// palettes
-local PAL    `SC' `MAIN'
 
 * {smcl}
 * {marker class}{bf:Class and struct definitions} {hline}
 * {asis}
 
 mata:
+
+class `DICT' {              // class for lookup tables
+    public:
+        `SC'    keys()      // return sorted keys
+        void    put()       // add element
+        `T'     get()       // obtain value of element
+        `RS'    N()         // obtain number of elements
+        void    notfound()  // set notfound value
+    private:
+       void     new()       // initialize
+        `T'     A           // associative array
+        `SC'    keys        // sorted keys
+}
+
+void `DICT'::new() A = asarray_create()
+
+`SC' `DICT'::keys()
+{
+    if (rows(keys)) return(keys)
+    keys = asarray_keys(A)
+    keys = keys[order((strlower(keys),keys), (1,-2)),] // lowercase first
+    return(keys)
+}
+
+void `DICT'::put(`SS' key, `T' val)
+{
+    if (!asarray_contains(A, key)) keys = J(0,1,"")
+    asarray(A, key, val)
+}
+
+`T' `DICT'::get(`SS' key) return(asarray(A, key))
+
+`RS' `DICT'::N() return(asarray_elements(A))
+
+void `DICT'::notfound(`T' val) asarray_notfound(A, val)
 
 struct `DATA' {
     // meta data
@@ -125,9 +159,9 @@ class `MAIN' {
 
     // Data containers
     private:
-        `Data'  data          // main data container
-        `Data'  data1         // temporary data container
-        `PData' S             // pointer to relevant data container
+       `Data'   data          // main data container
+       `Data'   data1         // temporary data container
+      `PData'   S             // pointer to relevant data container
         `Int'   N1            // number of colors added last
         void    replacedata() // replace data by data1
         void    updatedata()  // replace last N1 colors in data by data1
@@ -142,11 +176,11 @@ class `MAIN' {
         void    settings()    // describe settings
         `RS'    N()           // number of colors
         `RS'    N_added()     // number of added colors
-        `T'     name()        // set or return name of palette
-        `T'     pclass()      // set or return type of palette
-        `T'     note()        // set or return palette description
-        `T'     source()      // set or return palette source
-        `Bool'  isipolate()   // 1 if interpolated; 0 else
+         `T'    name()        // set or return name of palette
+         `T'    pclass()      // set or return type of palette
+         `T'    note()        // set or return palette description
+         `T'    source()      // set or return palette source
+      `Bool'    isipolate()   // 1 if interpolated; 0 else
         `RM'    colipolate()  // interpolate columns
         `RM'    colipolate_c() // interpolate columns (circular)
         `TM'    colrecycle()  // recycle columns
@@ -154,8 +188,8 @@ class `MAIN' {
         `RM'    clip()        // clip values
     private:
         `SS'    gettok()      // split first token from rest
-        `Bool'  smatch()      // check abbreviated string
-        `SS'    findkey()     // find key in list (ignoring case; allowing abbreviation)
+      `Bool'    smatch()      // check abbreviated string
+        `SS'    findkey(), _findkey() // find key in list
         void    assert_cols() // assert number of columns
         void    assert_size() // assert number of columns and rows
         `RV'    _colipolate_setrange() // parse interpolation range argument
@@ -170,9 +204,9 @@ class `MAIN' {
 
     // XYZ reference white
     public:
-        `T'     xyzwhite()    // set/retrieve XYZ whitepoint
+         `T'    xyzwhite()    // set/retrieve XYZ whitepoint
     private:
-        `AA'    illuminants
+      `Dict'    illuminants
         void    illuminants()
         `RR'    white
         `RR'    _white(), _white_set(), _white_get()
@@ -180,11 +214,11 @@ class `MAIN' {
     // RGB working spaces
     public:
         void    rgbspace()    // set RGB working space
-        `T'     rgb_gamma()   // set/retrieve gamma compression parameters
-        `T'     rgb_white()   // set/retrieve RGB reference white
-        `T'     rgb_xy()      // set/retrieve primaries of RGB working space
-        `T'     rgb_M()       // set/retrieve RGB-XYZ transformation matrix
-        `T'     rgb_invM()    // set/retrieve XYZ-RGB transformation matrix
+         `T'    rgb_gamma()   // set/retrieve gamma compression parameters
+         `T'    rgb_white()   // set/retrieve RGB reference white
+         `T'    rgb_xy()      // set/retrieve primaries of RGB working space
+         `T'    rgb_M()       // set/retrieve RGB-XYZ transformation matrix
+         `T'    rgb_invM()    // set/retrieve XYZ-RGB transformation matrix
     private:
         `RV'    rgb_gamma
         `RR'    rgb_white
@@ -192,10 +226,10 @@ class `MAIN' {
 
     // CIECAM02 viewing conditions and J'a'b' coefficients
     public:
-        `T'     viewcond()    // set/retrieve CAM02 viewing conditions
-        `T'     ucscoefs()    // parse coefficients for J'M'h and J'a'b'
+         `T'    viewcond()    // set/retrieve CAM02 viewing conditions
+         `T'    ucscoefs()    // parse coefficients for J'M'h and J'a'b'
     private:
-        `Cam02' C02
+     `Cam02'    C02
         `RS'    viewcond_parsenum()
         void    surround()
         `RR'    surround_get()
@@ -204,7 +238,7 @@ class `MAIN' {
     // Chromatic adaption
     public:
         `RM'    XYZ_to_XYZ()  // chromatic adaption
-        `T'     chadapt()     // set/retrieve chromatic adaption method
+         `T'    chadapt()     // set/retrieve chromatic adaption method
         `RM'    tmatrix()     // retrieve chromatic adaption matrix
     private:
         `SS'    chadapt       // chromatic adaption setting
@@ -212,32 +246,32 @@ class `MAIN' {
     // String IO
     public:
         `SS'    cvalid()       // check whether color specification is valid
-        `T'     colors()       // parse or return string colors (scalar)
-        `Int'   _colors()      // like colors(), but with return code
+         `T'    colors()       // parse or return string colors (scalar)
+       `Int'    _colors()      // like colors(), but with return code
         void    add_colors()   // append colors
-        `Int'   _add_colors()  // like add_colors(), but with return code
+       `Int'    _add_colors()  // like add_colors(), but with return code
         `SS'    colors_added() // return added colors (scalar)
-        `T'     Colors()       // parse or return string colors (vector)
-        `Int'   _Colors()      // like Colors(), but with return code
+         `T'    Colors()       // parse or return string colors (vector)
+       `Int'    _Colors()      // like Colors(), but with return code
         void    add_Colors()   // append colors
-        `Int'   _add_Colors()  // like add_Colors(), but with return code
+       `Int'    _add_Colors()  // like add_Colors(), but with return code
         `SC'    Colors_added() // return added colors (vector)
-        `T'     names()        // parse or return color names (scalar)
-        `T'     names_added()
-        `T'     Names()        // parse or return color names (vector)
-        `T'     Names_added()
-        `T'     info()         // parse or return color info (scalar)
-        `T'     info_added()
-        `T'     Info()         // parse or return color info (vector)
-        `T'     Info_added()
+         `T'    names()        // parse or return color names (scalar)
+         `T'    names_added()
+         `T'    Names()        // parse or return color names (vector)
+         `T'    Names_added()
+         `T'    info()         // parse or return color info (scalar)
+         `T'    info_added()
+         `T'    Info()         // parse or return color info (vector)
+         `T'    Info_added()
     private:
         `SS'    colors_get(), names_get(), info_get()
         `SC'    Colors_get(), _Colors_get(), Names_get(), Info_get()
         void    colors_set(), names_set(), info_set()
         void    Colors_set(), Names_set(), _Names_set(), Info_set(), _Info_set()
-        `Int'   _colors_set(), _Colors_set()
-        `Int'   parse_split(), _parse_split(), parse_convert(), _parse_convert()
-        `Bool'  parse_named(), isnamedcolor()
+       `Int'    _colors_set(), _Colors_set()
+       `Int'    parse_split(), _parse_split(), parse_convert(), _parse_convert()
+      `Bool'    parse_named()
         `SS'    parse_stcolorstyle()
         `SR'    parse_namedcolor()
 
@@ -255,9 +289,9 @@ class `MAIN' {
 
     // Set or retrieve opacity and intensity
     public:
-        `T'     opacity(), alpha(), intensity()
+         `T'    opacity(), alpha(), intensity()
         void    add_opacity(), add_alpha(), add_intensity()
-        `T'     opacity_added(), alpha_added(), intensity_added()
+         `T'    opacity_added(), alpha_added(), intensity_added()
         void    add_opacity_added(), add_alpha_added(), add_intensity_added()
     private:
         `RC'    opacity_get(), alpha_get(), intensity_get()
@@ -322,7 +356,7 @@ class `MAIN' {
     public:
         `TM'    convert()
     private:
-        `Bool'  convert_parse()
+      `Bool'    convert_parse()
         `SM'    convert_getpath()
         `TM'    convert_run()
     
@@ -370,7 +404,7 @@ class `MAIN' {
     public:
         `SM'    namedcolors()
     private:
-       `PAA'    namedcolors
+     `PDict'    namedcolors
         void    namedcolorindex()
       `Bool'    _namedcolorindex()
     
@@ -380,7 +414,7 @@ class `MAIN' {
         `SM'    palettes()
         void    palette(), add_palette()
     private:
-       `PAA'    palettes
+     `PDict'    palettes
        `Int'    parse_palette()
         void    paletteindex(), _paletteindex(), _palette_tput()
         `TS'    _palette_tget()
@@ -707,24 +741,24 @@ void `MAIN'::settings()
     return(`TRUE')
 }
 
-`SS' `MAIN'::findkey(`SS' s0, `SC' KEYS/*0*/, | `SS' def)
+`SS' `MAIN'::findkey(`SS' s, `SC' keys, | `SS' def)
+    return(_findkey(s, sort(keys,1), def))
+
+`SS' `MAIN'::_findkey(`SS' s0, `SC' keys, | `SS' def)
 {   // gets matching key, ignoring case and allowing abbreviation; returns
-    // alphabetically first match in case of multiple matches
-    // returns def is s0 is empty
+    // first match in case of multiple matches
+    // returns def if s0 is empty
     // returns empty string if key not found
     `Int' i, r
     `SS'  s
-    `SC'  /*KEYS,*/ keys
     `RC'  p
     
     s = strlower(s0)
     if (strtrim(s)=="") return(def)
-    r = rows(KEYS/*0*/)
+    r = rows(keys)
     if (r==0) return("")
-    /*KEYS = KEYS0;*/ keys = strlower(KEYS)
-    p = ::order(keys, 1)
     for (i=1; i<=r; i++) {
-        if (smatch(s, keys[p[i]])) return(KEYS[p[i]])
+        if (smatch(s, keys[i])) return(keys[i])
     }
     return("")
 }
@@ -1118,7 +1152,7 @@ void `MAIN'::illuminants()
     if (illuminant=="") illuminant = "D65" // default
     white = illuminants.get(illuminant)
     if (length(white)==0) {
-        illuminant = findkey(illuminant, illuminants.keys())
+        illuminant = _findkey(illuminant, illuminants.keys())
         if (illuminant!="") white = illuminants.get(illuminant)
         else {
             white = strtoreal(tokens(illuminant0))
@@ -1893,22 +1927,9 @@ void `MAIN'::Colors_set(`SV' C)
     `SR' c
     `RR' rgb
     
-    // get color from color-<name>.style; this includes Stata's official colors
-    if (!isnamedcolor(s)) { // only if no exact match in namedcolors
-        c = parse_stcolorstyle(s)
-        if (c!="") {
-            rgb = strtoreal(tokens(c))
-            if (length(rgb)!=3) return(1) // invalid RGB code
-            info[i] = ""
-            stok[i] = `TRUE'
-            RGB[i,] = rgb/255
-            namedcolors->put(s, (_RGB_to_HEX(rgb),"1")) // "1" => system color
-            return(0)
-        }
-    }
     // get color from dictionary
     c = parse_namedcolor(s) // returns "" if not found
-    if (c!="") {
+    if (c[1]!="") { // skip system colors that have not yet been imported
         rgb = _HEX_to_RGB(c[1])
         if (missing(rgb)) return(1) // invalid HEX code
         if (c[2]!="") {
@@ -1917,13 +1938,38 @@ void `MAIN'::Colors_set(`SV' C)
         }
         else info[i] = c[1]
         RGB[i,] = rgb/255
-        if (substr(s,-1,1)=="*") { // remove * suffix from color name
-            s = substr(s,1,strlen(s)-1)
-        }
+        return(0)
+    }
+    // get color from color-<name>.style; this includes Stata's system colors
+    c = parse_stcolorstyle(s) // returns "" if not found 
+    if (c!="") {
+        rgb = strtoreal(tokens(c))
+        if (length(rgb)!=3) return(1) // invalid RGB code
+        info[i] = ""
+        stok[i] = `TRUE'
+        RGB[i,] = rgb/255
+        namedcolors->put(s, (_RGB_to_HEX(rgb),"1")) // "1" => system color
         return(0)
     }
     // color not found
     return(1)
+}
+
+`SR' `MAIN'::parse_namedcolor(`SS' s0)
+{
+    `SS' s
+    `SR' c
+    
+    if (namedcolors==NULL) namedcolorindex()
+    c = namedcolors->get(s0) // only finds exact match, including case
+    if (c=="") {
+        s = _findkey(s0, namedcolors->keys()) // ignore case and allow abbrev.
+        if (s!="") {
+            s0 = s
+            c = namedcolors->get(s0)
+        }
+    }
+    return(c)
 }
 
 `SS' `MAIN'::parse_stcolorstyle(`SS' s) // read RGB from color-<name>.style
@@ -1957,29 +2003,6 @@ void `MAIN'::Colors_set(`SV' C)
     }
     fclose(fh)
     return("") // no valid color definition found
-}
-
-`Bool' `MAIN'::isnamedcolor(`SS' s) // check for exact match, including case
-{
-    if (namedcolors==NULL) namedcolorindex()
-    return(namedcolors->exists(s))
-}
-
-`SR' `MAIN'::parse_namedcolor(`SS' s0)
-{
-    `SS' s
-    `SR' c
-    
-    // namedcolors already filled-in because isnamedcolor() has been called
-    c = namedcolors->get(s0) // only finds exact match, including case
-    if (c=="") {
-        s = findkey(s0, namedcolors->keys()) // ignore case and allow abbreviation
-        if (s!="") {
-            s0 = s
-            c = namedcolors->get(s0)
-        }
-    }
-    return(c)
 }
 
 `T' `MAIN'::names(| `SS' o1, `SS' o2)
@@ -4648,10 +4671,6 @@ mata:
         if (strict) keys = ::select(keys, strmatch(keys, pattern))
         else keys = ::select(keys, strmatch(strlower(keys), strlower(pattern)))
     }
-    if (rows(keys)) { // exclude clones of system colors
-        keys = ::select(keys, substr(keys,-1, 1):!="*")
-    }
-    _sort(keys, 1)
     i = rows(keys)
     C = J(i,2,"")
     for (i=rows(keys); i; i--) C[i,] = namedcolors->get(keys[i])
@@ -4661,17 +4680,19 @@ mata:
 void `MAIN'::namedcolorindex()
 {
     `Bool' brk
+    `Int'  j
+    `SR'   kw
     
     // setup
     namedcolors = findexternal("ColrSpace_namedcolorindex")
     if (namedcolors!=NULL) {
-        if (classname(*namedcolors)=="AssociativeArray") return
+        if (classname(*namedcolors)=="`DICT'") return
         namedcolors = NULL
         rmexternal("ColrSpace_namedcolorindex")
     }
     brk = setbreakintr(0)
     namedcolors = crexternal("ColrSpace_namedcolorindex")
-    *namedcolors = AssociativeArray()
+    *namedcolors = `DICT'()
     namedcolors->notfound("")
     // default library
     if (_namedcolorindex("namedcolors")) {
@@ -4680,17 +4701,49 @@ void `MAIN'::namedcolorindex()
         display("{err}colrspace_library_namedcolors.sthlp not found")
         exit(error(601))
     }
-    // special "system" colors (noncolor keywords allowed by colorstyle)
-    namedcolors->put("none",       ("#000000","1"))
-    namedcolors->put("fg",         ("#000000","1"))
-    namedcolors->put("foreground", ("#000000","1"))
-    namedcolors->put("bg",         ("#000000","1"))
-    namedcolors->put("background", ("#000000","1"))
-    namedcolors->put(".",          ("#000000","1"))
-    namedcolors->put("..",         ("#000000","1"))
-    namedcolors->put("...",        ("#000000","1"))
     // personal library
     (void) _namedcolorindex("namedcolors_personal")
+    // placeholders for (documented) system colors
+    kw = ("black","gs0","gs1","gs2","gs3","gs4","gs5","gs6","gs7","gs8","gs9",
+        "gs10","gs11","gs12","gs13","gs14","gs15","gs16","white","blue",
+        "bluishgray","brown","cranberry","cyan","dimgray","dkgreen","dknavy",
+        "dkorange","eggshell","emerald","forest_green","gold","gray","green",
+        "khaki","lavender","lime","ltblue","ltbluishgray","ltkhaki","magenta",
+        "maroon","midblue","midgreen","mint","navy","olive","olive_teal",
+        "orange","orange_red","pink","purple","red","sand","sandb","sienna",
+        "stone","teal","yellow","ebg","ebblue","edkblue","eltblue","eltgreen",
+        "emidblue","erose")
+    if (stataversion()>=1800) {
+        kw = kw, ("stc1","stc2","stc3","stc4","stc5",
+            "stc6","stc7","stc8","stc9","stc10","stc11","stc12","stc13",
+            "stc14","stc15","stblue","stgreen","stred","styellow")
+    }
+    else { // make additional Stata 18 colors available in Stata 17 or below
+        namedcolors->put(    "stc1", ("#1a85ff",""))
+        namedcolors->put(    "stc2", ("#d41159",""))
+        namedcolors->put(    "stc3", ("#00bf7f",""))
+        namedcolors->put(    "stc4", ("#ffd400",""))
+        namedcolors->put(    "stc5", ("#4f2c99",""))
+        namedcolors->put(    "stc6", ("#ff6333",""))
+        namedcolors->put(    "stc7", ("#4db7ff",""))
+        namedcolors->put(    "stc8", ("#7c0015",""))
+        namedcolors->put(    "stc9", ("#0fefaf",""))
+        namedcolors->put(   "stc10", ("#faa307",""))
+        namedcolors->put(   "stc11", ("#758bfd",""))
+        namedcolors->put(   "stc12", ("#fed9b7",""))
+        namedcolors->put(   "stc13", ("#08234c",""))
+        namedcolors->put(   "stc14", ("#f88dad",""))
+        namedcolors->put(   "stc15", ("#0f5156",""))
+        namedcolors->put(  "stblue", ("#1a85ff",""))
+        namedcolors->put( "stgreen", ("#00bf7f",""))
+        namedcolors->put(   "stred", ("#d41159",""))
+        namedcolors->put("styellow", ("#ffd400",""))
+    }
+    for (j=length(kw); j; j--) namedcolors->put(kw[j], ("","1"))
+    // additional keywords allowed by colorstyle (or colorstylelist)
+    kw = ("none", "fg", "foreground", "bg", "background", ".", "..", "...")
+    for (j=length(kw); j; j--) namedcolors->put(kw[j], ("#000000","1"))
+    // done
     (void) setbreakintr(brk)
 }
 
@@ -4763,7 +4816,6 @@ mata:
     }
     i = rows(keys)
     if (i==0) return(J(0,2,""))
-    _sort(keys, 1)
     src = J(i, 1, "")
     SRC = ("palettes", "namedcolors", "lsmaps", "generators", "rgbmaps")
     for (;i;i--) {
@@ -4790,7 +4842,7 @@ mata:
     }
     if (t==0) {
         // ignore case and allow abbreviation
-        p = findkey(p0, palettes->keys(), stataversion()<1800 ? "s2" : "st")
+        p = _findkey(p0, palettes->keys(), stataversion()<1800 ? "s2" : "st")
         if (p!="") {
             p0 = p
             t = _palette_tget(p0)
@@ -4809,13 +4861,14 @@ void `MAIN'::paletteindex()
     
     palettes = findexternal("ColrSpace_paletteindex")
     if (palettes!=NULL) {
-        if (classname(*palettes)=="AssociativeArray") return
+        if (classname(*palettes)=="`DICT'") return
         palettes = NULL
         rmexternal("ColrSpace_paletteindex")
     }
+    "paletteindex()"
     brk = setbreakintr(0)
     palettes = crexternal("ColrSpace_paletteindex")
-    *palettes = AssociativeArray()
+    *palettes = `DICT'()
     palettes->notfound((&0, NULL))
     _paletteindex()
     (void) setbreakintr(brk)

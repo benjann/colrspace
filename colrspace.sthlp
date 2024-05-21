@@ -1,5 +1,5 @@
 {smcl}
-{* 20may2024}{...}
+{* 21may2024}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 ({browse "http://ideas.repec.org/p/bss/wpaper/42.html":PDF manual}){...}
@@ -747,10 +747,11 @@
 {pmore}
     The color names can be abbreviated and typed in lowercase letters. If
     abbreviation is ambiguous, the first matching name in the alphabetically
-    ordered list will be used. In case of name conflict with a Stata color,
-    the color from {cmd:ColrSpace} will take precedence only if the specified name is an exact match
-    including case. For example, {cmd:pink} will refer to official Stata's
-    pink, whereas {cmd:Pink} will refer to HTML color pink.
+    ordered list (including official Stata's colors) will be used
+    (prioritizing lowercase variants; but note that case will be respected
+    if there is an exact match; for example, {cmd:pink} will
+    refer to official Stata's pink, whereas {cmd:Pink} will refer to HTML color
+    pink).
 
 {pstd}
     Example:

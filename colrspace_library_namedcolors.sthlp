@@ -1,4 +1,4 @@
-*! version 1.0.1  17may2024  Ben Jann
+*! version 1.0.2  21may2024  Ben Jann
 * {smcl}
 * {title:ColrSpace namedcolors library}
 * 
@@ -670,23 +670,3 @@ s:https://www.w3schools.com/colors/colors_ral.asp
 #8d948d w3-traffic-grey
 #f6f6f6 w3-traffic-white
 #1e1e1e w3-traffic-black
-* {smcl}
-* {title:stcolor}{asis}
-n:stcolor
-c:qualitative
-d:colors used for p1 to p15 in Stata's stcolor scheme
-#1a85ff stc1*
-#d41159 stc2*
-#00bf7f stc3*
-#ffd400 stc4*
-#4f2c99 stc5*
-#ff6333 stc6*
-#4db7ff stc7*
-#7c0015 stc8*
-#0fefaf stc9*
-#faa307 stc10*
-#758bfd stc11*
-#fed9b7 stc12*
-#08234c stc13*
-#f88dad stc14*
-#0f5156 stc15*

@@ -23,6 +23,17 @@ Installation from GitHub:
 
 Main changes:
 
+    21may2024 (v 1.2.0)
+    - placeholders for system colors are now included in the index of named colors
+      so that there will be less queries to the file system
+    - in Stata 17 or lower, additional Stata 18 system colors are now provided
+      internally as named colors (not through the library file)
+    - abbreviations, e.g. in S.colors() or S.palettes(), could result in unstable
+      matches if there were elements with the same name apart from capitalization;
+      this is fixed (lowercase is now prioritized)
+    - finding named colors and palettes is now more efficient (by avoiding repeated
+      sorting)
+
     20may2024 (v 1.1.9)
     - S.colors() now allows ".." and "..." only as last element
     - S.colors() now disallows "=" as first element
