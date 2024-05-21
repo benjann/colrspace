@@ -4865,7 +4865,6 @@ void `MAIN'::paletteindex()
         palettes = NULL
         rmexternal("ColrSpace_paletteindex")
     }
-    "paletteindex()"
     brk = setbreakintr(0)
     palettes = crexternal("ColrSpace_paletteindex")
     *palettes = `DICT'()
