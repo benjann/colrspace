@@ -1,4 +1,4 @@
-*! version 1.2.0  21may2024  Ben Jann
+*! version 1.2.1  22may2024  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -38,7 +38,7 @@ local DATA   `MAIN'_DATA
 local Data   struct `DATA' scalar
 local CAM02  `MAIN'_CAM02
 local Cam02  struct `CAM02' scalar
-local DICT   ColrSpace_AA
+local DICT   AssociativeArray
 local Dict   class `DICT' scalar
 // real
 local RS     real scalar
@@ -79,41 +79,6 @@ local FALSE  0
 * {asis}
 
 mata:
-
-class `DICT' {              // class for lookup tables
-    public:
-        `SC'    keys()      // return sorted keys
-        void    put()       // add element
-        `T'     get()       // obtain value of element
-        `RS'    N()         // obtain number of elements
-        void    notfound()  // set notfound value
-    private:
-       void     new()       // initialize
-        `T'     A           // associative array
-        `SC'    keys        // sorted keys
-}
-
-void `DICT'::new() A = asarray_create()
-
-`SC' `DICT'::keys()
-{
-    if (rows(keys)) return(keys)
-    keys = asarray_keys(A)
-    keys = keys[order((strlower(keys),keys), (1,-2)),] // lowercase first
-    return(keys)
-}
-
-void `DICT'::put(`SS' key, `T' val)
-{
-    if (!asarray_contains(A, key)) keys = J(0,1,"")
-    asarray(A, key, val)
-}
-
-`T' `DICT'::get(`SS' key) return(asarray(A, key))
-
-`RS' `DICT'::N() return(asarray_elements(A))
-
-void `DICT'::notfound(`T' val) asarray_notfound(A, val)
 
 struct `DATA' {
     // meta data
@@ -188,7 +153,7 @@ class `MAIN' {
         `RM'    clip()        // clip values
     private:
         `SS'    gettok()      // split first token from rest
-      `Bool'    smatch()      // check abbreviated string
+      `Bool'    smatch(), _smatch() // check abbreviated string
         `SS'    findkey(), _findkey() // find key in list
         void    assert_cols() // assert number of columns
         void    assert_size() // assert number of columns and rows
@@ -708,28 +673,30 @@ void `MAIN'::settings()
 }
 
 `Bool' `MAIN'::smatch(`SS' s, `SS' s0)
+{   // replaces s by s0 if _smatch(s, s0) is true
+    if (_smatch(s, s0)) {
+        s = s0
+        return(`TRUE')
+    }
+    return(`FALSE')
+}
+
+`Bool' `MAIN'::_smatch(`SS' s, `SS' s0)
 {   // checks whether s matches s0, word by word, allowing abbreviation
     // assumes s to be lower case and checks against lowercase(s0)
     // abbreviation to "nothing" also counts as a match; i.e. empty s will 
     // match anything
-    // in case of a match, s is replaced by s0
     `Int'  i, c, c0
     `SR'   S, S0
     `SS'   si
     
     S = tokens(s); c = cols(S)
-    if (c==0) { // s is empty
-        s = s0
-        return(`TRUE')
-    }
+    if (c==0) return(`TRUE') // s is empty
     S0 = tokens(s0); c0 = cols(S0)
     if (c0==0) return(`FALSE') // no match if s0 is empty
     if (c>c0)  return(`FALSE') // no match if s has more words than s0
     if (c0==1) {
-        if (S==substr(strlower(S0), 1, strlen(S))) {
-            s = s0
-            return(`TRUE')
-        }
+        if (S==substr(strlower(S0), 1, strlen(S))) return(`TRUE')
         return(`FALSE')
     }
     if (c<c0) S = S, J(1, c0-c, "")
@@ -737,30 +704,66 @@ void `MAIN'::settings()
         si = S[i]
         if (si!=substr(strlower(S0[i]), 1, strlen(si))) return(`FALSE')
     }
-    s = s0
     return(`TRUE')
 }
 
-`SS' `MAIN'::findkey(`SS' s, `SC' keys, | `SS' def)
-    return(_findkey(s, sort(keys,1), def))
-
-`SS' `MAIN'::_findkey(`SS' s0, `SC' keys, | `SS' def)
-{   // gets matching key, ignoring case and allowing abbreviation; returns
-    // first match in case of multiple matches
+`SS' `MAIN'::findkey(`SS' s0, `SC' keys, | `SS' def)
+{   // finds matching key allowing abbreviation and differences in
+    // capitalization; in case of multiple matches, capitalization and
+    // alphabetical order are considered to determine the best match
     // returns def if s0 is empty
     // returns empty string if key not found
-    `Int' i, r
-    `SS'  s
-    `RC'  p
+    `Int'  i
+    `IntC' p
+    `SS'   s
     
+    if (strtrim(s0)=="") return(def)
+    i = rows(keys)
+    if (i==0) return("")
+    // find all matching keys ignoring case and allowing abbreviation
+    p = J(i,1,.)
     s = strlower(s0)
-    if (strtrim(s)=="") return(def)
-    r = rows(keys)
-    if (r==0) return("")
-    for (i=1; i<=r; i++) {
-        if (smatch(s, keys[i])) return(keys[i])
+    for (; i; i--) p[i] = _smatch(s, keys[i])
+    p = selectindex(p)
+    i = length(p)
+    // no match
+    if (i<1)  return("")
+    // unique match
+    if (i==1) return(keys[p])
+    // find best match
+    return(_findkey(s0, keys, p))
+}
+
+`SS' `MAIN'::_findkey(`SS' s, `SC' keys, `IntC' p) // p will be modified
+{   // select candidates based on capitalization, prioritizing from
+    // left to right; among remaining candidates, select topmost candidate
+    // based on alphabetical order
+    `Int'  i, i1, l, r
+    `IntC' I, m
+    
+    I = J(rows(keys),1,1)
+    l = strlen(s)
+    for (i=1;i<=l;i++) {
+        if (substr(s,i,1)==" ") continue // move to next token in s
+        // skip blanks before token in each candidate
+        while (any(m=(substr(keys[p],I[p],1):==" "))) I[p] = I[p] + m
+        // determine end of current token in s
+        i1 = i + strpos(substr(s,i+1,.)+" ", " ") - 1
+        // check case within token, character by character
+        for (;i<=i1;i++) {
+            m = selectindex(substr(s,i,1):==substr(keys[p],I[p],1))
+            r = rows(m)
+            if (r) {
+                if (r==1) return(keys[p[m]]) // unique match; done
+                if (r<rows(p)) p = p[m] // update list of candidates
+            } // note: all will be kept if none has a match
+            I[p] = I[p] :+ 1 // move to next character in each candidate
+        }
+        // move to next token in each candidate
+        if (i<l) I[p] = I[p] :+ strpos(substr(keys[p],I[p],.):+" ", " ")
     }
-    return("")
+    // no unique match; select top candidate based on alphabetical order
+    return(sort(keys[p],1)[1])
 }
 
 void `MAIN'::assert_cols(`T' M, `RS' c)
@@ -1152,7 +1155,7 @@ void `MAIN'::illuminants()
     if (illuminant=="") illuminant = "D65" // default
     white = illuminants.get(illuminant)
     if (length(white)==0) {
-        illuminant = _findkey(illuminant, illuminants.keys())
+        illuminant = findkey(illuminant, illuminants.keys())
         if (illuminant!="") white = illuminants.get(illuminant)
         else {
             white = strtoreal(tokens(illuminant0))
@@ -1963,7 +1966,7 @@ void `MAIN'::Colors_set(`SV' C)
     if (namedcolors==NULL) namedcolorindex()
     c = namedcolors->get(s0) // only finds exact match, including case
     if (c=="") {
-        s = _findkey(s0, namedcolors->keys()) // ignore case and allow abbrev.
+        s = findkey(s0, namedcolors->keys())
         if (s!="") {
             s0 = s
             c = namedcolors->get(s0)
@@ -2894,7 +2897,7 @@ void `MAIN'::_saturate(`RV' p0, | `SS' method0, `Bool' level)
     `RM'   C
     
     if (args()<3) level = `FALSE'
-    method = findkey(strlower(method0), ("LCh", "HCL", "JCh", "JMh")', "LCh")
+    method = findkey(method0, ("LCh", "HCL", "JCh", "JMh")', "LCh")
     if (method=="") {
         display("{err}method '" + method0 + "' not allowed")
         exit(3498)
@@ -2933,8 +2936,8 @@ void `MAIN'::_luminate(`RV' p0, | `SS' method0, `Bool' level)
     `RM'   C
     
     if (args()<3) level = `FALSE'
-    method = findkey(strlower(method0), ("Lab", "LCh", "Luv", "HCL", 
-        "JCh", "JMh", "Jab")', "JMh")
+    method = findkey(method0, ("Lab", "LCh", "Luv", "HCL", "JCh", "JMh",
+        "Jab")', "JMh")
     if (method=="") {
         display("{err}method '" + method0 + "' not allowed")
         exit(3498)
@@ -2983,7 +2986,7 @@ void `MAIN'::_gray(| `RV' p0, `SS' method0)
     `RM'   C
     
     if (args()==0) p0 = 1
-    method = findkey(strlower(method0), ("LCh", "HCL", "JCh", "JMh")', "LCh")
+    method = findkey(method0, ("LCh", "HCL", "JCh", "JMh")', "LCh")
     if (method=="") {
         display("{err}method '" + method0 + "' not allowed")
         exit(3498)
@@ -3021,7 +3024,7 @@ void `MAIN'::_gray(| `RV' p0, `SS' method0)
         display("{err}proportion must be within 0 and 1")
         exit(3300)
     }
-    method = findkey(strlower(method0), ("LCh", "HCL", "JCh", "JMh")', "LCh")
+    method = findkey(method0, ("LCh", "HCL", "JCh", "JMh")', "LCh")
     if (method=="") {
         display("{err}method '" + method0 + "' not allowed")
         exit(3498)
@@ -4671,6 +4674,7 @@ mata:
         if (strict) keys = ::select(keys, strmatch(keys, pattern))
         else keys = ::select(keys, strmatch(strlower(keys), strlower(pattern)))
     }
+    _sort(keys, 1)
     i = rows(keys)
     C = J(i,2,"")
     for (i=rows(keys); i; i--) C[i,] = namedcolors->get(keys[i])
@@ -4816,6 +4820,7 @@ mata:
     }
     i = rows(keys)
     if (i==0) return(J(0,2,""))
+    _sort(keys, 1)
     src = J(i, 1, "")
     SRC = ("palettes", "namedcolors", "lsmaps", "generators", "rgbmaps")
     for (;i;i--) {
@@ -4841,8 +4846,7 @@ mata:
         t = _palette_tget(p0)
     }
     if (t==0) {
-        // ignore case and allow abbreviation
-        p = _findkey(p0, palettes->keys(), stataversion()<1800 ? "s2" : "st")
+        p = findkey(p0, palettes->keys(), stataversion()<1800 ? "s2" : "st")
         if (p!="") {
             p0 = p
             t = _palette_tget(p0)
@@ -5470,7 +5474,7 @@ void `MAIN'::generate(`SS' pal, `Int' n, `RV' h, `RV' c, `RV' l, `RV' p)
 {
     `SS'  space
     
-    space = findkey(strlower(gettok(pal)), ("HUE", "HCL", "LCh", "JMh", "HSV", "HSL")')
+    space = findkey(gettok(pal), ("HUE", "HCL", "LCh", "JMh", "HSV", "HSL")')
     if      (space=="HUE")              generate_HUE(n, h, c[1], l[1], p[1])
     else if (S->pclass=="qualitative")  generate_qual(space, n, h, c[1], l[1])
     else if (S->pclass=="sequential")   generate_seq(space, n, h, c, l, p)

@@ -745,13 +745,10 @@
     {browse "http://www.w3schools.com/colors/colors_ral.asp":Traffic Colors}.
 
 {pmore}
-    The color names can be abbreviated and typed in lowercase letters. If
-    abbreviation is ambiguous, the first matching name in the alphabetically
-    ordered list (including official Stata's colors) will be used
-    (prioritizing lowercase variants; but note that case will be respected
-    if there is an exact match; for example, {cmd:pink} will
-    refer to official Stata's pink, whereas {cmd:Pink} will refer to HTML color
-    pink).
+    Color names can be abbreviated and typed in lowercase letters. If
+    spelling is ambiguous, a choice will be made based on alphabetical order
+    and capitalization (for example, type {cmd:pink} to select official Stata's
+    pink, type {cmd:Pink} to select HTML color pink).
 
 {pstd}
     Example:
