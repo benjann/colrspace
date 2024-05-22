@@ -23,6 +23,11 @@ Installation from GitHub:
 
 Main changes:
 
+    22may2024 (v 1.2.1)
+    - further refinement of the algorithm to select color names and palettes; if
+      spelling is ambiguous, a choice will be now made based on alphabetical order
+      and capitalization
+
     21may2024 (v 1.2.0)
     - placeholders for system colors are now included in the index of named colors
       so that there will be less queries to the file system
