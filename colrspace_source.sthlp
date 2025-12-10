@@ -1,4 +1,4 @@
-*! version 1.2.1  22may2024  Ben Jann
+*! version 1.2.2  10dec2025  Ben Jann
 * {smcl}
 * {title:lcolrspace.mlib source code}
 *
@@ -381,7 +381,8 @@ class `MAIN' {
     private:
      `PDict'    palettes
        `Int'    parse_palette()
-        void    paletteindex(), _paletteindex(), _palette_tput()
+        void    paletteindex(), _paletteindex(), _paletteindex_mkalias(),
+                _palette_tput()
         `TS'    _palette_tget()
       `Bool'    Palette()
         `SC'    Palette_read(), _Palette_read()
@@ -4969,6 +4970,24 @@ void `MAIN'::_paletteindex() // create palette index
     _palette_tput("JMh"       , "JMh qualitative")
     _palette_tput("HSV"       , "HSV qualitative")
     _palette_tput("HSL"       , "HSL qualitative")
+    _paletteindex_mkalias("scico8", "scico")
+}
+
+void `MAIN'::_paletteindex_mkalias(`SS' s1, `ss' s0)
+{   // add s1-to-s0-alias for each scheme that exists in s0 but not in s1
+    `Int' i
+    `SC'  K, k
+    `T'   A
+
+    A = asarray_create()
+    K = palettes->keys()
+    k = substr(::select(K, strmatch(K, s1 + " *")), strlen(s1)+2, .)
+    for (i=length(k);i;i--) asarray(A, k[i], 1)
+    k = substr(::select(K, strmatch(K, s0 + " *")), strlen(s0)+2, .)
+    for (i=length(k);i;i--) {
+        if (asarray(A, k[i])!=J(0,0,.)) continue // palette exists
+        _palette_tput(s1+" "+k[i], s0+" "+k[i])  // create alias
+    }
 }
 
 void `MAIN'::_palette_tput(`SS' key, `TS' t0)

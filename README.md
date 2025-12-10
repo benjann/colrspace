@@ -23,6 +23,9 @@ Installation from GitHub:
 
 Main changes:
 
+    10dec2025 (v 1.2.2)
+    - added version 8.0.1 variants of Scico color maps
+
     22may2024 (v 1.2.1)
     - further refinement of the algorithm to select color names and palettes; if
       spelling is ambiguous, a choice will be now made based on alphabetical order

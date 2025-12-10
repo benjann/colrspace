@@ -1,5 +1,5 @@
 {smcl}
-{* 21may2024}{...}
+{* 10dec2025}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 ({browse "http://ideas.repec.org/p/bss/wpaper/42.html":PDF manual}){...}
@@ -1524,8 +1524,9 @@
     {stata colorpalette CET CBC1:{bf:CBC1}},
     {stata colorpalette CET CBC2:{bf:CBC2}}
     {p_end}
-{p2col:{cmd:scico} [{it:map}]}perceptually uniform CVD-friendly colormaps by
-    {browse "http://www.fabiocrameri.ch/colourmaps/":Crameri (2018)},
+{p2col:{cmd:scico} [{it:map}]}{browse "https://doi.org/10.5281/zenodo.5501399":version 7.0.1}
+    variants of the (perceptually uniform and CVD-friendly) Scientific colour
+    maps by {browse "http://www.fabiocrameri.ch/colourmaps/":Crameri (2018)},
     where {it:map} is as follows
     {p_end}
 {p2col:}sequential: {stata colorpalette scico batlow:{bf:batlow}} (default),
@@ -1562,6 +1563,26 @@
     {stata colorpalette scico brocO:{bf:brocO}},
     {stata colorpalette scico corkO:{bf:corkO}},
     {stata colorpalette scico vikO:{bf:vikO}}
+    {p_end}
+{p2col:{cmd:scico8} [{it:map}]}{browse "https://doi.org/10.5281/zenodo.8409685":version 8.0.1}
+    variants of the Scientific colour maps by
+    {browse "http://www.fabiocrameri.ch/colourmaps/":Crameri (2018)};
+    {cmd:scico8} provides additional sequential maps
+    {stata colorpalette scico8 glasgow:{bf:glasgow}},
+    {stata colorpalette scico8 lipari:{bf:lipari}},
+    {stata colorpalette scico8 navia:{bf:navia}}, and
+    {stata colorpalette scico8 naviaW:{bf:naviaW}},
+    additional diverging map
+    {stata colorpalette scico8 managua:{bf:managua}},
+    as well as updated variants of
+    {stata colorpalette scico8 batlowK:{bf:batlowK}},
+    {stata colorpalette scico8 lajolla:{bf:lajolla}},
+    {stata colorpalette scico8 bamako:{bf:bamako}},
+    {stata colorpalette scico8 bilbao:{bf:bilbao}},
+    {stata colorpalette scico8 grayC:{bf:grayC}},
+    {stata colorpalette scico8 tokyo:{bf:tokyo}}, and
+    {stata colorpalette scico8 acton:{bf:acton}};
+    all other maps are identical to the ones in {cmd:scico}
     {p_end}
 
 {pmore}
@@ -3410,7 +3431,7 @@
     {browse "http://ideas.repec.org/c/boc/bocode/s457623.html"}.
     {p_end}
 {phang}
-    Crameri, F. (2018). Scientific colour maps. Zenodo. {browse "http://doi.org/10.5281/zenodo.1243862":DOI: 10.5281/zenodo.1243862}.
+    Crameri, F. 2018. Scientific colour maps. Zenodo. {browse "http://doi.org/10.5281/zenodo.1243862":DOI: 10.5281/zenodo.1243862}.
     {p_end}
 {phang}
     Hunt, R.W.G. 2004. {browse "http://doi.org/10.1002/0470024275":The Reproduction of Colour}. 6th ed. John Wiley & Sons.
@@ -3436,7 +3457,7 @@
     Journal 3(3): 295-301.
     {p_end}
 {phang}
-    Kovesi, P. (2015). Good Colour Maps: How to Design Them. {browse "http://arxiv.org/abs/1509.03700":arXiv:1509.03700} [cs.GR].
+    Kovesi, P. 2015. Good Colour Maps: How to Design Them. {browse "http://arxiv.org/abs/1509.03700":arXiv:1509.03700} [cs.GR].
     {p_end}
 {phang}
     Lin, S., J. Fortuna, C. Kulkarni, M. Stone,
@@ -3489,7 +3510,7 @@
     {browse "http://ideas.repec.org/c/boc/bocode/s458103.html"}.
     {p_end}
 {phang}
-    Novak, J. (2016). What every coder should know about gamma. 2016 Sep 21. Available from
+    Novak, J. 2016. What every coder should know about gamma. 2016 Sep 21. Available from
     {browse "http://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/"}.
     {p_end}
 {phang}
@@ -3512,7 +3533,7 @@
     Assets. Version 1.1.1. Neuchâtel: Bundesamt f{c u:}r Statistik.
     {p_end}
 {phang}
-    Smith, N.J. (2018). colorspacious 1.1.2: A powerful, accurate, and easy-to-use
+    Smith, N.J. 2018. colorspacious 1.1.2: A powerful, accurate, and easy-to-use
     Python library for doing colorspace conversions. Available from
     {browse "http://pypi.org/project/colorspacious"} (DOI
     {browse "http://doi.org/10.5281/zenodo.1214904":10.5281/zenodo.1214904}).
