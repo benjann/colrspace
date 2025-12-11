@@ -1,5 +1,5 @@
 {smcl}
-{* 10dec2025}{...}
+{* 11dec2025}{...}
 {cmd:help colrspace}{...}
 {right:{browse "http://github.com/benjann/colrspace/"}}
 ({browse "http://ideas.repec.org/p/bss/wpaper/42.html":PDF manual}){...}
@@ -1524,7 +1524,7 @@
     {stata colorpalette CET CBC1:{bf:CBC1}},
     {stata colorpalette CET CBC2:{bf:CBC2}}
     {p_end}
-{p2col:{cmd:scico} [{it:map}]}{browse "https://doi.org/10.5281/zenodo.5501399":version 7.0.1}
+{p2col:{cmd:scico} [{it:map}]}{browse "http://doi.org/10.5281/zenodo.5501399":version 7.0.1}
     variants of the (perceptually uniform and CVD-friendly) Scientific colour
     maps by {browse "http://www.fabiocrameri.ch/colourmaps/":Crameri (2018)},
     where {it:map} is as follows
@@ -1564,7 +1564,7 @@
     {stata colorpalette scico corkO:{bf:corkO}},
     {stata colorpalette scico vikO:{bf:vikO}}
     {p_end}
-{p2col:{cmd:scico8} [{it:map}]}{browse "https://doi.org/10.5281/zenodo.8409685":version 8.0.1}
+{p2col:{cmd:scico8} [{it:map}]}{browse "http://doi.org/10.5281/zenodo.8409685":version 8.0.1}
     variants of the Scientific colour maps by
     {browse "http://www.fabiocrameri.ch/colourmaps/":Crameri (2018)};
     {cmd:scico8} provides additional sequential maps
